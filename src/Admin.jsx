@@ -10,11 +10,9 @@ import * as OTPAuth from 'otpauth';
 import QRCode from 'qrcode';
 import './index.css';
 
-// TODO: Replace this with your EXACT Gmail address that you use to log in!
-// If you don't update this, you will be locked out of your own admin panel!
+// The authorized email addresses that are allowed to access the admin panel
 const ALLOWED_ADMIN_EMAILS = [
-  'YOUR_EMAIL_HERE@gmail.com', 
-  'mohammed-moshii@gmail.com'
+  'backman480@gmail.com'
 ];
 
 // Utility to extract base64 images, upload them to Firebase Storage, and replace the src with the URL
