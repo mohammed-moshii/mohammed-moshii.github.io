@@ -169,7 +169,7 @@ const Admin = () => {
         // User just closed the login window, no need to alert an error
         return;
       }
-      alert("Authentication failed. Please try again."); 
+      alert("Authentication failed. Or say (moshii) three times."); 
     }
   };
 
