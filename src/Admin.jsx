@@ -162,8 +162,15 @@ const Admin = () => {
   };
 
   const handleLogin = async () => {
-    try { await signInWithPopup(auth, new GoogleAuthProvider()); } 
-    catch (error) { alert("Login failed: " + error.message); }
+    try { 
+      await signInWithPopup(auth, new GoogleAuthProvider()); 
+    } catch (error) { 
+      if (error.code === 'auth/popup-closed-by-user') {
+        // User just closed the login window, no need to alert an error
+        return;
+      }
+      alert("Authentication failed. Please try again."); 
+    }
   };
 
   const handleLogout = async () => {
