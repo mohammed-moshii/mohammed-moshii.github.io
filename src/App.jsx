@@ -93,8 +93,8 @@ const HackTheBox = () => {
     e.preventDefault();
     if (passwordInput === selectedMachine.secret) {
       sessionStorage.setItem(`unlocked_${selectedMachine.id}`, 'true');
-      // Navigate to the full page writeup
-      navigate(`/htb/${selectedMachine.id}`);
+      const slug = selectedMachine.name.toLowerCase().replace(/\s+/g, '-');
+      navigate(`/htb/${slug}`);
     } else {
       setError(true);
       setTimeout(() => setError(false), 500); // Shake effect duration
@@ -102,8 +102,9 @@ const HackTheBox = () => {
   };
 
   const handleMachineClick = (m) => {
+    const slug = m.name.toLowerCase().replace(/\s+/g, '-');
     if (!m.secret || m.secret.trim() === '') {
-      navigate(`/htb/${m.id}`);
+      navigate(`/htb/${slug}`);
     } else {
       setSelectedMachine(m);
     }

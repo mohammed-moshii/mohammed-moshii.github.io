@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Server, Calendar, Lock, AlertTriangle } from 'lucide-react';
@@ -11,6 +11,7 @@ const Writeup = () => {
   const [machine, setMachine] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentMachineId, setCurrentMachineId] = useState(null);
 
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
@@ -19,15 +20,25 @@ const Writeup = () => {
   useEffect(() => {
     const fetchMachine = async () => {
       try {
-        const docRef = doc(db, 'machines', id);
-        const docSnap = await getDoc(docRef);
+        const querySnapshot = await getDocs(collection(db, 'machines'));
+        let foundMachine = null;
+        let foundMachineId = null;
 
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setMachine(data);
-          if (!data.secret || data.secret.trim() === '') {
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const docSlug = data.name.toLowerCase().replace(/\s+/g, '-');
+          if (docSlug === id) {
+            foundMachine = data;
+            foundMachineId = doc.id;
+          }
+        });
+
+        if (foundMachine) {
+          setMachine(foundMachine);
+          setCurrentMachineId(foundMachineId);
+          if (!foundMachine.secret || foundMachine.secret.trim() === '') {
             setIsUnlocked(true);
-          } else if (sessionStorage.getItem(`unlocked_${id}`) === 'true') {
+          } else if (sessionStorage.getItem(`unlocked_${foundMachineId}`) === 'true') {
             setIsUnlocked(true);
           }
         } else {
@@ -47,7 +58,7 @@ const Writeup = () => {
   const handleUnlock = (e) => {
     e.preventDefault();
     if (passwordInput === machine.secret) {
-      sessionStorage.setItem(`unlocked_${id}`, 'true');
+      sessionStorage.setItem(`unlocked_${currentMachineId}`, 'true');
       setIsUnlocked(true);
     } else {
       setPasswordError(true);
