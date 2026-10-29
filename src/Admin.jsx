@@ -462,7 +462,11 @@ const Admin = () => {
               <div>
                 <label>Operating System</label>
                 <select value={os} onChange={e => setOs(e.target.value)} className="admin-input">
-                  <option>Linux</option><option>Windows</option><option>Android</option><option>Other</option>
+                  <option>Linux</option>
+                  <option>Windows</option>
+                  <option>Android</option>
+                  <option>AI &amp; LLM</option>
+                  <option>Other</option>
                 </select>
               </div>
               <div>
