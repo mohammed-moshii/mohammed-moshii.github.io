@@ -4,7 +4,9 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Server, Calendar, Lock, AlertTriangle, ExternalLink, Maximize2, X } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import profileCardImg from './assets/profile-card.png';
+import { verifySecret } from './cryptoUtils';
 import './index.css';
 
 const resolveContent = (raw) => {
@@ -76,11 +78,13 @@ const Writeup = () => {
         if (foundMachine) {
           setMachine(foundMachine);
           setCurrentMachineId(foundMachineId);
-          if (!foundMachine.secret || foundMachine.secret.trim() === '') {
+          const isLocked = (foundMachine.secretHash && foundMachine.secretHash.trim() !== '') || (foundMachine.secret && foundMachine.secret.trim() !== '');
+          if (!isLocked) {
             setIsUnlocked(true);
           } else {
             const savedPwd = sessionStorage.getItem(`unlocked_pwd_${foundMachineId}`);
-            if (savedPwd && savedPwd === foundMachine.secret) {
+            const isValid = savedPwd ? await verifySecret(savedPwd, foundMachine) : false;
+            if (isValid) {
               setIsUnlocked(true);
             } else {
               sessionStorage.removeItem(`unlocked_pwd_${foundMachineId}`);
@@ -102,9 +106,10 @@ const Writeup = () => {
     fetchMachine();
   }, [id]);
 
-  const handleUnlock = (e) => {
+  const handleUnlock = async (e) => {
     e.preventDefault();
-    if (passwordInput === machine.secret) {
+    const isValid = await verifySecret(passwordInput, machine);
+    if (isValid) {
       sessionStorage.setItem(`unlocked_pwd_${currentMachineId}`, passwordInput);
       setIsUnlocked(true);
     } else {
@@ -355,7 +360,12 @@ const Writeup = () => {
         <div 
           className="writeup-content responsive-glass-padding" 
           style={{ lineHeight: '1.8', fontSize: '1.1rem' }}
-          dangerouslySetInnerHTML={{ __html: resolved.html }} 
+          dangerouslySetInnerHTML={{ 
+            __html: DOMPurify.sanitize(resolved.html, { 
+              ADD_TAGS: ['iframe', 'style'], 
+              ADD_ATTR: ['target', 'allow', 'allowfullscreen', 'frameborder', 'scrolling', 'style', 'class', 'data-language'] 
+            }) 
+          }} 
         />
       )}
       

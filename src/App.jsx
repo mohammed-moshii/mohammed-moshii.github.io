@@ -9,6 +9,7 @@ import { db } from './firebase';
 import Admin from './Admin';
 import Writeup from './Writeup';
 import About from './About';
+import { verifySecret } from './cryptoUtils';
 import './index.css';
 
 // 3D Background Component
@@ -89,9 +90,10 @@ const HackTheBox = () => {
     fetchMachines();
   }, []);
 
-  const handleUnlock = (e) => {
+  const handleUnlock = async (e) => {
     e.preventDefault();
-    if (passwordInput === selectedMachine.secret) {
+    const isValid = await verifySecret(passwordInput, selectedMachine);
+    if (isValid) {
       sessionStorage.setItem(`unlocked_pwd_${selectedMachine.id}`, passwordInput);
       const slug = selectedMachine.name.toLowerCase().replace(/\s+/g, '-');
       navigate(`/htb/${slug}`);
@@ -101,13 +103,15 @@ const HackTheBox = () => {
     }
   };
 
-  const handleMachineClick = (m) => {
+  const handleMachineClick = async (m) => {
     const slug = m.name.toLowerCase().replace(/\s+/g, '-');
-    if (!m.secret || m.secret.trim() === '') {
+    const isLocked = (m.secretHash && m.secretHash.trim() !== '') || (m.secret && m.secret.trim() !== '');
+    if (!isLocked) {
       navigate(`/htb/${slug}`);
     } else {
       const savedPwd = sessionStorage.getItem(`unlocked_pwd_${m.id}`);
-      if (savedPwd && savedPwd === m.secret) {
+      const isValid = savedPwd ? await verifySecret(savedPwd, m) : false;
+      if (isValid) {
         navigate(`/htb/${slug}`);
       } else {
         sessionStorage.removeItem(`unlocked_pwd_${m.id}`);
@@ -171,7 +175,7 @@ const HackTheBox = () => {
                 <h3 className="text-glow-cyan" style={{ margin: '0 0 8px 0', fontSize: '1.5rem' }}>{m.name}</h3>
                 <p style={{ fontSize: '0.9rem', color: 'var(--text-primary)', margin: '0 0 16px 0' }}>OS: {m.os || 'Unknown'} | Difficulty: {m.diff || 'Unknown'}</p>
                 <button className="hack-btn" style={{ width: '100%' }}>
-                  {m.secret ? <><Lock size={16} /> Decrypt</> : <><Unlock size={16} /> Read Writeup</>}
+                  {(m.secretHash || m.secret) ? <><Lock size={16} /> Decrypt</> : <><Unlock size={16} /> Read Writeup</>}
                 </button>
               </div>
             </div>

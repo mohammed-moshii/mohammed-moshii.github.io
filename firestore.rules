@@ -1,0 +1,26 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Check if the authenticated user is the designated admin
+    function isAdmin() {
+      return request.auth != null && 
+        request.auth.token.email in ['backman480@gmail.com'];
+    }
+
+    // Public machines & writeups:
+    // Anyone can read targets
+    // Only the verified admin can create, update, or delete
+    match /machines/{machineId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Admin 2FA Secrets:
+    // Strictly restricted to the authorized admin only
+    match /admin_secrets/{userId} {
+      allow read, write: if isAdmin() && request.auth.uid == userId;
+    }
+  }
+}

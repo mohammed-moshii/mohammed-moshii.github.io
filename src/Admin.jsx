@@ -8,6 +8,7 @@ import 'react-quill-new/dist/quill.snow.css';
 import { Shield, LogOut, PlusCircle, CheckCircle, Lock, QrCode, AlertTriangle, Edit3, Trash2, Copy, Image as ImageIcon, Eye, Code, ExternalLink } from 'lucide-react';
 import * as OTPAuth from 'otpauth';
 import QRCode from 'qrcode';
+import { hashPassword } from './cryptoUtils';
 import './index.css';
 
 // The authorized email addresses that are allowed to access the admin panel
@@ -266,8 +267,14 @@ const Admin = () => {
         return;
       }
 
+      const secretTrimmed = (secret || '').trim();
+      const secretHash = secretTrimmed ? await hashPassword(secretTrimmed) : '';
+
       const machineData = {
-        name, os, diff, secret,
+        name, os, diff, 
+        secret: secretTrimmed,
+        secretHash: secretHash,
+        isProtected: !!secretTrimmed,
         imageUrl: imageUrl,
         writeup: finalWriteup,
         updatedAt: serverTimestamp()
