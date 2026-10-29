@@ -3,7 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Server, Calendar, Lock, AlertTriangle, ExternalLink, Maximize2 } from 'lucide-react';
+import { ArrowLeft, Server, Calendar, Lock, AlertTriangle, ExternalLink, Maximize2, X } from 'lucide-react';
+import profileCardImg from './assets/profile-card.png';
 import './index.css';
 
 const resolveContent = (raw) => {
@@ -54,6 +55,7 @@ const Writeup = () => {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState(false);
+  const [showLinkedInModal, setShowLinkedInModal] = useState(true);
 
   useEffect(() => {
     const fetchMachine = async () => {
@@ -126,6 +128,133 @@ const Writeup = () => {
       className="light-theme-page"
       style={{ width: '100%', minHeight: '100vh', backgroundColor: '#f4f5f7', padding: '40px 16px' }}
     >
+      {/* LinkedIn Profile Popup Modal */}
+      <AnimatePresence>
+        {showLinkedInModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              backgroundColor: 'rgba(5, 6, 11, 0.88)',
+              backdropFilter: 'blur(8px)',
+              zIndex: 99999,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: '16px',
+              boxSizing: 'border-box'
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.88, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.88, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              style={{
+                position: 'relative',
+                background: 'linear-gradient(135deg, #090d16 0%, #111827 100%)',
+                border: '1px solid var(--accent-cyan)',
+                borderRadius: '16px',
+                boxShadow: '0 0 35px rgba(0, 240, 255, 0.3), 0 20px 50px rgba(0,0,0,0.9)',
+                maxWidth: '440px',
+                width: '100%',
+                overflow: 'hidden',
+                textAlign: 'center'
+              }}
+            >
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={() => setShowLinkedInModal(false)}
+                aria-label="Close"
+                style={{
+                  position: 'absolute',
+                  top: '12px',
+                  right: '12px',
+                  background: 'rgba(0, 0, 0, 0.6)',
+                  border: '1px solid rgba(255, 255, 255, 0.25)',
+                  color: '#ffffff',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  zIndex: 10,
+                  transition: 'all 0.2s'
+                }}
+              >
+                <X size={18} />
+              </button>
+
+              {/* Profile Card Image */}
+              <div style={{ width: '100%', backgroundColor: '#000000', borderBottom: '1px solid rgba(0, 255, 255, 0.2)' }}>
+                <img
+                  src={profileCardImg}
+                  alt="Mohammed Moshii"
+                  style={{
+                    width: '100%',
+                    height: 'auto',
+                    display: 'block',
+                    objectFit: 'contain'
+                  }}
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ padding: '20px 24px 24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <a
+                  href="https://www.linkedin.com/in/mohammed-m0shii/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hack-btn"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '10px',
+                    fontSize: '1.05rem',
+                    padding: '12px 20px',
+                    textDecoration: 'none',
+                    background: 'linear-gradient(135deg, #0077b5 0%, #00a0dc 100%)',
+                    color: '#ffffff',
+                    border: '1px solid #00F0FF',
+                    borderRadius: '8px',
+                    boxShadow: '0 0 20px rgba(0, 119, 181, 0.5)',
+                    fontWeight: 'bold',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <ExternalLink size={18} /> Go to LinkedIn
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => setShowLinkedInModal(false)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#94a3b8',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    padding: '6px',
+                    textDecoration: 'underline'
+                  }}
+                >
+                  Continue to Lab →
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="writeup-page-wrapper" style={{ maxWidth: '1200px', margin: '0 auto', backgroundColor: '#ffffff', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', padding: '32px' }}>
       <div className="writeup-header-banner">
         <Link to="/htb" className="back-btn-banner">
