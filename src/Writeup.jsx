@@ -78,8 +78,15 @@ const Writeup = () => {
           setCurrentMachineId(foundMachineId);
           if (!foundMachine.secret || foundMachine.secret.trim() === '') {
             setIsUnlocked(true);
-          } else if (sessionStorage.getItem(`unlocked_${foundMachineId}`) === 'true') {
-            setIsUnlocked(true);
+          } else {
+            const savedPwd = sessionStorage.getItem(`unlocked_pwd_${foundMachineId}`);
+            if (savedPwd && savedPwd === foundMachine.secret) {
+              setIsUnlocked(true);
+            } else {
+              sessionStorage.removeItem(`unlocked_pwd_${foundMachineId}`);
+              sessionStorage.removeItem(`unlocked_${foundMachineId}`);
+              setIsUnlocked(false);
+            }
           }
         } else {
           setError("Machine not found in database.");
@@ -98,7 +105,7 @@ const Writeup = () => {
   const handleUnlock = (e) => {
     e.preventDefault();
     if (passwordInput === machine.secret) {
-      sessionStorage.setItem(`unlocked_${currentMachineId}`, 'true');
+      sessionStorage.setItem(`unlocked_pwd_${currentMachineId}`, passwordInput);
       setIsUnlocked(true);
     } else {
       setPasswordError(true);

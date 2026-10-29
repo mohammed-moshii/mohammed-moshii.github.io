@@ -92,7 +92,7 @@ const HackTheBox = () => {
   const handleUnlock = (e) => {
     e.preventDefault();
     if (passwordInput === selectedMachine.secret) {
-      sessionStorage.setItem(`unlocked_${selectedMachine.id}`, 'true');
+      sessionStorage.setItem(`unlocked_pwd_${selectedMachine.id}`, passwordInput);
       const slug = selectedMachine.name.toLowerCase().replace(/\s+/g, '-');
       navigate(`/htb/${slug}`);
     } else {
@@ -106,7 +106,14 @@ const HackTheBox = () => {
     if (!m.secret || m.secret.trim() === '') {
       navigate(`/htb/${slug}`);
     } else {
-      setSelectedMachine(m);
+      const savedPwd = sessionStorage.getItem(`unlocked_pwd_${m.id}`);
+      if (savedPwd && savedPwd === m.secret) {
+        navigate(`/htb/${slug}`);
+      } else {
+        sessionStorage.removeItem(`unlocked_pwd_${m.id}`);
+        sessionStorage.removeItem(`unlocked_${m.id}`);
+        setSelectedMachine(m);
+      }
     }
   };
 
