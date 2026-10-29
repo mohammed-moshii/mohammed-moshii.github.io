@@ -5,7 +5,7 @@ import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { auth, db, storage } from './firebase';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
-import { Shield, LogOut, PlusCircle, CheckCircle, Lock, QrCode, AlertTriangle, Edit3, Trash2, Copy, Image as ImageIcon } from 'lucide-react';
+import { Shield, LogOut, PlusCircle, CheckCircle, Lock, QrCode, AlertTriangle, Edit3, Trash2, Copy, Image as ImageIcon, Eye, Code } from 'lucide-react';
 import * as OTPAuth from 'otpauth';
 import QRCode from 'qrcode';
 import './index.css';
@@ -65,6 +65,7 @@ const Admin = () => {
   
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [isHtmlMode, setIsHtmlMode] = useState(false);
 
   // 1. Authentication & MFA Effects
   useEffect(() => {
@@ -451,10 +452,83 @@ const Admin = () => {
             </div>
 
             <div>
-              <label>Writeup Content *</label>
-              <div style={{ background: '#fff', color: '#000', borderRadius: '4px', marginTop: '8px' }}>
-                <ReactQuill theme="snow" value={writeup} onChange={setWriteup} modules={modules} style={{ height: '400px', marginBottom: '60px' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <label style={{ margin: 0 }}>Writeup Content *</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsHtmlMode(false)}
+                    style={{
+                      padding: '4px 12px',
+                      borderRadius: '4px',
+                      border: !isHtmlMode ? '1px solid var(--accent-cyan)' : '1px solid var(--glass-border)',
+                      background: !isHtmlMode ? 'rgba(0, 255, 255, 0.15)' : 'transparent',
+                      color: !isHtmlMode ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <Eye size={14} /> Visual Editor
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsHtmlMode(true)}
+                    style={{
+                      padding: '4px 12px',
+                      borderRadius: '4px',
+                      border: isHtmlMode ? '1px solid var(--accent-green)' : '1px solid var(--glass-border)',
+                      background: isHtmlMode ? 'rgba(0, 255, 65, 0.15)' : 'transparent',
+                      color: isHtmlMode ? 'var(--accent-green)' : 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <Code size={14} /> HTML Source (&lt;/&gt;)
+                  </button>
+                </div>
               </div>
+
+              {!isHtmlMode ? (
+                <div style={{ background: '#fff', color: '#000', borderRadius: '4px', marginTop: '8px' }}>
+                  <ReactQuill theme="snow" value={writeup} onChange={setWriteup} modules={modules} style={{ height: '400px', marginBottom: '60px' }} />
+                </div>
+              ) : (
+                <div style={{ marginTop: '8px' }}>
+                  <textarea
+                    value={writeup}
+                    onChange={(e) => setWriteup(e.target.value)}
+                    placeholder="Paste your raw HTML code here (e.g. <h2>Title</h2>, <p>text</p>, <pre><code>nmap -sC...</code></pre>)..."
+                    className="admin-input"
+                    style={{
+                      width: '100%',
+                      height: '460px',
+                      fontFamily: 'var(--font-mono, monospace)',
+                      fontSize: '0.9rem',
+                      lineHeight: '1.6',
+                      padding: '16px',
+                      backgroundColor: '#0d1117',
+                      color: '#00ff41',
+                      border: '1px solid var(--accent-green)',
+                      borderRadius: '4px',
+                      resize: 'vertical',
+                      boxSizing: 'border-box',
+                      whiteSpace: 'pre',
+                      overflowX: 'auto'
+                    }}
+                  />
+                  <small style={{ color: 'var(--text-secondary)', display: 'block', marginTop: '6px' }}>
+                    💡 Tip: In HTML Source mode, your code is saved directly as real HTML elements. You can switch back to "Visual Editor" anytime to preview how it looks!
+                  </small>
+                </div>
+              )}
             </div>
 
             <div style={{ display: 'flex', gap: '16px', borderTop: '1px solid var(--glass-border)', paddingTop: '24px' }}>
