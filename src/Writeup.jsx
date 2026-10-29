@@ -3,8 +3,46 @@ import { useParams, Link } from 'react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Server, Calendar, Lock, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Server, Calendar, Lock, AlertTriangle, ExternalLink, Maximize2 } from 'lucide-react';
 import './index.css';
+
+const resolveContent = (raw) => {
+  if (!raw) return { isFullDoc: false, html: '' };
+
+  const trimmed = raw.trim();
+
+  // 1. Clean standalone HTML document
+  if (/^<!DOCTYPE\s+html/i.test(trimmed) || /^<html/i.test(trimmed)) {
+    return { isFullDoc: true, html: trimmed };
+  }
+
+  // 2. Escaped / wrapped in pre or table
+  if (
+    raw.includes('&lt;!DOCTYPE') || 
+    raw.includes('&lt;html') || 
+    raw.includes('<!DOCTYPE') || 
+    raw.includes('<html')
+  ) {
+    let clean = raw
+      .replace(/<tr[^>]*>/gi, '\n')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<[^>]+>/g, '')
+      .replaceAll('&lt;', '<')
+      .replaceAll('&gt;', '>')
+      .replaceAll('&quot;', '"')
+      .replaceAll('&#39;', "'")
+      .replaceAll('&amp;', '&')
+      .replaceAll('&nbsp;', ' ')
+      .trim();
+
+    const docMatch = clean.match(/<!DOCTYPE\s+html[\s\S]*<\/html>/i) || clean.match(/<html[\s\S]*<\/html>/i);
+    if (docMatch) {
+      return { isFullDoc: true, html: docMatch[0] };
+    }
+  }
+
+  return { isFullDoc: false, html: raw };
+};
 
 const Writeup = () => {
   const { id } = useParams();
@@ -80,6 +118,8 @@ const Writeup = () => {
     dateString = new Date(machine.createdAt.seconds * 1000).toLocaleDateString();
   }
 
+  const resolved = resolveContent(machine.writeup);
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
@@ -134,11 +174,52 @@ const Writeup = () => {
             </button>
           </form>
         </div>
+      ) : resolved.isFullDoc ? (
+        <div style={{ width: '100%', marginTop: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
+            <button 
+              type="button"
+              onClick={() => {
+                const blob = new Blob([resolved.html], { type: 'text/html;charset=utf-8' });
+                const blobUrl = URL.createObjectURL(blob);
+                window.open(blobUrl, '_blank');
+              }}
+              className="hack-btn"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '0.85rem',
+                background: 'rgba(0, 255, 255, 0.15)',
+                border: '1px solid var(--accent-cyan)',
+                color: 'var(--accent-cyan)',
+                padding: '8px 16px',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              <ExternalLink size={16} /> Open Fullscreen / New Tab
+            </button>
+          </div>
+          <iframe
+            srcDoc={resolved.html}
+            title={machine.name}
+            style={{
+              width: '100%',
+              minHeight: '85vh',
+              height: '950px',
+              border: '1px solid var(--glass-border)',
+              borderRadius: '8px',
+              backgroundColor: '#0d1117'
+            }}
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+          />
+        </div>
       ) : (
         <div 
           className="writeup-content responsive-glass-padding" 
           style={{ lineHeight: '1.8', fontSize: '1.1rem' }}
-          dangerouslySetInnerHTML={{ __html: machine.writeup }} 
+          dangerouslySetInnerHTML={{ __html: resolved.html }} 
         />
       )}
       
