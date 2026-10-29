@@ -5,7 +5,7 @@ import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { auth, db, storage } from './firebase';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
-import { Shield, LogOut, PlusCircle, CheckCircle, Lock, QrCode, AlertTriangle, Edit3, Trash2, Copy, Image as ImageIcon, Eye, Code } from 'lucide-react';
+import { Shield, LogOut, PlusCircle, CheckCircle, Lock, QrCode, AlertTriangle, Edit3, Trash2, Copy, Image as ImageIcon, Eye, Code, ExternalLink } from 'lucide-react';
 import * as OTPAuth from 'otpauth';
 import QRCode from 'qrcode';
 import './index.css';
@@ -40,6 +40,38 @@ const uploadHtmlImagesToStorage = async (html, setSuccessMsg) => {
   return doc.body.innerHTML;
 };
 
+// Clean full HTML documents that may have been escaped or wrapped in pre/table
+const getCleanHtml = (raw) => {
+  if (!raw) return '';
+  const trimmed = raw.trim();
+  if (/^<!DOCTYPE\s+html/i.test(trimmed) || /^<html/i.test(trimmed)) {
+    return trimmed;
+  }
+  if (raw.includes('&lt;!DOCTYPE') || raw.includes('&lt;html') || raw.includes('<!DOCTYPE') || raw.includes('<html')) {
+    let clean = raw
+      .replace(/<tr[^>]*>/gi, '\n')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<[^>]+>/g, '')
+      .replaceAll('&lt;', '<')
+      .replaceAll('&gt;', '>')
+      .replaceAll('&quot;', '"')
+      .replaceAll('&#39;', "'")
+      .replaceAll('&amp;', '&')
+      .replaceAll('&nbsp;', ' ')
+      .trim();
+
+    const docMatch = clean.match(/<!DOCTYPE\s+html[\s\S]*<\/html>/i) || clean.match(/<html[\s\S]*<\/html>/i);
+    if (docMatch) return docMatch[0];
+  }
+  return raw;
+};
+
+const isFullHtmlDoc = (content) => {
+  if (!content) return false;
+  const trimmed = content.trim();
+  return /^<!DOCTYPE\s+html/i.test(trimmed) || /^<html/i.test(trimmed);
+};
+
 const Admin = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -65,7 +97,7 @@ const Admin = () => {
   
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
-  const [isHtmlMode, setIsHtmlMode] = useState(false);
+  const [editorMode, setEditorMode] = useState('quill'); // 'quill' | 'html' | 'preview'
 
   // 1. Authentication & MFA Effects
   useEffect(() => {
@@ -190,6 +222,7 @@ const Admin = () => {
     setSecret('');
     setImageUrl('');
     setWriteup('');
+    setEditorMode('quill');
     setSuccessMsg('');
   };
 
@@ -200,7 +233,14 @@ const Admin = () => {
     setDiff(m.diff || 'Easy');
     setSecret(m.secret || '');
     setImageUrl(m.imageUrl || '');
-    setWriteup(m.writeup || '');
+    
+    const cleaned = getCleanHtml(m.writeup || '');
+    setWriteup(cleaned);
+    if (isFullHtmlDoc(cleaned)) {
+      setEditorMode('preview');
+    } else {
+      setEditorMode('quill');
+    }
     setSuccessMsg('');
   };
 
@@ -214,9 +254,9 @@ const Admin = () => {
     setSuccessMsg('');
 
     try {
-      let finalWriteup = writeup;
-      if (writeup.includes('data:image/')) {
-        finalWriteup = await uploadHtmlImagesToStorage(writeup, setSuccessMsg);
+      let finalWriteup = getCleanHtml(writeup);
+      if (finalWriteup.includes('data:image/')) {
+        finalWriteup = await uploadHtmlImagesToStorage(finalWriteup, setSuccessMsg);
       }
 
       if (finalWriteup.length > 1000000) {
@@ -452,18 +492,18 @@ const Admin = () => {
             </div>
 
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
                 <label style={{ margin: 0 }}>Writeup Content *</label>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button
                     type="button"
-                    onClick={() => setIsHtmlMode(false)}
+                    onClick={() => setEditorMode('preview')}
                     style={{
                       padding: '4px 12px',
                       borderRadius: '4px',
-                      border: !isHtmlMode ? '1px solid var(--accent-cyan)' : '1px solid var(--glass-border)',
-                      background: !isHtmlMode ? 'rgba(0, 255, 255, 0.15)' : 'transparent',
-                      color: !isHtmlMode ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+                      border: editorMode === 'preview' ? '1px solid var(--accent-cyan)' : '1px solid var(--glass-border)',
+                      background: editorMode === 'preview' ? 'rgba(0, 255, 255, 0.2)' : 'transparent',
+                      color: editorMode === 'preview' ? 'var(--accent-cyan)' : 'var(--text-secondary)',
                       cursor: 'pointer',
                       fontSize: '0.85rem',
                       display: 'flex',
@@ -472,17 +512,36 @@ const Admin = () => {
                       transition: 'all 0.2s'
                     }}
                   >
-                    <Eye size={14} /> Visual Editor
+                    <Eye size={14} /> Live Preview
                   </button>
                   <button
                     type="button"
-                    onClick={() => setIsHtmlMode(true)}
+                    onClick={() => setEditorMode('quill')}
                     style={{
                       padding: '4px 12px',
                       borderRadius: '4px',
-                      border: isHtmlMode ? '1px solid var(--accent-green)' : '1px solid var(--glass-border)',
-                      background: isHtmlMode ? 'rgba(0, 255, 65, 0.15)' : 'transparent',
-                      color: isHtmlMode ? 'var(--accent-green)' : 'var(--text-secondary)',
+                      border: editorMode === 'quill' ? '1px solid var(--accent-purple)' : '1px solid var(--glass-border)',
+                      background: editorMode === 'quill' ? 'rgba(181, 55, 242, 0.2)' : 'transparent',
+                      color: editorMode === 'quill' ? 'var(--accent-purple)' : 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <Edit3 size={14} /> Rich Text
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditorMode('html')}
+                    style={{
+                      padding: '4px 12px',
+                      borderRadius: '4px',
+                      border: editorMode === 'html' ? '1px solid var(--accent-green)' : '1px solid var(--glass-border)',
+                      background: editorMode === 'html' ? 'rgba(0, 255, 65, 0.2)' : 'transparent',
+                      color: editorMode === 'html' ? 'var(--accent-green)' : 'var(--text-secondary)',
                       cursor: 'pointer',
                       fontSize: '0.85rem',
                       display: 'flex',
@@ -496,16 +555,66 @@ const Admin = () => {
                 </div>
               </div>
 
-              {!isHtmlMode ? (
+              {editorMode === 'preview' && (
+                <div style={{ marginTop: '8px', border: '1px solid var(--glass-border)', borderRadius: '6px', overflow: 'hidden' }}>
+                  <div style={{ background: '#161b22', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)' }}>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--accent-cyan)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Eye size={14} /> Live Interactive Preview (What visitors will see)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const blob = new Blob([getCleanHtml(writeup)], { type: 'text/html;charset=utf-8' });
+                        const url = URL.createObjectURL(blob);
+                        window.open(url, '_blank');
+                      }}
+                      style={{
+                        background: 'rgba(0, 255, 255, 0.1)',
+                        border: '1px solid var(--accent-cyan)',
+                        color: 'var(--accent-cyan)',
+                        cursor: 'pointer',
+                        fontSize: '0.8rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '4px 10px',
+                        borderRadius: '4px'
+                      }}
+                    >
+                      <ExternalLink size={14} /> Open in new window
+                    </button>
+                  </div>
+                  <iframe
+                    srcDoc={getCleanHtml(writeup)}
+                    title="Live Preview"
+                    style={{
+                      width: '100%',
+                      height: '550px',
+                      border: 'none',
+                      backgroundColor: isFullHtmlDoc(writeup) ? '#090d16' : '#ffffff'
+                    }}
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+                  />
+                </div>
+              )}
+
+              {editorMode === 'quill' && (
                 <div style={{ background: '#fff', color: '#000', borderRadius: '4px', marginTop: '8px' }}>
+                  {isFullHtmlDoc(writeup) && (
+                    <div style={{ background: '#fff3cd', color: '#856404', padding: '10px 14px', borderBottom: '1px solid #ffeeba', fontSize: '0.85rem' }}>
+                      ⚠️ <strong>Full HTML App Detected:</strong> This writeup is a full standalone HTML application. Use <strong>Live Preview</strong> above to interact with the visual page, or <strong>HTML Source</strong> to edit its code.
+                    </div>
+                  )}
                   <ReactQuill theme="snow" value={writeup} onChange={setWriteup} modules={modules} style={{ height: '400px', marginBottom: '60px' }} />
                 </div>
-              ) : (
+              )}
+
+              {editorMode === 'html' && (
                 <div style={{ marginTop: '8px' }}>
                   <textarea
                     value={writeup}
                     onChange={(e) => setWriteup(e.target.value)}
-                    placeholder="Paste your raw HTML code here (e.g. <h2>Title</h2>, <p>text</p>, <pre><code>nmap -sC...</code></pre>)..."
+                    placeholder="Paste your raw HTML code here (e.g. <!DOCTYPE html>, <h2>Title</h2>, <p>text</p>)..."
                     className="admin-input"
                     style={{
                       width: '100%',
@@ -525,7 +634,7 @@ const Admin = () => {
                     }}
                   />
                   <small style={{ color: 'var(--text-secondary)', display: 'block', marginTop: '6px' }}>
-                    💡 Tip: In HTML Source mode, your code is saved directly as real HTML elements. You can switch back to "Visual Editor" anytime to preview how it looks!
+                    💡 Tip: Paste your raw HTML here. Click "Live Preview" above anytime to see and test the interactive page!
                   </small>
                 </div>
               )}
