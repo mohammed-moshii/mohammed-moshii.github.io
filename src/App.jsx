@@ -245,22 +245,31 @@ const AppContent = () => {
 
   // Track unique visitor sessions in Firestore (counted once per browsing session)
   useEffect(() => {
+    // 1. NEVER count Admin visits
+    if (location.pathname.startsWith('/admin') || localStorage.getItem('m_is_admin') === 'true') {
+      sessionStorage.setItem('m_visited_session', 'admin');
+      return;
+    }
+
+    // 2. Only count genuine visitors once per browsing session
+    if (sessionStorage.getItem('m_visited_session')) {
+      return;
+    }
+
     const trackVisitor = async () => {
       try {
-        if (!sessionStorage.getItem('m_visited_session')) {
-          sessionStorage.setItem('m_visited_session', '1');
-          const statRef = doc(db, 'site_stats', 'traffic');
-          await setDoc(statRef, {
-            count: increment(1),
-            lastVisit: serverTimestamp()
-          }, { merge: true });
-        }
+        const statRef = doc(db, 'site_stats', 'traffic');
+        await setDoc(statRef, {
+          count: increment(1),
+          lastVisit: serverTimestamp()
+        }, { merge: true });
+        sessionStorage.setItem('m_visited_session', '1');
       } catch (err) {
-        // Silently ignore if network is offline or blocked
+        // Silently ignore if offline or blocked
       }
     };
     trackVisitor();
-  }, []);
+  }, [location.pathname]);
 
   return (
     <div className="app-wrapper">

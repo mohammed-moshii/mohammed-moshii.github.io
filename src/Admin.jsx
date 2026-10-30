@@ -5,7 +5,7 @@ import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { auth, db, storage } from './firebase';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
-import { Shield, LogOut, PlusCircle, CheckCircle, Lock, QrCode, AlertTriangle, Edit3, Trash2, Copy, Image as ImageIcon, Eye, Code, ExternalLink, Users } from 'lucide-react';
+import { Shield, LogOut, PlusCircle, CheckCircle, Lock, QrCode, AlertTriangle, Edit3, Trash2, Copy, Image as ImageIcon, Eye, Code, ExternalLink, Users, RefreshCw } from 'lucide-react';
 import * as OTPAuth from 'otpauth';
 import QRCode from 'qrcode';
 import { hashPassword } from './cryptoUtils';
@@ -88,6 +88,7 @@ const Admin = () => {
   const [machines, setMachines] = useState([]);
   const [selectedMachineId, setSelectedMachineId] = useState(null);
   const [visitorCount, setVisitorCount] = useState(null);
+  const [isRefreshingStats, setIsRefreshingStats] = useState(false);
 
   // Form State
   const [name, setName] = useState('');
@@ -117,6 +118,8 @@ const Admin = () => {
         }
 
         setUser(currentUser);
+        localStorage.setItem('m_is_admin', 'true');
+        sessionStorage.setItem('m_visited_session', 'admin');
         try {
           const secretDoc = await getDoc(doc(db, 'admin_secrets', currentUser.uid));
           if (secretDoc.exists()) {
@@ -161,6 +164,20 @@ const Admin = () => {
       return () => unsubscribeStats();
     }
   }, [mfaStatus]);
+
+  const fetchVisitorStatsManual = async () => {
+    setIsRefreshingStats(true);
+    try {
+      const statsDoc = await getDoc(doc(db, 'site_stats', 'traffic'));
+      if (statsDoc.exists()) {
+        setVisitorCount(statsDoc.data().count || 0);
+      }
+    } catch (err) {
+      console.error("Manual refresh stats error:", err);
+    } finally {
+      setTimeout(() => setIsRefreshingStats(false), 500);
+    }
+  };
 
   const fetchMachines = async () => {
     try {
@@ -456,16 +473,31 @@ const Admin = () => {
               letterSpacing: '0.5px',
               boxShadow: '0 0 10px rgba(0, 255, 65, 0.15)'
             }}>
-              <span style={{
+              <span className="pulse-dot" style={{
                 width: '7px',
                 height: '7px',
                 borderRadius: '50%',
                 backgroundColor: 'var(--accent-green)',
-                boxShadow: '0 0 8px var(--accent-green)',
                 display: 'inline-block'
               }}></span>
               <Users size={15} />
               <span>VISITORS: <strong style={{ color: '#fff' }}>{visitorCount.toLocaleString()}</strong> <span style={{ opacity: 0.6, fontSize: '0.72rem' }}>(LIVE)</span></span>
+              <button 
+                onClick={fetchVisitorStatsManual}
+                title="Force refresh counter from database"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--accent-green)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '2px',
+                  marginLeft: '4px'
+                }}
+              >
+                <RefreshCw size={13} className={isRefreshingStats ? "spin-icon" : ""} />
+              </button>
             </div>
           )}
         </div>
