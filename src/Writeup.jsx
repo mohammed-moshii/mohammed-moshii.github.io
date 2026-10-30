@@ -66,10 +66,12 @@ const Writeup = () => {
         let foundMachine = null;
         let foundMachineId = null;
 
+        const targetId = (id || '').trim().toLowerCase().replace(/-+$/, '');
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          const docSlug = data.name.toLowerCase().replace(/\s+/g, '-');
-          if (docSlug === id) {
+          const cleanName = (data.name || '').trim().toLowerCase();
+          const docSlug = cleanName.replace(/\s+/g, '-').replace(/-+$/, '');
+          if (docSlug === targetId || doc.id === id) {
             foundMachine = data;
             foundMachineId = doc.id;
           }

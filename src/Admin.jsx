@@ -267,11 +267,13 @@ const Admin = () => {
         return;
       }
 
+      const nameTrimmed = (name || '').trim();
       const secretTrimmed = (secret || '').trim();
       const secretHash = secretTrimmed ? await hashPassword(secretTrimmed) : '';
 
       const machineData = {
-        name, os, diff, 
+        name: nameTrimmed, 
+        os, diff, 
         secret: secretTrimmed,
         secretHash: secretHash,
         isProtected: !!secretTrimmed,

@@ -95,7 +95,7 @@ const HackTheBox = () => {
     const isValid = await verifySecret(passwordInput, selectedMachine);
     if (isValid) {
       sessionStorage.setItem(`unlocked_pwd_${selectedMachine.id}`, passwordInput);
-      const slug = selectedMachine.name.toLowerCase().replace(/\s+/g, '-');
+      const slug = (selectedMachine.name || '').trim().toLowerCase().replace(/\s+/g, '-').replace(/-+$/, '');
       navigate(`/htb/${slug}`);
     } else {
       setError(true);
@@ -104,7 +104,7 @@ const HackTheBox = () => {
   };
 
   const handleMachineClick = async (m) => {
-    const slug = m.name.toLowerCase().replace(/\s+/g, '-');
+    const slug = (m.name || '').trim().toLowerCase().replace(/\s+/g, '-').replace(/-+$/, '');
     const isLocked = (m.secretHash && m.secretHash.trim() !== '') || (m.secret && m.secret.trim() !== '');
     if (!isLocked) {
       navigate(`/htb/${slug}`);
