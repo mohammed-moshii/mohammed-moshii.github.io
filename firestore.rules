@@ -22,5 +22,13 @@ service cloud.firestore {
     match /admin_secrets/{userId} {
       allow read, write: if isAdmin() && request.auth.uid == userId;
     }
+
+    // Site Traffic & Visitor Statistics:
+    // Anyone can increment/record visits
+    // Only verified admin can view visitor counts
+    match /site_stats/{statId} {
+      allow read: if isAdmin();
+      allow write: if true;
+    }
   }
 }

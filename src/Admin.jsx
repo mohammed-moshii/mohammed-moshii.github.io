@@ -5,7 +5,7 @@ import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { auth, db, storage } from './firebase';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
-import { Shield, LogOut, PlusCircle, CheckCircle, Lock, QrCode, AlertTriangle, Edit3, Trash2, Copy, Image as ImageIcon, Eye, Code, ExternalLink } from 'lucide-react';
+import { Shield, LogOut, PlusCircle, CheckCircle, Lock, QrCode, AlertTriangle, Edit3, Trash2, Copy, Image as ImageIcon, Eye, Code, ExternalLink, Users } from 'lucide-react';
 import * as OTPAuth from 'otpauth';
 import QRCode from 'qrcode';
 import { hashPassword } from './cryptoUtils';
@@ -87,6 +87,7 @@ const Admin = () => {
   // Dashboard Data
   const [machines, setMachines] = useState([]);
   const [selectedMachineId, setSelectedMachineId] = useState(null);
+  const [visitorCount, setVisitorCount] = useState(null);
 
   // Form State
   const [name, setName] = useState('');
@@ -137,12 +138,26 @@ const Admin = () => {
     return () => unsubscribe();
   }, []);
 
-  // 2. Fetch Machines when MFA passed
+  // 2. Fetch Machines & Stats when MFA passed
   useEffect(() => {
     if (mfaStatus === 'passed') {
       fetchMachines();
+      fetchVisitorStats();
     }
   }, [mfaStatus]);
+
+  const fetchVisitorStats = async () => {
+    try {
+      const statsDoc = await getDoc(doc(db, 'site_stats', 'traffic'));
+      if (statsDoc.exists()) {
+        setVisitorCount(statsDoc.data().count || 0);
+      } else {
+        setVisitorCount(0);
+      }
+    } catch (err) {
+      console.error("Error fetching visitor stats:", err);
+    }
+  };
 
   const fetchMachines = async () => {
     try {
@@ -420,8 +435,29 @@ const Admin = () => {
 
   return (
     <div className="page-container" style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '16px' }}>
-        <h2 className="text-glow-purple" style={{ margin: 0 }}>Admin_Dashboard.exe</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+          <h2 className="text-glow-purple" style={{ margin: 0 }}>Admin_Dashboard.exe</h2>
+          {visitorCount !== null && (
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '6px 14px',
+              background: 'rgba(0, 255, 65, 0.08)',
+              border: '1px solid rgba(0, 255, 65, 0.35)',
+              borderRadius: '20px',
+              fontSize: '0.82rem',
+              color: 'var(--accent-green)',
+              fontFamily: 'monospace',
+              letterSpacing: '0.5px',
+              boxShadow: '0 0 10px rgba(0, 255, 65, 0.15)'
+            }}>
+              <Users size={15} />
+              <span>VISITORS: <strong style={{ color: '#fff' }}>{visitorCount.toLocaleString()}</strong></span>
+            </div>
+          )}
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <span style={{ fontSize: '0.9rem', color: 'var(--accent-cyan)' }}>{user.email} (Verified)</span>
           <button className="hack-btn" onClick={handleLogout} style={{ border: '1px solid var(--accent-red)', color: 'var(--accent-red)' }}><LogOut size={16} /> Logout</button>

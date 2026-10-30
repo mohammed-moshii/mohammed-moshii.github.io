@@ -4,7 +4,7 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Sphere, MeshDistortMaterial, Stars } from '@react-three/drei';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Terminal, Shield, Lock, Server, Unlock, AlertTriangle, Settings } from 'lucide-react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, increment, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase';
 import Admin from './Admin';
 import Writeup from './Writeup';
@@ -242,6 +242,26 @@ const HackTheBox = () => {
 // --- Navigation Wrapper ---
 const AppContent = () => {
   const location = useLocation();
+
+  // Track unique visitor sessions in Firestore (counted once per browsing session)
+  useEffect(() => {
+    const trackVisitor = async () => {
+      try {
+        if (!sessionStorage.getItem('m_visited_session')) {
+          sessionStorage.setItem('m_visited_session', '1');
+          const statRef = doc(db, 'site_stats', 'traffic');
+          await setDoc(statRef, {
+            count: increment(1),
+            lastVisit: serverTimestamp()
+          }, { merge: true });
+        }
+      } catch (err) {
+        // Silently ignore if network is offline or blocked
+      }
+    };
+    trackVisitor();
+  }, []);
+
   return (
     <div className="app-wrapper">
       {location.pathname === '/' && <CyberBackground />}
