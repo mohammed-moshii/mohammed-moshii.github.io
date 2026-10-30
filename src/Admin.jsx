@@ -93,6 +93,7 @@ const Admin = () => {
   const [os, setOs] = useState('Linux');
   const [diff, setDiff] = useState('Easy');
   const [secret, setSecret] = useState('');
+  const [labFlag, setLabFlag] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [writeup, setWriteup] = useState('');
   
@@ -221,6 +222,7 @@ const Admin = () => {
     setOs('Linux');
     setDiff('Easy');
     setSecret('');
+    setLabFlag('');
     setImageUrl('');
     setWriteup('');
     setEditorMode('quill');
@@ -233,6 +235,7 @@ const Admin = () => {
     setOs(m.os || 'Linux');
     setDiff(m.diff || 'Easy');
     setSecret(m.secret || '');
+    setLabFlag(m.labFlag || '');
     setImageUrl(m.imageUrl || '');
     
     const cleaned = getCleanHtml(m.writeup || '');
@@ -270,6 +273,15 @@ const Admin = () => {
       const nameTrimmed = (name || '').trim();
       const secretTrimmed = (secret || '').trim();
       const secretHash = secretTrimmed ? await hashPassword(secretTrimmed) : '';
+      const labFlagTrimmed = (labFlag || '').trim();
+
+      let xorKey = '';
+      let encryptedFlag = '';
+      if (labFlagTrimmed) {
+        xorKey = 'm0sh11_x0r_' + Math.floor(Math.random() * 8999 + 1000);
+        const encChars = labFlagTrimmed.split('').map((c, i) => String.fromCharCode(c.charCodeAt(0) ^ xorKey.charCodeAt(i % xorKey.length)));
+        encryptedFlag = btoa(encChars.join(''));
+      }
 
       const machineData = {
         name: nameTrimmed, 
@@ -277,6 +289,9 @@ const Admin = () => {
         secret: secretTrimmed,
         secretHash: secretHash,
         isProtected: !!secretTrimmed,
+        labFlag: labFlagTrimmed,
+        xorKey: xorKey,
+        encryptedFlag: encryptedFlag,
         imageUrl: imageUrl,
         writeup: finalWriteup,
         updatedAt: serverTimestamp()
@@ -462,9 +477,23 @@ const Admin = () => {
                 <input type="text" value={name} onChange={e => setName(e.target.value)} required className="admin-input" placeholder="e.g. Lame" />
               </div>
               <div>
-                <label>Secret / Root Flag (Optional)</label>
-                <input type="text" value={secret} onChange={e => setSecret(e.target.value)} className="admin-input" placeholder="Leave empty for public access" />
+                <label>Page Lock Password (Optional)</label>
+                <input type="text" value={secret} onChange={e => setSecret(e.target.value)} className="admin-input" placeholder="Password to unlock writeup" />
               </div>
+            </div>
+
+            <div>
+              <label>Lab Challenge Flag / Session Key (Optional - for interactive labs)</label>
+              <input 
+                type="text" 
+                value={labFlag} 
+                onChange={e => setLabFlag(e.target.value)} 
+                className="admin-input" 
+                placeholder="e.g. flag{W3lc0me-Ev3ry0ne-T0-AI-S3ss1on-W1th-M0sh11}" 
+              />
+              <small style={{ color: 'var(--text-secondary)' }}>
+                🔐 Automatically encrypted using a dynamic XOR cipher in Firestore. The lab fetches and decrypts it at runtime.
+              </small>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
