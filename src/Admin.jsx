@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, addDoc, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { auth, db, storage } from './firebase';
 import ReactQuill from 'react-quill-new';
@@ -138,26 +138,29 @@ const Admin = () => {
     return () => unsubscribe();
   }, []);
 
-  // 2. Fetch Machines & Stats when MFA passed
+  // 2. Fetch Machines & subscribe to Live Real-Time Stats when MFA passed
   useEffect(() => {
     if (mfaStatus === 'passed') {
       fetchMachines();
-      fetchVisitorStats();
+
+      // Real-time listener: instantly updates counter without page refresh
+      const unsubscribeStats = onSnapshot(
+        doc(db, 'site_stats', 'traffic'),
+        (docSnap) => {
+          if (docSnap.exists()) {
+            setVisitorCount(docSnap.data().count || 0);
+          } else {
+            setVisitorCount(0);
+          }
+        },
+        (err) => {
+          console.error("Real-time visitor stats listener error:", err);
+        }
+      );
+
+      return () => unsubscribeStats();
     }
   }, [mfaStatus]);
-
-  const fetchVisitorStats = async () => {
-    try {
-      const statsDoc = await getDoc(doc(db, 'site_stats', 'traffic'));
-      if (statsDoc.exists()) {
-        setVisitorCount(statsDoc.data().count || 0);
-      } else {
-        setVisitorCount(0);
-      }
-    } catch (err) {
-      console.error("Error fetching visitor stats:", err);
-    }
-  };
 
   const fetchMachines = async () => {
     try {
@@ -453,8 +456,16 @@ const Admin = () => {
               letterSpacing: '0.5px',
               boxShadow: '0 0 10px rgba(0, 255, 65, 0.15)'
             }}>
+              <span style={{
+                width: '7px',
+                height: '7px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--accent-green)',
+                boxShadow: '0 0 8px var(--accent-green)',
+                display: 'inline-block'
+              }}></span>
               <Users size={15} />
-              <span>VISITORS: <strong style={{ color: '#fff' }}>{visitorCount.toLocaleString()}</strong></span>
+              <span>VISITORS: <strong style={{ color: '#fff' }}>{visitorCount.toLocaleString()}</strong> <span style={{ opacity: 0.6, fontSize: '0.72rem' }}>(LIVE)</span></span>
             </div>
           )}
         </div>
