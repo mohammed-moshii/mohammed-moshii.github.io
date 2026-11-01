@@ -40,13 +40,12 @@ const CyberBackground = () => (
 // --- Pages ---
 const Home = () => (
   <div className="home-container">
-    <Companion />
     <motion.div 
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 1, ease: "easeOut" }}
       className="hero-text glass-panel"
-      style={{ padding: '40px', background: 'rgba(5,5,5,0.7)', border: '1px solid #00ff41', position: 'relative' }}
+      style={{ padding: '40px', background: 'rgba(5,5,5,0.7)', border: '1px solid #00ff41' }}
     >
       <motion.h1 
         className="text-glow-green"
@@ -276,6 +275,7 @@ const AppContent = () => {
   return (
     <div className="app-wrapper">
       {location.pathname === '/' && <CyberBackground />}
+      {location.pathname === '/' && <Companion />}
       <nav className="navbar" style={{ background: '#0a0a0a', borderBottom: '1px solid var(--accent-green)', zIndex: 9999 }}>
         <div className="logo text-glow-green"><Shield size={24} /> Moshii</div>
         <div className="nav-links">
