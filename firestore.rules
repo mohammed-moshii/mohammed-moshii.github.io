@@ -30,12 +30,5 @@ service cloud.firestore {
       allow read: if isAdmin();
       allow write: if true;
     }
-
-    // Site Settings (Cyber Companion, Configurations):
-    // Public can read, only verified admin can update
-    match /site_settings/{settingId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
   }
 }
