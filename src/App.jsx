@@ -9,6 +9,7 @@ import { db } from './firebase';
 import Admin from './Admin';
 import Writeup from './Writeup';
 import About from './About';
+import Companion from './Companion';
 import { verifySecret } from './cryptoUtils';
 import './index.css';
 
@@ -274,6 +275,7 @@ const AppContent = () => {
   return (
     <div className="app-wrapper">
       {location.pathname === '/' && <CyberBackground />}
+      {location.pathname === '/' && <Companion />}
       <nav className="navbar" style={{ background: '#0a0a0a', borderBottom: '1px solid var(--accent-green)', zIndex: 9999 }}>
         <div className="logo text-glow-green"><Shield size={24} /> Moshii</div>
         <div className="nav-links">

@@ -5,10 +5,11 @@ import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { auth, db, storage } from './firebase';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
-import { Shield, LogOut, PlusCircle, CheckCircle, Lock, QrCode, AlertTriangle, Edit3, Trash2, Copy, Image as ImageIcon, Eye, Code, ExternalLink, Users, RefreshCw } from 'lucide-react';
+import { Shield, LogOut, PlusCircle, CheckCircle, Lock, QrCode, AlertTriangle, Edit3, Trash2, Copy, Image as ImageIcon, Eye, Code, ExternalLink, Users, RefreshCw, Sparkles, Layers, Check } from 'lucide-react';
 import * as OTPAuth from 'otpauth';
 import QRCode from 'qrcode';
 import { hashPassword } from './cryptoUtils';
+import { DEFAULT_COMPANION_CONFIG } from './Companion';
 import './index.css';
 
 // The authorized email addresses that are allowed to access the admin panel
@@ -90,6 +91,18 @@ const Admin = () => {
   const [visitorCount, setVisitorCount] = useState(null);
   const [isRefreshingStats, setIsRefreshingStats] = useState(false);
 
+  // Tabs & Companion State
+  const [activeTab, setActiveTab] = useState('machines'); // 'machines' | 'companion'
+  const [companionConfig, setCompanionConfig] = useState(DEFAULT_COMPANION_CONFIG);
+  const [savingCompanion, setSavingCompanion] = useState(false);
+  const [companionSuccessMsg, setCompanionSuccessMsg] = useState('');
+
+  // New creature form state
+  const [newCreatureName, setNewCreatureName] = useState('');
+  const [newCreatureBadge, setNewCreatureBadge] = useState('');
+  const [newCreatureUrl, setNewCreatureUrl] = useState('');
+  const [newCreatureDesc, setNewCreatureDesc] = useState('');
+
   // Form State
   const [name, setName] = useState('');
   const [os, setOs] = useState('Linux');
@@ -145,6 +158,7 @@ const Admin = () => {
   useEffect(() => {
     if (mfaStatus === 'passed') {
       fetchMachines();
+      fetchCompanionConfig();
 
       // Real-time listener: instantly updates counter without page refresh
       const unsubscribeStats = onSnapshot(
@@ -164,6 +178,118 @@ const Admin = () => {
       return () => unsubscribeStats();
     }
   }, [mfaStatus]);
+
+  const fetchCompanionConfig = async () => {
+    try {
+      const snap = await getDoc(doc(db, 'site_settings', 'companion'));
+      if (snap.exists()) {
+        const data = snap.data();
+        setCompanionConfig({
+          enabled: data.enabled !== undefined ? data.enabled : DEFAULT_COMPANION_CONFIG.enabled,
+          activeCreatureId: data.activeCreatureId || DEFAULT_COMPANION_CONFIG.activeCreatureId,
+          creatures: data.creatures && data.creatures.length > 0 ? data.creatures : DEFAULT_COMPANION_CONFIG.creatures
+        });
+      }
+    } catch (err) {
+      console.error("Error fetching companion settings:", err);
+    }
+  };
+
+  const handleSelectActiveCreature = async (creatureId) => {
+    const updated = {
+      ...companionConfig,
+      activeCreatureId: creatureId
+    };
+    setCompanionConfig(updated);
+    try {
+      await setDoc(doc(db, 'site_settings', 'companion'), updated);
+      const cName = updated.creatures.find(c => c.id === creatureId)?.name || creatureId;
+      setCompanionSuccessMsg(`Active companion switched to: "${cName}"!`);
+      setTimeout(() => setCompanionSuccessMsg(''), 4000);
+    } catch (err) {
+      console.error("Failed to update active companion:", err);
+      alert("Error updating active creature: " + err.message);
+    }
+  };
+
+  const handleToggleCompanion = async () => {
+    const updated = {
+      ...companionConfig,
+      enabled: !companionConfig.enabled
+    };
+    setCompanionConfig(updated);
+    try {
+      await setDoc(doc(db, 'site_settings', 'companion'), updated);
+      setCompanionSuccessMsg(`Companion visibility on Home: ${updated.enabled ? 'ENABLED' : 'DISABLED'}`);
+      setTimeout(() => setCompanionSuccessMsg(''), 4000);
+    } catch (err) {
+      console.error("Failed to toggle companion:", err);
+      alert("Error toggling companion: " + err.message);
+    }
+  };
+
+  const handleAddCreature = async (e) => {
+    e.preventDefault();
+    if (!newCreatureName.trim() || !newCreatureUrl.trim()) return;
+
+    const newId = 'custom_' + Date.now();
+    const newCreature = {
+      id: newId,
+      name: newCreatureName.trim(),
+      badge: newCreatureBadge.trim() || 'Custom Mascot',
+      url: newCreatureUrl.trim(),
+      type: 'custom',
+      description: newCreatureDesc.trim() || 'Custom Cyber Companion'
+    };
+
+    const updated = {
+      ...companionConfig,
+      creatures: [...companionConfig.creatures, newCreature]
+    };
+
+    setSavingCompanion(true);
+    try {
+      await setDoc(doc(db, 'site_settings', 'companion'), updated);
+      setCompanionConfig(updated);
+      setNewCreatureName('');
+      setNewCreatureBadge('');
+      setNewCreatureUrl('');
+      setNewCreatureDesc('');
+      setCompanionSuccessMsg(`Deployed new creature: "${newCreature.name}"!`);
+      setTimeout(() => setCompanionSuccessMsg(''), 4000);
+    } catch (err) {
+      console.error("Error adding creature:", err);
+      alert("Failed to save new creature: " + err.message);
+    } finally {
+      setSavingCompanion(false);
+    }
+  };
+
+  const handleDeleteCreature = async (creatureId) => {
+    if (creatureId === 'koi' || creatureId === 'shark') {
+      alert("Default creatures (Git-Koi & Cyber Shark) cannot be deleted.");
+      return;
+    }
+    if (!window.confirm("Are you sure you want to remove this creature?")) return;
+
+    const remaining = companionConfig.creatures.filter(c => c.id !== creatureId);
+    const newActive = companionConfig.activeCreatureId === creatureId ? 'koi' : companionConfig.activeCreatureId;
+    const updated = {
+      ...companionConfig,
+      activeCreatureId: newActive,
+      creatures: remaining
+    };
+
+    setCompanionConfig(updated);
+    try {
+      await setDoc(doc(db, 'site_settings', 'companion'), updated);
+      setCompanionSuccessMsg("Creature removed successfully.");
+      setTimeout(() => setCompanionSuccessMsg(''), 4000);
+    } catch (err) {
+      console.error("Failed to delete creature:", err);
+      alert("Error deleting creature: " + err.message);
+    }
+  };
 
   const fetchVisitorStatsManual = async () => {
     setIsRefreshingStats(true);
@@ -507,6 +633,39 @@ const Admin = () => {
         </div>
       </div>
 
+      {/* Admin Navigation Tabs */}
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
+        <button
+          onClick={() => setActiveTab('machines')}
+          className="hack-btn"
+          style={{
+            background: activeTab === 'machines' ? 'rgba(0, 255, 65, 0.15)' : 'rgba(0, 0, 0, 0.5)',
+            borderColor: activeTab === 'machines' ? 'var(--accent-green)' : 'var(--glass-border)',
+            color: activeTab === 'machines' ? 'var(--accent-green)' : 'var(--text-secondary)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          <Layers size={16} /> Target Machines
+        </button>
+        <button
+          onClick={() => setActiveTab('companion')}
+          className="hack-btn"
+          style={{
+            background: activeTab === 'companion' ? 'rgba(0, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.5)',
+            borderColor: activeTab === 'companion' ? 'var(--accent-cyan)' : 'var(--glass-border)',
+            color: activeTab === 'companion' ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          <Sparkles size={16} /> Cyber Companion (Home Mascot)
+        </button>
+      </div>
+
+      {activeTab === 'machines' && (
       <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '24px', alignItems: 'start' }}>
         {/* Left Side: Machine List */}
         <div className="glass-panel" style={{ padding: '16px', maxHeight: '80vh', overflowY: 'auto' }}>
@@ -781,6 +940,244 @@ const Admin = () => {
           </form>
         </div>
       </div>
+      )}
+
+      {/* Cyber Companion Manager */}
+      {activeTab === 'companion' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {companionSuccessMsg && (
+            <div style={{ padding: '16px', background: 'rgba(0,255,65,0.1)', border: '1px solid var(--accent-green)', borderRadius: '4px', color: 'var(--accent-green)' }}>
+              <CheckCircle className="inline-icon" /> {companionSuccessMsg}
+            </div>
+          )}
+
+          {/* Top Controls: Status Toggle */}
+          <div className="glass-panel" style={{ padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+            <div>
+              <h3 style={{ margin: '0 0 6px 0', color: 'var(--accent-cyan)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Sparkles size={20} /> Home Page Cyber Companion
+              </h3>
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
+                Manage the animated companion mascot displayed on your Home page. Switch between Git-Koi, Cyber Shark, or add any custom creature anytime.
+              </p>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '0.9rem', color: companionConfig.enabled ? 'var(--accent-green)' : 'var(--accent-red)', fontWeight: 600 }}>
+                {companionConfig.enabled ? '● ACTIVE ON HOME' : '○ DISABLED'}
+              </span>
+              <button
+                type="button"
+                onClick={handleToggleCompanion}
+                className="hack-btn"
+                style={{
+                  borderColor: companionConfig.enabled ? 'var(--accent-red)' : 'var(--accent-green)',
+                  color: companionConfig.enabled ? 'var(--accent-red)' : 'var(--accent-green)'
+                }}
+              >
+                {companionConfig.enabled ? 'Disable Companion' : 'Enable Companion'}
+              </button>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '24px', alignItems: 'start' }}>
+            {/* Left: Available Creatures Fleet */}
+            <div className="glass-panel" style={{ padding: '24px' }}>
+              <h4 style={{ margin: '0 0 16px 0', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.9rem' }}>
+                Companion Fleet ({companionConfig.creatures?.length || 0})
+              </h4>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: '16px' }}>
+                {companionConfig.creatures?.map(c => {
+                  const isActive = companionConfig.activeCreatureId === c.id;
+                  return (
+                    <div
+                      key={c.id}
+                      style={{
+                        padding: '16px',
+                        background: isActive ? 'rgba(0, 255, 65, 0.08)' : 'rgba(0, 0, 0, 0.5)',
+                        border: isActive ? '2px solid var(--accent-green)' : '1px solid var(--glass-border)',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        textAlign: 'center',
+                        position: 'relative',
+                        transition: 'all 0.2s',
+                        boxShadow: isActive ? '0 0 16px rgba(0, 255, 65, 0.2)' : 'none'
+                      }}
+                    >
+                      {isActive && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '10px',
+                          right: '10px',
+                          background: 'var(--accent-green)',
+                          color: '#000',
+                          fontSize: '0.65rem',
+                          fontWeight: 800,
+                          padding: '2px 8px',
+                          borderRadius: '10px',
+                          textTransform: 'uppercase'
+                        }}>
+                          Active
+                        </div>
+                      )}
+
+                      <div style={{
+                        width: '88px',
+                        height: '88px',
+                        borderRadius: '50%',
+                        overflow: 'hidden',
+                        background: 'radial-gradient(circle, rgba(0,255,255,0.1) 0%, rgba(0,0,0,0.6) 80%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginBottom: '12px',
+                        border: '1px solid rgba(255,255,255,0.1)'
+                      }}>
+                        <img 
+                          src={c.url} 
+                          alt={c.name} 
+                          style={{ width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'pixelated' }}
+                          onError={(e) => { e.target.src = 'koi/koi.gif'; }}
+                        />
+                      </div>
+
+                      <strong style={{ color: isActive ? 'var(--accent-green)' : 'var(--text-primary)', fontSize: '1rem', marginBottom: '4px' }}>
+                        {c.name}
+                      </strong>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--accent-cyan)', background: 'rgba(0,255,255,0.1)', padding: '2px 8px', borderRadius: '4px', marginBottom: '8px' }}>
+                        {c.badge || 'Companion'}
+                      </span>
+                      <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: '0 0 14px 0', lineHeight: 1.35, minHeight: '36px' }}>
+                        {c.description}
+                      </p>
+
+                      <div style={{ width: '100%', display: 'flex', gap: '8px' }}>
+                        {!isActive ? (
+                          <button
+                            type="button"
+                            onClick={() => handleSelectActiveCreature(c.id)}
+                            className="hack-btn"
+                            style={{ flex: 1, padding: '6px', fontSize: '0.8rem' }}
+                          >
+                            Set Active
+                          </button>
+                        ) : (
+                          <div style={{ flex: 1, padding: '6px', fontSize: '0.8rem', color: 'var(--accent-green)', fontWeight: 600 }}>
+                            ✓ Live on Home
+                          </div>
+                        )}
+
+                        {c.id !== 'koi' && c.id !== 'shark' && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCreature(c.id)}
+                            style={{
+                              background: 'rgba(255, 0, 85, 0.1)',
+                              border: '1px solid var(--accent-red)',
+                              color: 'var(--accent-red)',
+                              borderRadius: '4px',
+                              padding: '6px 10px',
+                              cursor: 'pointer'
+                            }}
+                            title="Remove Creature"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Right: Deploy New Creature Form */}
+            <div className="glass-panel" style={{ padding: '24px' }}>
+              <h4 style={{ margin: '0 0 16px 0', color: 'var(--accent-cyan)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem' }}>
+                <PlusCircle size={18} /> Deploy New Creature
+              </h4>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0 0 16px 0', lineHeight: 1.4 }}>
+                Add any animated GIF, pixel-art sprite, or character URL to your companion fleet.
+              </p>
+
+              <form onSubmit={handleAddCreature} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div>
+                  <label style={{ fontSize: '0.82rem', marginBottom: '4px', display: 'block' }}>Creature Name *</label>
+                  <input
+                    type="text"
+                    value={newCreatureName}
+                    onChange={(e) => setNewCreatureName(e.target.value)}
+                    required
+                    placeholder="e.g. Cyber Dragon"
+                    className="admin-input"
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.82rem', marginBottom: '4px', display: 'block' }}>Badge / Tag</label>
+                  <input
+                    type="text"
+                    value={newCreatureBadge}
+                    onChange={(e) => setNewCreatureBadge(e.target.value)}
+                    placeholder="e.g. Glitch Mode"
+                    className="admin-input"
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.82rem', marginBottom: '4px', display: 'block' }}>Image / GIF URL *</label>
+                  <input
+                    type="text"
+                    value={newCreatureUrl}
+                    onChange={(e) => setNewCreatureUrl(e.target.value)}
+                    required
+                    placeholder="e.g. https://.../dragon.gif or /creatures/my-art.gif"
+                    className="admin-input"
+                  />
+                  <small style={{ color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
+                    Supports any direct GIF link (GitHub, Giphy, Imgur, etc.)
+                  </small>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.82rem', marginBottom: '4px', display: 'block' }}>Description</label>
+                  <textarea
+                    value={newCreatureDesc}
+                    onChange={(e) => setNewCreatureDesc(e.target.value)}
+                    rows={2}
+                    placeholder="Brief lore or description..."
+                    className="admin-input"
+                    style={{ resize: 'vertical' }}
+                  />
+                </div>
+
+                {newCreatureUrl && (
+                  <div style={{ textAlign: 'center', padding: '10px', background: 'rgba(0,0,0,0.5)', borderRadius: '6px', border: '1px solid var(--glass-border)' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>Live URL Preview</div>
+                    <img
+                      src={newCreatureUrl}
+                      alt="Preview"
+                      style={{ maxHeight: '80px', maxWidth: '100%', objectFit: 'contain' }}
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={savingCompanion}
+                  className="hack-btn"
+                  style={{ width: '100%', marginTop: '8px' }}
+                >
+                  {savingCompanion ? 'Saving...' : '+ Add Creature to Fleet'}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
