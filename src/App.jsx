@@ -4,60 +4,43 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Sphere, MeshDistortMaterial, Stars } from '@react-three/drei';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Terminal, Shield, Lock, Server, Unlock, AlertTriangle, Settings } from 'lucide-react';
-import { collection, getDocs, doc, setDoc, increment, serverTimestamp, onSnapshot } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, increment, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase';
 import Admin from './Admin';
 import Writeup from './Writeup';
 import About from './About';
-import CyberSharkMesh from './CyberCreature3D';
+import Companion from './Companion';
 import { verifySecret } from './cryptoUtils';
 import './index.css';
 
 // 3D Background Component
-const CyberBackground = () => {
-  const [activeType, setActiveType] = useState('shark');
-  const [enabled, setEnabled] = useState(true);
-
-  useEffect(() => {
-    const unsub = onSnapshot(doc(db, 'site_settings', 'companion'), (snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
-        if (data.enabled !== undefined) setEnabled(data.enabled);
-        if (data.activeCreatureId) setActiveType(data.activeCreatureId);
-      }
-    }, () => {});
-    return () => unsub();
-  }, []);
-
-  return (
-    <div className="canvas-container">
-      <Canvas camera={{ position: [0, 0, 7.5], fov: 50 }}>
-        <ambientLight intensity={0.4} />
-        <directionalLight position={[10, 10, 5]} intensity={2.0} color="#00ff41" />
-        <directionalLight position={[-10, -10, -5]} intensity={1.8} color="#00ffff" />
-        <pointLight position={[0, 0, 0]} intensity={1.5} color="#00ff41" />
-        <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
-        <Sphere visible args={[1, 64, 64]} scale={2.5}>
-          <MeshDistortMaterial 
-            color="#05080c" 
-            attach="material" 
-            distort={0.4} 
-            speed={1.2} 
-            roughness={0.2} 
-            metalness={0.8}
-            wireframe={true}
-          />
-        </Sphere>
-        {enabled && <CyberSharkMesh isShark={activeType !== 'koi'} />}
-        <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={0.3} />
-      </Canvas>
-    </div>
-  );
-};
+const CyberBackground = () => (
+  <div className="canvas-container">
+    <Canvas>
+      <ambientLight intensity={0.2} />
+      <directionalLight position={[10, 10, 5]} intensity={1.5} color="#00ff41" />
+      <directionalLight position={[-10, -10, -5]} intensity={1.5} color="#b537f2" />
+      <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+      <Sphere visible args={[1, 64, 64]} scale={2.5}>
+        <MeshDistortMaterial 
+          color="#0a0a0a" 
+          attach="material" 
+          distort={0.5} 
+          speed={1.5} 
+          roughness={0.2}
+          metalness={0.8}
+          wireframe={true}
+        />
+      </Sphere>
+      <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={0.5} />
+    </Canvas>
+  </div>
+);
 
 // --- Pages ---
 const Home = () => (
   <div className="home-container">
+    <Companion />
     <motion.div 
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
