@@ -9,6 +9,7 @@ import { Shield, LogOut, PlusCircle, CheckCircle, Lock, QrCode, AlertTriangle, E
 import * as OTPAuth from 'otpauth';
 import QRCode from 'qrcode';
 import { hashPassword } from './cryptoUtils';
+import { BUILTIN_MACHINES } from './data/builtinMachines';
 import './index.css';
 
 // The authorized email addresses that are allowed to access the admin panel
@@ -186,9 +187,49 @@ const Admin = () => {
         id: doc.id,
         ...doc.data()
       }));
-      setMachines(machinesData);
+
+      // Merge built-in machines so they ALWAYS show in the Admin dashboard!
+      const combined = [...machinesData];
+      for (const builtin of BUILTIN_MACHINES) {
+        const builtinSlug = (builtin.name || '').trim().toLowerCase().replace(/\s+/g, '-');
+        const alreadyExists = combined.some(m => {
+          const mSlug = (m.name || '').trim().toLowerCase().replace(/\s+/g, '-');
+          return mSlug === builtinSlug || m.id === builtin.id;
+        });
+        if (!alreadyExists) {
+          combined.unshift(builtin);
+        }
+      }
+      setMachines(combined);
+
+      // Auto-sync missing built-ins directly to Firestore as the admin is authenticated!
+      for (const builtin of BUILTIN_MACHINES) {
+        const existsInFirestore = machinesData.some(m => {
+          const mSlug = (m.name || '').trim().toLowerCase().replace(/\s+/g, '-');
+          const builtinSlug = (builtin.name || '').trim().toLowerCase().replace(/\s+/g, '-');
+          return mSlug === builtinSlug || m.id === builtin.id;
+        });
+        if (!existsInFirestore) {
+          try {
+            await setDoc(doc(db, 'machines', builtin.id), {
+              name: builtin.name,
+              os: builtin.os,
+              diff: builtin.diff,
+              secret: builtin.secret || '',
+              imageUrl: builtin.imageUrl || '',
+              writeup: builtin.writeup,
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp()
+            }, { merge: true });
+            console.log('[+] Auto-synced built-in machine to Firestore:', builtin.name);
+          } catch (syncErr) {
+            console.warn('[!] Note: Could not auto-sync builtin to Firestore:', syncErr.message);
+          }
+        }
+      }
     } catch (err) {
       console.error("Error fetching machines:", err);
+      setMachines(BUILTIN_MACHINES);
     }
   };
 
@@ -334,7 +375,7 @@ const Admin = () => {
 
       if (selectedMachineId) {
         // Update Existing
-        await updateDoc(doc(db, 'machines', selectedMachineId), machineData);
+        await setDoc(doc(db, 'machines', selectedMachineId), machineData, { merge: true });
         setWriteup(finalWriteup); // Update editor state with live Firebase URLs to prevent re-uploading
         setSuccessMsg('Machine updated successfully!');
       } else {
@@ -581,6 +622,7 @@ const Admin = () => {
                 <select value={os} onChange={e => setOs(e.target.value)} className="admin-input">
                   <option>Linux</option>
                   <option>Windows</option>
+                  <option>Windows x86</option>
                   <option>Android</option>
                   <option>AI &amp; LLM</option>
                   <option>Other</option>
