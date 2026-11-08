@@ -7,6 +7,7 @@ import { ArrowLeft, Server, Calendar, Lock, AlertTriangle, ExternalLink, Maximiz
 import DOMPurify from 'dompurify';
 import profileCardImg from './assets/profile-card.png';
 import { verifySecret } from './cryptoUtils';
+import { BUILTIN_MACHINES } from './data/builtinMachines';
 import './index.css';
 
 const resolveContent = (raw) => {
@@ -76,6 +77,18 @@ const Writeup = () => {
             foundMachineId = doc.id;
           }
         });
+
+        if (!foundMachine) {
+          for (const builtin of BUILTIN_MACHINES) {
+            const cleanName = (builtin.name || '').trim().toLowerCase();
+            const docSlug = cleanName.replace(/\s+/g, '-').replace(/-+$/, '');
+            if (docSlug === targetId || builtin.id === id) {
+              foundMachine = builtin;
+              foundMachineId = builtin.id;
+              break;
+            }
+          }
+        }
 
         if (foundMachine) {
           setMachine(foundMachine);

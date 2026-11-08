@@ -10,6 +10,7 @@ import Admin from './Admin';
 import Writeup from './Writeup';
 import About from './About';
 import { verifySecret } from './cryptoUtils';
+import { BUILTIN_MACHINES } from './data/builtinMachines';
 import './index.css';
 
 // 3D Background Component
@@ -79,7 +80,18 @@ const HackTheBox = () => {
           id: doc.id,
           ...doc.data()
         }));
-        setMachines(machinesData);
+        const combined = [...machinesData];
+        for (const builtin of BUILTIN_MACHINES) {
+          const builtinSlug = (builtin.name || '').trim().toLowerCase().replace(/\s+/g, '-');
+          const alreadyExists = combined.some(m => {
+            const mSlug = (m.name || '').trim().toLowerCase().replace(/\s+/g, '-');
+            return mSlug === builtinSlug || m.id === builtin.id;
+          });
+          if (!alreadyExists) {
+            combined.unshift(builtin);
+          }
+        }
+        setMachines(combined);
       } catch (err) {
         console.error("Error fetching machines from Firebase:", err);
       } finally {
