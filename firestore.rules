@@ -24,11 +24,20 @@ service cloud.firestore {
     }
 
     // Site Traffic & Visitor Statistics:
-    // Anyone can increment/record visits
-    // Only verified admin can view visitor counts
+    // Legitimate visitors can only increment/record counts on the 'traffic' document.
+    // Arbitrary document injection and deletions are blocked.
+    // Reading stats is restricted to the verified admin.
     match /site_stats/{statId} {
       allow read: if isAdmin();
-      allow write: if true;
+      allow create, update: if statId == 'traffic' 
+        && request.resource.data.keys().hasOnly(['count', 'lastVisit'])
+        && request.resource.data.count is int;
+      allow delete: if isAdmin();
+    }
+
+    // Default deny for all other collections
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
