@@ -199,34 +199,48 @@ const SocCourse = () => {
 
             {/* Top Navigation */}
             <nav className="hidden xl:flex items-center gap-space-xs">
-              <button
-                onClick={() => { setActiveSidebarTrack('modules'); setSelectedModule(null); }}
-                className={`px-3 py-1.5 rounded-lg transition-colors font-body-sm text-body-sm ${
-                  activeSidebarTrack === 'modules' && !selectedModule
-                    ? 'bg-surface-container-highest text-primary font-semibold'
-                    : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
-                }`}
+              <a
+                href="https://www.linkedin.com/in/mohammed-m0shii/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-sm text-body-sm group"
+                title="Open Mohammed Moshii's LinkedIn Profile"
               >
-                Modules &amp; Curriculum
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedModule(SOC_MODULES[3]);
-                  setActiveTab('lab');
-                }}
-                className="px-3 py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-sm text-body-sm"
+                <svg className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="#0A66C2">
+                  <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9h2.8v8.37h-2.8V10.9M7.86 6.78a1.63 1.63 0 1 0 0 3.26 1.63 1.63 0 0 0 0-3.26z" />
+                </svg>
+                <span>LinkedIn Profile</span>
+                <span className="material-symbols-outlined text-xs text-outline group-hover:text-primary leading-none">open_in_new</span>
+              </a>
+
+              <a
+                href="https://www.youtube.com/@moshii0x00"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-sm text-body-sm group"
+                title="Open Mohammed Moshii's YouTube Channel"
               >
-                Hands-on Cyber Range Labs
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedModule(SOC_MODULES[3]);
-                  setActiveTab('lab');
-                }}
-                className="px-3 py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-sm text-body-sm"
+                <svg className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="#FF0000">
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                </svg>
+                <span>YouTube Channel</span>
+                <span className="material-symbols-outlined text-xs text-outline group-hover:text-primary leading-none">open_in_new</span>
+              </a>
+
+              <a
+                href="https://tryhackme.com/p/Moshii"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-sm text-body-sm group"
+                title="Open Mohammed Moshii's TryHackMe Profile"
               >
-                SIEM Telemetry Sandbox
-              </button>
+                <svg className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="#EA2A42">
+                  <path d="M10.74 0c-.39 0-.77.16-1.04.45L.43 10.12a1.44 1.44 0 0 0 0 2.05l9.27 9.67c.27.29.65.45 1.04.45s.77-.16 1.04-.45l3.86-4.02-3.86-4.02a1.44 1.44 0 0 1 0-2.05l3.86-4.02L11.78.45A1.42 1.42 0 0 0 10.74 0zm6.8 6.87a1.44 1.44 0 0 0 0 2.05l2.82 2.94-2.82 2.94a1.44 1.44 0 0 0 0 2.05 1.44 1.44 0 0 0 2.04 0l3.86-4.02a1.44 1.44 0 0 0 0-2.05l-3.86-4.02a1.44 1.44 0 0 0-2.04.01z"/>
+                </svg>
+                <span>TryHackMe Account</span>
+                <span className="material-symbols-outlined text-xs text-outline group-hover:text-primary leading-none">open_in_new</span>
+              </a>
+
               <Link
                 to="/"
                 className="px-3 py-1.5 rounded-lg text-secondary hover:bg-surface-container-high transition-colors font-body-sm text-body-sm flex items-center gap-1"
