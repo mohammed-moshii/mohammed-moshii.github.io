@@ -1317,6 +1317,16 @@ const SocCourse = () => {
                       </div>
                     )}
 
+                    {/* LAB TYPE 8: CLOUD AUDIT SIMULATOR */}
+                    {selectedModule.lab.type === 'cloud-sim' && (
+                      <div className="flex flex-col gap-2">
+                        <span className="font-label-sm text-label-sm text-outline">AWS CLOUDTRAIL JSON SECURITY AUDIT LOG:</span>
+                        <pre className="p-3 rounded-lg bg-surface-container-lowest border border-outline-variant/30 font-code-sm text-code-sm text-primary overflow-x-auto whitespace-pre m-0">
+                          {selectedModule.lab.cloudTrailEvent}
+                        </pre>
+                      </div>
+                    )}
+
                     {/* LAB TYPE 8: ACTIVE DIRECTORY CAPSTONE */}
                     {selectedModule.lab.type === 'ad-defense-sim' && (
                       <div className="flex flex-col gap-3">
