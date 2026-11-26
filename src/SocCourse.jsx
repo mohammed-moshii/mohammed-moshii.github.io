@@ -351,7 +351,7 @@ const SocCourse = () => {
         <div className="flex flex-col gap-space-sm bg-surface-container-lowest p-space-sm rounded-lg border border-outline-variant/30">
           <div className="flex items-center justify-between">
             <span className="font-label-sm text-label-sm text-outline uppercase">
-              Tier 2 Progress
+              Tier 1 Progress
             </span>
             <span className="font-code-sm text-code-sm text-secondary font-bold">
               {progressPercent}%
