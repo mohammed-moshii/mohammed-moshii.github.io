@@ -243,35 +243,18 @@ const SocCourse = () => {
             </nav>
           </div>
 
-          {/* Right Notifications & Profile */}
-          <div className="flex items-center gap-space-md">
-            <button
-              onClick={() => setShowCertificate(true)}
-              aria-label="Certificate and Notifications"
-              className="relative p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors"
-              title="View Certificate Status"
-            >
-              <span className="material-symbols-outlined text-xl">workspace_premium</span>
-              <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
+          {/* Right Profile */}
+          <div className="flex items-center gap-space-sm">
+            <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/50 flex items-center justify-center text-primary font-bold font-code-sm text-code-sm">
+              MM
+            </div>
+            <div className="hidden lg:flex flex-col text-left">
+              <span className="font-body-sm text-body-sm font-semibold text-on-surface leading-tight">
+                Mohammed Moshii
               </span>
-            </button>
-
-            <div className="h-6 w-px bg-outline-variant/40"></div>
-
-            <div className="flex items-center gap-space-sm">
-              <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/50 flex items-center justify-center text-primary font-bold font-code-sm text-code-sm">
-                MM
-              </div>
-              <div className="hidden lg:flex flex-col text-left">
-                <span className="font-body-sm text-body-sm font-semibold text-on-surface leading-tight">
-                  Mohammed Moshii
-                </span>
-                <span className="font-label-sm text-label-sm text-primary leading-tight">
-                  CyberSecurity Instructor
-                </span>
-              </div>
+              <span className="font-label-sm text-label-sm text-primary leading-tight">
+                CyberSecurity Instructor
+              </span>
             </div>
           </div>
         </div>
