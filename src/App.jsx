@@ -9,6 +9,7 @@ import { db } from './firebase';
 import Admin from './Admin';
 import Writeup from './Writeup';
 import About from './About';
+import SocCourse from './SocCourse';
 import { verifySecret } from './cryptoUtils';
 import { BUILTIN_MACHINES } from './data/builtinMachines';
 import './index.css';
@@ -292,6 +293,7 @@ const AppContent = () => {
           <Link to="/">[ Home ]</Link>
           <Link to="/about">[ About ]</Link>
           <Link to="/htb">[ HTB_Writeups ]</Link>
+          <Link to="/soc">[ SOC_Course ]</Link>
         </div>
       </nav>
 
@@ -302,6 +304,8 @@ const AppContent = () => {
             <Route path="/about" element={<About />} />
             <Route path="/htb" element={<HackTheBox />} />
             <Route path="/htb/:id" element={<Writeup />} />
+            <Route path="/soc" element={<SocCourse />} />
+            <Route path="/soc/:moduleId" element={<SocCourse />} />
             <Route path="/admin" element={<Admin />} />
           </Routes>
         </AnimatePresence>
