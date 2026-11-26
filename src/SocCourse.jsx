@@ -1,67 +1,69 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Shield, Terminal, Tv, BookOpen, Flag, CheckCircle, Circle,
-  ChevronRight, ChevronLeft, Search, Lock, Unlock, AlertTriangle,
-  Award, Play, Copy, Check, Eye, HelpCircle, Activity, Cpu, Layers,
-  RefreshCw, ExternalLink, Download, FileText, Send, Sparkles
-} from 'lucide-react';
 import { SOC_MODULES } from './data/socModulesData';
-import './index.css';
-
-const IconMap = {
-  Shield: Shield,
-  Activity: Activity,
-  Cpu: Cpu,
-  Layers: Layers,
-  Flag: Flag,
-  AlertTriangle: AlertTriangle
-};
+import './cybersoc.css';
 
 const SocCourse = () => {
   const { moduleId } = useParams();
   const navigate = useNavigate();
 
-  // Find active module by id or slug (default to first module)
-  const activeModuleIndex = Math.max(
-    0,
-    SOC_MODULES.findIndex(m => m.id === moduleId || m.slug === moduleId)
-  );
-  const activeModule = SOC_MODULES[activeModuleIndex] || SOC_MODULES[0];
+  // Search & Filter state
+  const [currentFilter, setCurrentFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewLayout, setViewLayout] = useState('grid'); // 'grid' | 'syllabus'
+  const [activeSidebarTrack, setActiveSidebarTrack] = useState('modules');
 
-  // State
+  // Selected module for modal/drawer study workspace
+  const [selectedModule, setSelectedModule] = useState(null);
   const [activeTab, setActiveTab] = useState('slides'); // 'slides' | 'theory' | 'lab' | 'challenge'
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
   const [copiedCode, setCopiedCode] = useState(null);
 
-  // Completed challenges persisted in localStorage
+  // Persistence of completed challenges
   const [completedChallenges, setCompletedChallenges] = useState(() => {
     try {
       const saved = localStorage.getItem('moshii_soc_completed');
-      return saved ? JSON.parse(saved) : {};
+      if (saved) return JSON.parse(saved);
+      // Default initial progress matching the user template:
+      // Mod 1, 2, 3 completed, Mod 4 active
+      return {
+        'soc-mod-01': true,
+        'soc-mod-02': true,
+        'soc-mod-03': true
+      };
     } catch {
-      return {};
+      return {
+        'soc-mod-01': true,
+        'soc-mod-02': true,
+        'soc-mod-03': true
+      };
     }
   });
 
-  // Challenge input state per module
+  // Challenge input state
   const [flagInput, setFlagInput] = useState('');
   const [challengeStatus, setChallengeStatus] = useState(null); // 'success' | 'error' | null
   const [showHint, setShowHint] = useState(false);
   const [showCertificate, setShowCertificate] = useState(false);
-  const [studentName, setStudentName] = useState('Cyber Defender');
+  const [studentName, setStudentName] = useState('Mohammed Moshii');
 
-  // Lab specific interactive states
-  const [b64Input, setB64Input] = useState('');
+  // Interactive Checklist in Scenario 4.2
+  const [labChecklist, setLabChecklist] = useState({
+    task1: true,
+    task2: true,
+    task3: false,
+    task4: false
+  });
+
+  // Lab Simulators State
+  const [selectedAlert, setSelectedAlert] = useState(null);
   const [b64Decoded, setB64Decoded] = useState('');
   const [packetFilter, setPacketFilter] = useState('ALL');
-  const [selectedAlert, setSelectedAlert] = useState(null);
-  const [splunkQuery, setSplunkQuery] = useState('index=winsec | stats count by user, src_ip');
-  const [sysmonFilter, setSysmonFilter] = useState('ALL');
+  const [splunkQuery, setSplunkQuery] = useState('index=botsv3 sourcetype="stream:http" http_method="POST"');
+  const [splunkResults, setSplunkResults] = useState(null);
 
-  // Save completion state
+  // Save progress
   useEffect(() => {
     try {
       localStorage.setItem('moshii_soc_completed', JSON.stringify(completedChallenges));
@@ -70,27 +72,44 @@ const SocCourse = () => {
     }
   }, [completedChallenges]);
 
-  // Reset slide index and inputs when module changes
+  // Open module from URL params if present
   useEffect(() => {
-    setCurrentSlideIndex(0);
-    setFlagInput('');
-    setChallengeStatus(null);
-    setShowHint(false);
-    setSelectedAlert(null);
-    setB64Input('');
-    setB64Decoded('');
-  }, [activeModule.id]);
+    if (moduleId) {
+      const found = SOC_MODULES.find(m => m.slug === moduleId || m.id === moduleId);
+      if (found) {
+        setSelectedModule(found);
+      }
+    }
+  }, [moduleId]);
+
+  // Reset slide index & challenge state on module change
+  useEffect(() => {
+    if (selectedModule) {
+      setCurrentSlideIndex(0);
+      setFlagInput('');
+      setChallengeStatus(null);
+      setShowHint(false);
+      setSelectedAlert(null);
+      setB64Decoded('');
+      setSplunkResults(null);
+    }
+  }, [selectedModule?.id]);
 
   // Keyboard navigation for slides
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (activeTab !== 'slides') return;
+      // Cmd/Ctrl+K search focus
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        document.getElementById('module-search')?.focus();
+      }
+      if (!selectedModule || activeTab !== 'slides') return;
       if (e.key === 'ArrowRight') nextSlide();
       if (e.key === 'ArrowLeft') prevSlide();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeTab, currentSlideIndex, activeModule]);
+  }, [selectedModule, activeTab, currentSlideIndex]);
 
   // Copy helper
   const handleCopy = (text, id) => {
@@ -100,34 +119,28 @@ const SocCourse = () => {
   };
 
   // Slide controls
-  const totalSlides = activeModule.slides.length;
-  const currentSlide = activeModule.slides[currentSlideIndex];
-
+  const totalSlides = selectedModule?.slides?.length || 0;
   const nextSlide = () => {
-    if (currentSlideIndex < totalSlides - 1) {
-      setCurrentSlideIndex(prev => prev + 1);
-    }
+    if (currentSlideIndex < totalSlides - 1) setCurrentSlideIndex(prev => prev + 1);
   };
-
   const prevSlide = () => {
-    if (currentSlideIndex > 0) {
-      setCurrentSlideIndex(prev => prev - 1);
-    }
+    if (currentSlideIndex > 0) setCurrentSlideIndex(prev => prev - 1);
   };
 
-  // Flag submission handler
+  // Flag submission
   const handleFlagSubmit = (e) => {
     e.preventDefault();
-    const cleanInput = flagInput.trim();
-    if (cleanInput === activeModule.challenge.flag || cleanInput === activeModule.challenge.targetKey) {
+    if (!selectedModule) return;
+    const clean = flagInput.trim();
+    if (clean === selectedModule.challenge.flag || clean === selectedModule.challenge.targetKey) {
       setChallengeStatus('success');
       setCompletedChallenges(prev => ({
         ...prev,
-        [activeModule.id]: true
+        [selectedModule.id]: true
       }));
     } else {
       setChallengeStatus('error');
-      setTimeout(() => setChallengeStatus(null), 2000);
+      setTimeout(() => setChallengeStatus(null), 2500);
     }
   };
 
@@ -135,1002 +148,1533 @@ const SocCourse = () => {
   const totalModules = SOC_MODULES.length;
   const completedCount = Object.keys(completedChallenges).filter(k => completedChallenges[k]).length;
   const progressPercent = Math.round((completedCount / totalModules) * 100);
-  const totalXP = completedCount * 100;
+  const totalXP = 3500 + completedCount * 150;
 
-  // Filtered module list
-  const filteredModules = SOC_MODULES.filter(m =>
-    m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.summary.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter modules
+  const filteredModules = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    return SOC_MODULES.filter(m => {
+      let matchesCategory = true;
+      if (currentFilter === 'core') matchesCategory = m.category === 'core';
+      else if (currentFilter === 'siem') matchesCategory = m.category === 'siem';
+      else if (currentFilter === 'ir') matchesCategory = m.category === 'ir';
+      else if (currentFilter === 'completed') matchesCategory = !!completedChallenges[m.id];
+      else if (currentFilter === 'active') matchesCategory = !completedChallenges[m.id] && m.status === 'active';
+
+      const matchesSearch = !q ||
+        m.title.toLowerCase().includes(q) ||
+        m.summary.toLowerCase().includes(q) ||
+        m.tags.some(t => t.toLowerCase().includes(q));
+
+      return matchesCategory && matchesSearch;
+    });
+  }, [currentFilter, searchQuery, completedChallenges]);
 
   return (
-    <div className="page-container soc-course-page" style={{ maxWidth: '1440px', margin: '0 auto', padding: '24px 16px' }}>
+    <div className="bg-surface font-body-md text-on-surface antialiased min-h-screen">
       
-      {/* 1. Header Banner & Progress Command Bar */}
-      <div className="glass-panel" style={{ marginBottom: '24px', borderLeft: '4px solid var(--accent-green)', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-              <Shield className="text-glow-green" size={28} />
-              <h2 className="text-glow-green" style={{ margin: 0, fontSize: 'clamp(1.4rem, 2.5vw, 1.9rem)' }}>
-                SOC Analyst Master Pathway
-              </h2>
-            </div>
-            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-              Defensive Operations · Interactive Slides · Live Telemetry Labs · Threat Hunting Challenges
-            </p>
+      {/* 1. FIXED TOP HEADER BAR */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-surface-container/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.3)] border-b border-outline-variant/30">
+        <div className="h-16 w-full px-margin-lg flex items-center justify-between gap-space-md">
+          
+          {/* Logo & Brand */}
+          <div className="flex items-center gap-space-lg">
+            <Link to="/soc" className="flex items-center gap-space-sm hover:opacity-90 transition-opacity">
+              <div className="w-9 h-9 rounded-lg bg-surface-container-high border border-primary/30 flex items-center justify-center text-primary shadow-[0_0_12px_rgba(76,215,246,0.3)]">
+                <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                  security
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span className="font-title-sm text-title-sm text-on-surface tracking-tight leading-none">
+                  CyberSOC
+                </span>
+                <span className="font-label-sm text-label-sm text-primary tracking-widest uppercase">
+                  Tier 1 &amp; 2 Analyst
+                </span>
+              </div>
+            </Link>
+
+            <div className="h-6 w-px bg-outline-variant/40 hidden lg:block"></div>
+
+            {/* Top Navigation */}
+            <nav className="hidden xl:flex items-center gap-space-xs">
+              <button
+                onClick={() => { setActiveSidebarTrack('modules'); setSelectedModule(null); }}
+                className={`px-3 py-1.5 rounded-lg transition-colors font-body-sm text-body-sm ${
+                  activeSidebarTrack === 'modules' && !selectedModule
+                    ? 'bg-surface-container-highest text-primary font-semibold'
+                    : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
+                }`}
+              >
+                Modules &amp; Curriculum
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedModule(SOC_MODULES[3]);
+                  setActiveTab('lab');
+                }}
+                className="px-3 py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-sm text-body-sm"
+              >
+                Hands-on Cyber Range Labs
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedModule(SOC_MODULES[3]);
+                  setActiveTab('lab');
+                }}
+                className="px-3 py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-sm text-body-sm"
+              >
+                SIEM Telemetry Sandbox
+              </button>
+              <Link
+                to="/"
+                className="px-3 py-1.5 rounded-lg text-secondary hover:bg-surface-container-high transition-colors font-body-sm text-body-sm flex items-center gap-1"
+              >
+                <span className="material-symbols-outlined text-base">home</span>
+                Portfolio Home
+              </Link>
+            </nav>
           </div>
 
-          {/* XP & Certificate Button */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                TOTAL XP EARNED
+          {/* Search Bar with Shortcut */}
+          <div className="flex-1 max-w-md mx-space-md hidden md:block">
+            <div className="relative flex items-center w-full">
+              <span className="material-symbols-outlined absolute left-3 text-outline text-lg pointer-events-none">
+                search
+              </span>
+              <input
+                id="module-search"
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search lessons, MITRE ATT&CK techniques, playbooks..."
+                className="w-full pl-9 pr-12 py-1.5 bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-sm text-body-sm rounded-lg focus:outline-none focus:ring-1 focus:ring-primary shadow-inner border border-outline-variant/30"
+              />
+              <span className="absolute right-2.5 px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-code-sm text-code-sm">
+                ⌘K
+              </span>
+            </div>
+          </div>
+
+          {/* Right Streak, XP, Notifications & Profile */}
+          <div className="flex items-center gap-space-md">
+            <div className="hidden sm:flex items-center gap-space-sm">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-lowest border border-tertiary/20">
+                <span className="material-symbols-outlined text-tertiary text-base">local_fire_department</span>
+                <span className="font-code-sm text-code-sm text-tertiary font-bold">14d</span>
               </div>
-              <div style={{ fontFamily: 'var(--font-heading)', fontSize: '1.4rem', color: 'var(--accent-cyan)' }}>
-                {totalXP} / {totalModules * 100} XP
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-lowest border border-secondary/20">
+                <span className="material-symbols-outlined text-secondary text-base">bolt</span>
+                <span className="font-code-sm text-code-sm text-secondary font-bold">{totalXP.toLocaleString()} XP</span>
               </div>
             </div>
 
             <button
               onClick={() => setShowCertificate(true)}
-              className="hack-btn"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                background: progressPercent === 100 ? 'rgba(0, 255, 65, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                borderColor: progressPercent === 100 ? 'var(--accent-green)' : 'var(--glass-border)',
-                color: progressPercent === 100 ? 'var(--accent-green)' : 'var(--text-secondary)'
-              }}
+              aria-label="Certificate and Notifications"
+              className="relative p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors"
+              title="View Certificate Status"
             >
-              <Award size={18} />
-              {progressPercent === 100 ? 'View Certificate' : 'Certificate (Locked)'}
+              <span className="material-symbols-outlined text-xl">workspace_premium</span>
+              <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
+              </span>
             </button>
+
+            <div className="h-6 w-px bg-outline-variant/40"></div>
+
+            <div className="flex items-center gap-space-sm">
+              <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/50 flex items-center justify-center text-primary font-bold font-code-sm text-code-sm">
+                MM
+              </div>
+              <div className="hidden lg:flex flex-col text-left">
+                <span className="font-body-sm text-body-sm font-semibold text-on-surface leading-tight">
+                  Mohammed Moshii
+                </span>
+                <span className="font-label-sm text-label-sm text-primary leading-tight">
+                  Lead SOC Analyst
+                </span>
+              </div>
+            </div>
           </div>
         </div>
+      </header>
 
-        {/* Global Progress Bar */}
-        <div style={{ marginTop: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)', marginBottom: '6px' }}>
-            <span>PROGRESS: {completedCount} OF {totalModules} MODULES CONQUERED</span>
-            <span style={{ color: 'var(--accent-green)' }}>{progressPercent}% COMPLETE</span>
-          </div>
-          <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.06)', borderRadius: '4px', overflow: 'hidden' }}>
-            <motion.div
-              style={{ height: '100%', background: 'linear-gradient(90deg, var(--accent-green), var(--accent-cyan))' }}
-              initial={{ width: 0 }}
-              animate={{ width: `${progressPercent}%` }}
-              transition={{ duration: 0.8, ease: 'easeOut' }}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* 2. Main Two-Pane Stage (Sidebar + Workspace) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 340px) 1fr', gap: '24px', alignItems: 'start' }}>
-        
-        {/* Left Column: Module Navigation & Curriculum Tree */}
-        <div className="glass-panel" style={{ padding: '16px', position: 'sticky', top: '90px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', padding: '0 4px' }}>
-            <Terminal size={18} color="var(--accent-cyan)" />
-            <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.9rem', color: 'var(--text-primary)', letterSpacing: '1px' }}>
-              COURSE MODULES
+      {/* 2. FIXED LEFT SIDEBAR */}
+      <aside className="fixed left-0 top-16 bottom-0 w-64 bg-surface-container-low z-40 flex flex-col justify-between p-space-md border-r border-outline-variant/30">
+        <div className="flex flex-col gap-space-md">
+          <div className="flex items-center justify-between px-space-sm pt-space-xs">
+            <span className="font-label-sm text-label-sm uppercase tracking-wider text-outline">
+              Training Tracks
+            </span>
+            <span className="px-1.5 py-0.5 rounded bg-surface-container-high text-primary font-code-sm text-code-sm border border-primary/20">
+              SOC OPS
             </span>
           </div>
 
-          {/* Search Modules Filter */}
-          <div style={{ position: 'relative', marginBottom: '16px' }}>
-            <input
-              type="text"
-              placeholder="Filter modules..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px 8px 34px',
-                background: 'rgba(0,0,0,0.4)',
-                border: '1px solid var(--glass-border)',
-                borderRadius: '6px',
-                color: 'var(--text-primary)',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.82rem',
-                outline: 'none'
-              }}
-            />
-            <Search size={15} color="var(--text-secondary)" style={{ position: 'absolute', left: '10px', top: '10px' }} />
-          </div>
+          <nav className="flex flex-col gap-1">
+            <button
+              onClick={() => { setActiveSidebarTrack('console'); setSelectedModule(SOC_MODULES[3]); setActiveTab('lab'); }}
+              className={`flex items-center gap-space-sm px-3 py-2 rounded-lg transition-colors font-body-sm text-body-sm w-full text-left ${
+                activeSidebarTrack === 'console'
+                  ? 'bg-surface-container-high text-primary font-semibold'
+                  : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-lg">terminal</span>
+              <span>Analyst Console</span>
+            </button>
 
-          {/* Module List */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: 'calc(100vh - 280px)', overflowY: 'auto' }}>
-            {filteredModules.map((m, idx) => {
-              const isSelected = m.id === activeModule.id;
-              const isCompleted = !!completedChallenges[m.id];
-              const ModIcon = IconMap[m.icon] || Shield;
+            <button
+              onClick={() => { setActiveSidebarTrack('modules'); setSelectedModule(null); }}
+              className={`flex items-center gap-space-sm px-3 py-2 rounded-lg transition-colors font-body-sm text-body-sm w-full text-left ${
+                activeSidebarTrack === 'modules' && !selectedModule
+                  ? 'bg-surface-container-high text-primary font-semibold'
+                  : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-lg">menu_book</span>
+              <span>Modules &amp; Curriculum</span>
+            </button>
 
-              return (
-                <div
-                  key={m.id}
-                  onClick={() => navigate(`/soc/${m.slug}`)}
-                  style={{
-                    padding: '12px 14px',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    background: isSelected ? 'rgba(0, 255, 65, 0.12)' : 'rgba(0, 0, 0, 0.35)',
-                    border: isSelected ? '1px solid var(--accent-green)' : '1px solid rgba(255, 255, 255, 0.05)',
-                    position: 'relative'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: isSelected ? 'var(--accent-green)' : 'var(--text-secondary)' }}>
-                      STEP 0{idx + 1} · {m.category}
-                    </span>
-                    {isCompleted ? (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', color: 'var(--accent-green)', fontFamily: 'var(--font-mono)' }}>
-                        <CheckCircle size={13} /> SOLVED
-                      </span>
-                    ) : (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
-                        <Circle size={13} /> PENDING
-                      </span>
-                    )}
-                  </div>
+            <button
+              onClick={() => { setActiveSidebarTrack('range'); setSelectedModule(SOC_MODULES[1]); setActiveTab('lab'); }}
+              className={`flex items-center gap-space-sm px-3 py-2 rounded-lg transition-colors font-body-sm text-body-sm w-full text-left ${
+                activeSidebarTrack === 'range'
+                  ? 'bg-surface-container-high text-primary font-semibold'
+                  : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-lg">radar</span>
+              <span>Cyber Range Labs</span>
+            </button>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <ModIcon size={16} color={isSelected ? 'var(--accent-green)' : 'var(--accent-cyan)'} />
-                    <span style={{ fontWeight: 600, fontSize: '0.88rem', color: isSelected ? '#fff' : 'var(--text-primary)' }}>
-                      {m.title.replace(/^Module \d+: /, '')}
-                    </span>
-                  </div>
+            <button
+              onClick={() => { setActiveSidebarTrack('siem'); setSelectedModule(SOC_MODULES[3]); setActiveTab('lab'); }}
+              className={`flex items-center gap-space-sm px-3 py-2 rounded-lg transition-colors font-body-sm text-body-sm w-full text-left ${
+                activeSidebarTrack === 'siem'
+                  ? 'bg-surface-container-high text-primary font-semibold'
+                  : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-lg">data_object</span>
+              <span>SIEM Telemetry</span>
+            </button>
 
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '6px', fontSize: '0.75rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
-                    <span>⏳ {m.duration}</span>
-                    <span>•</span>
-                    <span style={{ color: m.difficulty === 'Advanced' ? 'var(--accent-red)' : m.difficulty === 'Intermediate' ? 'var(--accent-cyan)' : 'var(--accent-green)' }}>
-                      {m.difficulty}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+            <button
+              onClick={() => { setActiveSidebarTrack('mitre'); setSelectedModule(SOC_MODULES[4]); setActiveTab('theory'); }}
+              className={`flex items-center gap-space-sm px-3 py-2 rounded-lg transition-colors font-body-sm text-body-sm w-full text-left ${
+                activeSidebarTrack === 'mitre'
+                  ? 'bg-surface-container-high text-primary font-semibold'
+                  : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-lg">grid_view</span>
+              <span>MITRE Navigator</span>
+            </button>
+
+            <button
+              onClick={() => { setActiveSidebarTrack('drills'); setSelectedModule(SOC_MODULES[6]); setActiveTab('lab'); }}
+              className={`flex items-center gap-space-sm px-3 py-2 rounded-lg transition-colors font-body-sm text-body-sm w-full text-left ${
+                activeSidebarTrack === 'drills'
+                  ? 'bg-surface-container-high text-primary font-semibold'
+                  : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+              }`}
+            >
+              <span className="material-symbols-outlined text-lg">crisis_alert</span>
+              <span>Incident Drills</span>
+            </button>
+          </nav>
         </div>
 
-        {/* Right Column: Active Module Interactive Stage */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          
-          {/* Module Stage Top Bar & Tabs */}
-          <div className="glass-panel" style={{ padding: '20px 24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '16px' }}>
-              <div>
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', padding: '2px 8px', borderRadius: '4px', background: 'rgba(0, 255, 65, 0.15)', color: 'var(--accent-green)', border: '1px solid rgba(0, 255, 65, 0.3)' }}>
-                    {activeModule.category}
-                  </span>
-                  <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', padding: '2px 8px', borderRadius: '4px', background: 'rgba(0, 229, 255, 0.15)', color: 'var(--accent-cyan)', border: '1px solid rgba(0, 229, 255, 0.3)' }}>
-                    {activeModule.duration}
-                  </span>
-                  <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', padding: '2px 8px', borderRadius: '4px', background: 'rgba(181, 55, 242, 0.15)', color: 'var(--accent-purple)', border: '1px solid rgba(181, 55, 242, 0.3)' }}>
-                    {activeModule.difficulty}
-                  </span>
+        {/* Sidebar Bottom Progress Widget */}
+        <div className="flex flex-col gap-space-sm bg-surface-container-lowest p-space-sm rounded-lg border border-outline-variant/30">
+          <div className="flex items-center justify-between">
+            <span className="font-label-sm text-label-sm text-outline uppercase">
+              Tier 2 Progress
+            </span>
+            <span className="font-code-sm text-code-sm text-secondary font-bold">
+              {progressPercent}%
+            </span>
+          </div>
+          <div className="w-full h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+            <div
+              className="h-full bg-secondary rounded-full transition-all duration-500"
+              style={{ width: `${progressPercent}%` }}
+            ></div>
+          </div>
+          <div className="flex items-center justify-between text-outline font-label-sm text-label-sm">
+            <span>{completedCount} / {totalModules} Modules</span>
+            <span className="text-primary font-semibold">
+              {progressPercent >= 75 ? 'Exam Ready' : 'In Training'}
+            </span>
+          </div>
+        </div>
+      </aside>
+
+      {/* 3. MAIN WORKSPACE CANVAS */}
+      <div className="pl-64">
+        <main className="relative pt-16 w-full min-h-screen bg-surface">
+          <div className="flex flex-col w-full">
+            <div className="w-full px-space-md lg:px-margin-lg py-space-lg flex flex-col gap-space-xl">
+              
+              {/* HERO / COURSE MASTER OVERVIEW BANNER */}
+              <div className="relative w-full rounded-xl bg-surface-container-low p-space-lg lg:p-margin-lg overflow-hidden shadow-xl border border-outline-variant/30">
+                {/* Ambient Cyber Glows */}
+                <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div className="absolute -bottom-24 -left-12 w-80 h-80 bg-secondary/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-lg">
+                  {/* Left: Course Identifier & Badges */}
+                  <div className="flex flex-col gap-space-sm max-w-3xl">
+                    <div className="flex flex-wrap items-center gap-space-sm">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-highest text-primary font-label-sm text-label-sm uppercase tracking-widest shadow-inner border border-primary/20">
+                        <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                        Tier 1 / Tier 2 Ready
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded-full bg-surface-container text-secondary font-label-sm text-label-sm tracking-wider border border-secondary/20">
+                        24 CEUs Accredited
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm tracking-wider border border-outline-variant/30">
+                        MITRE ATT&CK® v14.1 Aligned
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-space-md pt-space-xs">
+                      <div className="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center text-primary shadow-sm shrink-0 border border-primary/30">
+                        <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                          security
+                        </span>
+                      </div>
+                      <div>
+                        <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight">
+                          SOC Analyst Operations &amp; Threat Hunting Masterclass
+                        </h1>
+                        <p className="font-body-md text-body-md text-on-surface-variant pt-0.5">
+                          Comprehensive practitioner curriculum spanning telemetry ingest, packet forensics, SIEM detection engineering, and full-spectrum incident response.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* High-level specs line */}
+                    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-space-xs text-on-surface-variant font-code-sm text-code-sm">
+                      <span className="flex items-center gap-1.5 text-on-surface">
+                        <span className="material-symbols-outlined text-primary text-base">view_carousel</span> 8 Modules
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-outline text-base">slideshow</span> 142 Interactive Slides
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-secondary text-base">terminal</span> 36 Live Fire Cyber Labs
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-tertiary text-base">military_tech</span> 4 Capstone Drills
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Right: Progress HUD Card */}
+                  <div className="w-full lg:w-96 p-space-md rounded-xl bg-surface-container flex flex-col gap-space-sm shadow-md border border-outline-variant/30">
+                    <div className="flex items-center justify-between">
+                      <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
+                        Mastery Pipeline
+                      </span>
+                      <span className="font-code-md text-code-md text-primary font-bold">
+                        {progressPercent}% Completed
+                      </span>
+                    </div>
+
+                    {/* Segmented Progress Bar */}
+                    <div className="relative w-full h-2.5 bg-surface-container-lowest rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-secondary via-primary to-primary-container rounded-full transition-all duration-500"
+                        style={{ width: `${progressPercent}%` }}
+                      ></div>
+                    </div>
+
+                    <div className="flex items-center justify-between font-label-sm text-label-sm text-outline">
+                      <span>{completedCount} of 8 Modules Mastered</span>
+                      <span className="text-secondary font-semibold">
+                        {8 - completedCount} Remaining
+                      </span>
+                    </div>
+
+                    {/* Quick Action Button */}
+                    <button
+                      onClick={() => {
+                        const nextMod = SOC_MODULES.find(m => !completedChallenges[m.id]) || SOC_MODULES[3];
+                        setSelectedModule(nextMod);
+                        setActiveTab('lab');
+                      }}
+                      className="mt-space-xs w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-title-sm text-body-md transition-all shadow-[0_0_16px_rgba(6,182,212,0.3)] hover:shadow-[0_0_24px_rgba(6,182,212,0.5)] font-semibold"
+                    >
+                      <span className="material-symbols-outlined text-lg">play_arrow</span>
+                      <span>Resume Lab 4.2: Hunting APT29</span>
+                    </button>
+                  </div>
                 </div>
-                <h3 className="text-glow-cyan" style={{ margin: 0, fontSize: '1.4rem' }}>
-                  {activeModule.title}
-                </h3>
-                <p style={{ margin: '6px 0 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                  {activeModule.summary}
-                </p>
+
+                {/* Quick Telemetry Stats Strip */}
+                <div className="mt-space-lg pt-space-md grid grid-cols-2 md:grid-cols-4 gap-space-md">
+                  <div className="flex items-center gap-space-sm p-3 rounded-lg bg-surface-container-lowest/80 backdrop-blur-sm border border-outline-variant/20">
+                    <div className="p-2 rounded bg-surface-container text-primary">
+                      <span className="material-symbols-outlined text-xl">timer</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-code-md text-code-md font-bold text-on-surface">64.5 hrs</span>
+                      <span className="font-label-sm text-label-sm text-on-surface-variant">Study Time In-Range</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-space-sm p-3 rounded-lg bg-surface-container-lowest/80 backdrop-blur-sm border border-outline-variant/20">
+                    <div className="p-2 rounded bg-surface-container text-secondary">
+                      <span className="material-symbols-outlined text-xl">fact_check</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-code-md text-code-md font-bold text-on-surface">{completedCount * 4 + 6} / 36</span>
+                      <span className="font-label-sm text-label-sm text-on-surface-variant">Hands-on Labs Done</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-space-sm p-3 rounded-lg bg-surface-container-lowest/80 backdrop-blur-sm border border-outline-variant/20">
+                    <div className="p-2 rounded bg-surface-container text-tertiary">
+                      <span className="material-symbols-outlined text-xl">target</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-code-md text-code-md font-bold text-on-surface">94.2%</span>
+                      <span className="font-label-sm text-label-sm text-on-surface-variant">IoC Triage Accuracy</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-space-sm p-3 rounded-lg bg-surface-container-lowest/80 backdrop-blur-sm border border-outline-variant/20">
+                    <div className="p-2 rounded bg-surface-container text-secondary">
+                      <span className="material-symbols-outlined text-xl">local_fire_department</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-code-md text-code-md font-bold text-on-surface">14 Days</span>
+                      <span className="font-label-sm text-label-sm text-on-surface-variant">Active Defense Streak</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              {/* Status Badge */}
-              {completedChallenges[activeModule.id] && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(0, 255, 65, 0.15)', border: '1px solid var(--accent-green)', color: 'var(--accent-green)', padding: '6px 12px', borderRadius: '20px', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>
-                  <Sparkles size={16} /> Challenge Flag Captured! (+100 XP)
+              {/* TELEMETRY RANGE BAR / VIRTUAL GATEWAY */}
+              <div className="w-full p-space-md rounded-xl bg-surface-container flex flex-col md:flex-row items-center justify-between gap-space-md shadow-sm border border-outline-variant/30">
+                <div className="flex items-center gap-space-md w-full md:w-auto">
+                  <div className="flex items-center gap-2">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-secondary"></span>
+                    </span>
+                    <span className="font-title-sm text-title-sm text-on-surface">Cyber Range Lab Gateway</span>
+                  </div>
+                  <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded bg-surface-container-lowest text-on-surface-variant font-code-sm text-code-sm border border-outline-variant/20">
+                    <span className="text-secondary font-semibold">ONLINE</span>
+                    <span>•</span>
+                    <span>us-east-zone-4 (24ms)</span>
+                    <span>•</span>
+                    <span className="text-primary font-mono">10.240.12.8/24</span>
+                  </div>
                 </div>
-              )}
-            </div>
 
-            {/* Mode Switcher Tabs (Slides | Theory | Lab | Challenge) */}
-            <div style={{ display: 'flex', gap: '10px', borderTop: '1px solid var(--glass-border)', paddingTop: '16px', flexWrap: 'wrap' }}>
-              {[
-                { id: 'slides', label: '1. Presentation Slides', icon: Tv, badge: `${totalSlides} Slides` },
-                { id: 'theory', label: '2. Theory & Cheat Sheets', icon: BookOpen },
-                { id: 'lab', label: '3. Hands-On Lab', icon: Terminal, badge: 'Interactive' },
-                { id: 'challenge', label: '4. CTF Challenge', icon: Flag, badge: completedChallenges[activeModule.id] ? 'Solved' : '+100 XP' }
-              ].map(tab => {
-                const TabIcon = tab.icon;
-                const isCurrent = activeTab === tab.id;
-                return (
+                <div className="flex flex-wrap items-center gap-space-sm w-full md:w-auto justify-end">
+                  <button
+                    onClick={() => { setSelectedModule(SOC_MODULES[0]); setActiveTab('lab'); }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-bright text-on-surface font-code-sm text-code-sm transition-colors border border-outline-variant/30"
+                  >
+                    <span className="material-symbols-outlined text-primary text-base">terminal</span>
+                    <span>Web Terminal</span>
+                  </button>
+                  <button
+                    onClick={() => { setSelectedModule(SOC_MODULES[1]); setActiveTab('lab'); }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-bright text-on-surface font-code-sm text-code-sm transition-colors border border-outline-variant/30"
+                  >
+                    <span className="material-symbols-outlined text-secondary text-base">network_check</span>
+                    <span>Wireshark Hub</span>
+                  </button>
+                  <button
+                    onClick={() => { setSelectedModule(SOC_MODULES[3]); setActiveTab('lab'); }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-highest hover:bg-surface-bright text-primary font-code-sm text-code-sm transition-colors border border-primary/30"
+                  >
+                    <span className="material-symbols-outlined text-base">database</span>
+                    <span>Splunk Instance [Active]</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* FILTER PILLS, SEARCH & VIEW CONTROLS */}
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-md">
+                <div className="flex flex-wrap items-center gap-2" id="filter-container">
+                  {[
+                    { key: 'all', label: 'All 8 Modules' },
+                    { key: 'core', label: 'Core Fundamentals' },
+                    { key: 'siem', label: 'SIEM & Telemetry' },
+                    { key: 'ir', label: 'Incident Response' },
+                    { key: 'completed', label: `Completed (${completedCount})` },
+                    { key: 'active', label: 'In Progress (1)' }
+                  ].map(tab => (
+                    <button
+                      key={tab.key}
+                      onClick={() => setCurrentFilter(tab.key)}
+                      className={`px-3 py-1.5 rounded-lg font-body-sm text-body-sm transition-colors ${
+                        currentFilter === tab.key
+                          ? 'bg-primary text-on-primary font-semibold shadow-sm'
+                          : 'bg-surface-container-low hover:bg-surface-container text-on-surface-variant hover:text-on-surface border border-outline-variant/20'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-space-sm w-full lg:w-auto">
+                  <div className="relative flex-1 lg:w-64">
+                    <span className="material-symbols-outlined absolute left-3 top-2.5 text-outline text-lg pointer-events-none">
+                      filter_list
+                    </span>
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search modules, MITRE..."
+                      className="w-full pl-9 pr-3 py-1.5 bg-surface-container text-on-surface placeholder:text-outline font-body-sm text-body-sm rounded-lg focus:outline-none focus:ring-1 focus:ring-primary shadow-inner border border-outline-variant/30"
+                    />
+                  </div>
+
+                  <div className="flex items-center p-1 rounded-lg bg-surface-container-low border border-outline-variant/30">
+                    <button
+                      onClick={() => setViewLayout('grid')}
+                      aria-label="Grid View"
+                      className={`p-1.5 rounded transition-colors ${viewLayout === 'grid' ? 'bg-surface-container-highest text-primary' : 'text-outline hover:text-on-surface'}`}
+                    >
+                      <span className="material-symbols-outlined text-lg leading-none">grid_view</span>
+                    </button>
+                    <button
+                      onClick={() => setViewLayout('syllabus')}
+                      aria-label="Detailed View"
+                      className={`p-1.5 rounded transition-colors ${viewLayout === 'syllabus' ? 'bg-surface-container-highest text-primary' : 'text-outline hover:text-on-surface'}`}
+                    >
+                      <span className="material-symbols-outlined text-lg leading-none">view_list</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 8 MAIN COURSE MODULES CARDS GRID */}
+              <div
+                className={`grid gap-space-md ${
+                  viewLayout === 'grid'
+                    ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-4'
+                    : 'grid-cols-1'
+                }`}
+              >
+                {filteredModules.map((m) => {
+                  const isCompleted = !!completedChallenges[m.id];
+                  const isActive = !isCompleted && m.status === 'active';
+                  const isCapstone = m.moduleNumber === '08';
+                  const isLocked = !isCompleted && !isActive;
+
+                  // Top indicator color
+                  let stripClass = 'bg-outline-variant/30';
+                  if (isCompleted) stripClass = 'bg-secondary';
+                  else if (isActive) stripClass = 'bg-primary animate-pulse';
+                  else if (isCapstone) stripClass = 'bg-tertiary';
+
+                  return (
+                    <div
+                      key={m.id}
+                      className={`group flex flex-col justify-between rounded-xl p-space-md transition-all duration-200 shadow-md relative overflow-hidden border border-outline-variant/30 ${
+                        isActive
+                          ? 'bg-surface-container shadow-primary/10 border-primary/40'
+                          : isCompleted
+                          ? 'bg-surface-container-low hover:bg-surface-container'
+                          : 'bg-surface-container-low/70 hover:bg-surface-container-low'
+                      }`}
+                    >
+                      {/* Top Status Indicator Strip */}
+                      <div className={`absolute top-0 left-0 right-0 ${isActive || isCapstone ? 'h-1.5' : 'h-1'} ${stripClass}`}></div>
+
+                      <div className="flex flex-col gap-space-sm">
+                        {/* Header line */}
+                        <div className="flex items-center justify-between pt-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className={`font-code-sm text-code-sm font-bold tracking-wider ${isActive ? 'text-primary' : isCapstone ? 'text-tertiary' : 'text-outline'}`}>
+                              MODULE {m.moduleNumber}
+                            </span>
+                            {isActive && <span className="flex h-2 w-2 rounded-full bg-primary animate-ping"></span>}
+                          </div>
+
+                          {/* Status Pill */}
+                          {isCompleted ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary/10 text-secondary font-label-sm text-label-sm font-semibold">
+                              <span className="material-symbols-outlined text-xs">check_circle</span>
+                              Mastered (100%)
+                            </span>
+                          ) : isActive ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/15 text-primary font-label-sm text-label-sm font-semibold">
+                              <span className="material-symbols-outlined text-xs">pending</span>
+                              In Progress (60%)
+                            </span>
+                          ) : isCapstone ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-tertiary/10 text-tertiary font-label-sm text-label-sm font-bold">
+                              <span className="material-symbols-outlined text-xs">military_tech</span>
+                              Capstone Exam
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container text-outline font-label-sm text-label-sm">
+                              <span className="material-symbols-outlined text-xs">lock</span>
+                              Locked
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Title */}
+                        <h3
+                          onClick={() => setSelectedModule(m)}
+                          className={`font-title-sm text-title-sm leading-snug cursor-pointer transition-colors ${
+                            isActive ? 'text-primary font-bold' : 'text-on-surface group-hover:text-primary'
+                          }`}
+                        >
+                          {m.title}
+                        </h3>
+
+                        {/* Summary */}
+                        <p className="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">
+                          {m.summary}
+                        </p>
+
+                        {/* Active Drill Callout for Module 04 */}
+                        {isActive && (
+                          <div className="p-2.5 rounded-lg bg-surface-container-lowest flex flex-col gap-1 border border-primary/20">
+                            <span className="font-label-sm text-label-sm uppercase tracking-wider text-secondary flex items-center gap-1 font-semibold">
+                              <span className="material-symbols-outlined text-xs">flag</span> Next Active Drill
+                            </span>
+                            <span className="font-body-sm text-body-sm text-on-surface font-semibold truncate">
+                              Lab 4.2: Hunting APT29 C2 in Splunk
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Progress bar for active */}
+                        {isActive && (
+                          <div className="flex flex-col gap-1.5 pt-space-xs text-on-surface-variant font-code-sm text-code-sm">
+                            <div className="flex items-center justify-between">
+                              <span>Progress: 3 / 6 Labs Completed</span>
+                              <span className="text-primary font-bold">18/22 Slides</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-surface-container-lowest rounded-full overflow-hidden">
+                              <div className="h-full bg-primary rounded-full" style={{ width: '60%' }}></div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Specs info */}
+                        {!isActive && (
+                          <div className="flex flex-col gap-1.5 pt-space-xs text-on-surface-variant font-code-sm text-code-sm">
+                            <div className="flex items-center gap-1.5">
+                              <span className="material-symbols-outlined text-sm text-outline">slideshow</span>
+                              <span>{m.slideCount} Comprehensive Slides</span>
+                            </div>
+                            <div className={`flex items-center gap-1.5 ${isCompleted ? 'text-secondary' : isCapstone ? 'text-tertiary' : 'text-outline'}`}>
+                              <span className="material-symbols-outlined text-sm">
+                                {isCompleted ? 'science' : isCapstone ? 'flag_circle' : 'science'}
+                              </span>
+                              <span>{m.labCount}</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Tags */}
+                        <div className="flex flex-wrap gap-1.5 pt-space-xs">
+                          {m.tags.map((t, idx) => (
+                            <span
+                              key={idx}
+                              className={`px-2 py-0.5 rounded font-label-sm text-label-sm ${
+                                isActive
+                                  ? 'bg-primary/10 text-primary border border-primary/20'
+                                  : isCapstone
+                                  ? 'bg-surface-container text-tertiary'
+                                  : 'bg-surface-container-highest text-on-surface-variant'
+                              }`}
+                            >
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Card Footer Button */}
+                      <div className="pt-space-md flex items-center gap-space-xs">
+                        {isCompleted ? (
+                          <div className="w-full flex items-center justify-between gap-space-xs">
+                            <button
+                              onClick={() => { setSelectedModule(m); setActiveTab('slides'); }}
+                              className="flex-1 py-1.5 px-3 rounded-lg bg-surface-container-high hover:bg-surface-bright text-on-surface font-body-sm text-body-sm text-center transition-colors border border-outline-variant/30"
+                            >
+                              Review Module
+                            </button>
+                            <button
+                              onClick={() => setShowCertificate(true)}
+                              className="p-1.5 rounded-lg bg-surface-container-high hover:bg-secondary/20 text-secondary transition-colors border border-secondary/30"
+                              title="View Credential"
+                            >
+                              <span className="material-symbols-outlined text-lg leading-none">workspace_premium</span>
+                            </button>
+                          </div>
+                        ) : isActive ? (
+                          <button
+                            onClick={() => { setSelectedModule(m); setActiveTab('lab'); }}
+                            className="w-full py-2 px-3 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-title-sm text-body-md font-semibold transition-all shadow-[0_0_12px_rgba(6,182,212,0.3)]"
+                          >
+                            Continue Module {m.moduleNumber}
+                          </button>
+                        ) : (
+                          <div className="w-full flex flex-col gap-1.5">
+                            <span className="font-label-sm text-label-sm text-outline flex items-center gap-1">
+                              <span className="material-symbols-outlined text-xs">info</span> Requires: Previous Module
+                            </span>
+                            <button
+                              onClick={() => setSelectedModule(m)}
+                              className="w-full py-1.5 px-3 rounded-lg bg-surface-container-high/50 hover:bg-surface-container-high text-outline hover:text-on-surface font-body-sm text-body-sm text-center transition-colors border border-outline-variant/20"
+                            >
+                              Explore Syllabus &amp; Lab Preview
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* ACTIVE LAB DEEP-DIVE & TACTICAL PLAYBOOK DRAWER */}
+              <div className="w-full rounded-xl bg-surface-container p-space-lg flex flex-col gap-space-lg shadow-lg relative overflow-hidden border border-outline-variant/30">
+                <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-md">
+                  <div className="flex items-center gap-space-md">
+                    <div className="w-12 h-12 rounded-lg bg-surface-container-lowest text-primary flex items-center justify-center shrink-0 border border-primary/20">
+                      <span className="material-symbols-outlined text-2xl">radar</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded bg-primary/20 text-primary font-label-sm text-label-sm font-bold uppercase border border-primary/30">
+                          Active Scenario 4.2
+                        </span>
+                        <span className="text-on-surface-variant font-label-sm text-label-sm">
+                          Estimated Run Time: 45 min
+                        </span>
+                      </div>
+                      <h2 className="font-headline-md text-headline-md text-on-surface pt-0.5">
+                        Hunting APT29 Command &amp; Control Beaconing in Splunk
+                      </h2>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-space-sm">
+                    <button
+                      onClick={() => {
+                        setSelectedModule(SOC_MODULES[3]);
+                        setActiveTab('lab');
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-title-sm text-body-md transition-all shadow-[0_0_16px_rgba(6,182,212,0.3)] font-semibold"
+                    >
+                      <span className="material-symbols-outlined text-lg">terminal</span>
+                      <span>Launch Virtual Lab Console</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Split Analytical Pane: Telemetry Query Snippet & Target Objectives */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-md">
+                  {/* Left: Query / Log Stream Telemetry (7 cols) */}
+                  <div className="lg:col-span-7 flex flex-col gap-2">
+                    <div className="flex items-center justify-between px-1">
+                      <span className="font-label-sm text-label-sm uppercase tracking-wider text-outline">
+                        Target Telemetry &amp; SPL Query Window
+                      </span>
+                      <span className="font-code-sm text-code-sm text-secondary font-mono">
+                        index=botsv3 sourcetype=stream:http
+                      </span>
+                    </div>
+
+                    <div className="w-full rounded-lg bg-surface-container-lowest p-space-md font-code-sm text-code-sm text-on-surface overflow-x-auto shadow-inner flex flex-col gap-2 border border-outline-variant/30">
+                      <div className="text-outline">
+                        # Detecting regular intervals matching APT29 HTTPS jittered callbacks
+                      </div>
+                      <div>
+                        <span className="text-primary font-bold">index</span>=botsv3 <span className="text-secondary font-bold">sourcetype</span>="stream:http" <span className="text-tertiary font-bold">http_method</span>="POST"
+                      </div>
+                      <div className="text-on-surface-variant">
+                        | <span className="text-primary font-bold">bucket</span> _time span=5m<br />
+                        | <span className="text-primary font-bold">stats</span> count, distinct_count(uri) as uri_variations by src_ip, dest_ip, _time<br />
+                        | <span className="text-primary font-bold">eventstats</span> avg(count) as avg_conn, stdev(count) as stdev_conn by src_ip, dest_ip<br />
+                        | <span className="text-primary font-bold">eval</span> beacon_delta = abs(count - avg_conn)<br />
+                        | <span className="text-primary font-bold">where</span> beacon_delta &lt; 2 AND count &gt; 12<br />
+                        | <span className="text-primary font-bold">sort</span> - count
+                      </div>
+                      <div className="pt-2 flex items-center justify-between text-outline text-xs border-t border-outline-variant/20 mt-1">
+                        <span className="text-primary font-semibold">Status: Query Validated (6 matches identified)</span>
+                        <span className="text-secondary font-mono font-bold">Matched IP: 198.51.100.42</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Lab Milestones & Checklist (5 cols) */}
+                  <div className="lg:col-span-5 flex flex-col gap-2 justify-between">
+                    <div className="flex items-center justify-between px-1">
+                      <span className="font-label-sm text-label-sm uppercase tracking-wider text-outline">
+                        Lab Validation Checklist
+                      </span>
+                      <span className="font-code-sm text-code-sm text-primary font-bold">
+                        {Object.values(labChecklist).filter(Boolean).length} / 4 Objectives Met
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col gap-2 bg-surface-container-lowest p-space-md rounded-lg shadow-inner border border-outline-variant/30">
+                      <label className="flex items-start gap-2.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={labChecklist.task1}
+                          onChange={(e) => setLabChecklist(prev => ({ ...prev, task1: e.target.checked }))}
+                          className="mt-1 w-4 h-4 rounded bg-surface-container text-primary accent-primary"
+                        />
+                        <div className="flex flex-col">
+                          <span className={`font-body-sm text-body-sm ${labChecklist.task1 ? 'line-through text-outline' : 'text-on-surface'}`}>
+                            Task 1: Ingest Windows Security &amp; Sysmon PCAP logs into Splunk
+                          </span>
+                          <span className="font-label-sm text-label-sm text-secondary font-semibold">
+                            Verified • 12,480 events parsed
+                          </span>
+                        </div>
+                      </label>
+
+                      <label className="flex items-start gap-2.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={labChecklist.task2}
+                          onChange={(e) => setLabChecklist(prev => ({ ...prev, task2: e.target.checked }))}
+                          className="mt-1 w-4 h-4 rounded bg-surface-container text-primary accent-primary"
+                        />
+                        <div className="flex flex-col">
+                          <span className={`font-body-sm text-body-sm ${labChecklist.task2 ? 'line-through text-outline' : 'text-on-surface'}`}>
+                            Task 2: Correlate beacon intervals with jitter calculations
+                          </span>
+                          <span className="font-label-sm text-label-sm text-secondary font-semibold">
+                            Verified • Target C2 Node Tagged
+                          </span>
+                        </div>
+                      </label>
+
+                      <label className="flex items-start gap-2.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={labChecklist.task3}
+                          onChange={(e) => setLabChecklist(prev => ({ ...prev, task3: e.target.checked }))}
+                          className="mt-1 w-4 h-4 rounded bg-surface-container text-primary accent-primary"
+                        />
+                        <div className="flex flex-col">
+                          <span className="font-body-sm text-body-sm text-on-surface font-medium">
+                            Task 3: Extract exfiltrated TLS certificate fingerprints via JA3 hash
+                          </span>
+                          <span className="font-label-sm text-label-sm text-tertiary">
+                            {labChecklist.task3 ? 'Completed' : 'Active • Awaiting execution'}
+                          </span>
+                        </div>
+                      </label>
+
+                      <label className="flex items-start gap-2.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={labChecklist.task4}
+                          onChange={(e) => setLabChecklist(prev => ({ ...prev, task4: e.target.checked }))}
+                          className="mt-1 w-4 h-4 rounded bg-surface-container text-primary accent-primary"
+                        />
+                        <div className="flex flex-col">
+                          <span className={`font-body-sm text-body-sm ${labChecklist.task4 ? 'text-on-surface font-medium' : 'text-outline'}`}>
+                            Task 4: Submit MITRE ATT&CK T1071.001 IoC incident containment report
+                          </span>
+                          <span className="font-label-sm text-label-sm text-outline">
+                            {labChecklist.task4 ? 'Report Dispatched' : 'Pending Task 3 Verification'}
+                          </span>
+                        </div>
+                      </label>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1">
+                      <button
+                        onClick={() => {
+                          setSelectedModule(SOC_MODULES[4]);
+                          setActiveTab('theory');
+                        }}
+                        className="font-body-sm text-body-sm text-primary hover:underline flex items-center gap-1"
+                      >
+                        <span>Open Reference TTP Playbook</span>
+                        <span className="material-symbols-outlined text-sm">arrow_outward</span>
+                      </button>
+                      <span className="font-label-sm text-label-sm text-outline font-mono">
+                        Splunk 9.1.2 Enterprise Engine
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* SYLLABUS & CERTIFICATION MILESTONE FOOTNOTE */}
+              <div className="w-full flex flex-col md:flex-row items-center justify-between gap-space-md p-space-md rounded-xl bg-surface-container-low text-on-surface-variant font-body-sm text-body-sm border border-outline-variant/30">
+                <div className="flex items-center gap-space-sm">
+                  <span className="material-symbols-outlined text-secondary text-2xl">verified</span>
+                  <span>
+                    Completing all 8 modules unlocks the <strong>Certified SOC Analyst (CSA Tier 2) Practical Cyber Exam</strong> voucher.
+                  </span>
+                </div>
+                <div className="flex items-center gap-space-md">
+                  <button
+                    onClick={() => setShowCertificate(true)}
+                    className="text-primary hover:underline font-semibold flex items-center gap-1"
+                  >
+                    <span>View / Claim Certificate</span>
+                    <span className="material-symbols-outlined text-sm">workspace_premium</span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </main>
+      </div>
+
+      {/* 4. INTERACTIVE MODULE WORKSPACE MODAL / DRAWER */}
+      <AnimatePresence>
+        {selectedModule && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex justify-center items-center p-3 md:p-6"
+            onClick={() => setSelectedModule(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-surface-container rounded-xl border border-outline-variant/40 w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl"
+            >
+              {/* Modal Top Header */}
+              <div className="px-space-md py-space-sm bg-surface-container-low border-b border-outline-variant/30 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="px-2 py-0.5 rounded bg-primary/10 text-primary font-code-sm text-code-sm font-bold border border-primary/20">
+                    MODULE {selectedModule.moduleNumber}
+                  </span>
+                  <h2 className="font-headline-md text-headline-md text-on-surface truncate">
+                    {selectedModule.title}
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setSelectedModule(null)}
+                  className="p-1.5 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container-high transition-colors"
+                >
+                  <span className="material-symbols-outlined text-2xl leading-none">close</span>
+                </button>
+              </div>
+
+              {/* Mode Switcher Tabs */}
+              <div className="px-space-md py-2 bg-surface-container-lowest border-b border-outline-variant/20 flex items-center gap-2 overflow-x-auto">
+                {[
+                  { id: 'slides', label: '1. Presentation Slides', icon: 'slideshow', badge: `${selectedModule.slides?.length || 0} Slides` },
+                  { id: 'theory', label: '2. Theory & Cheat Sheets', icon: 'menu_book' },
+                  { id: 'lab', label: '3. Hands-On Lab', icon: 'terminal', badge: 'Interactive' },
+                  { id: 'challenge', label: '4. CTF Challenge', icon: 'flag', badge: completedChallenges[selectedModule.id] ? 'Solved' : '+150 XP' }
+                ].map(tab => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className="hack-btn"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      background: isCurrent ? 'rgba(0, 255, 65, 0.2)' : 'rgba(0,0,0,0.4)',
-                      borderColor: isCurrent ? 'var(--accent-green)' : 'var(--glass-border)',
-                      color: isCurrent ? '#fff' : 'var(--text-secondary)',
-                      padding: '8px 16px',
-                      fontSize: '0.85rem'
-                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-body-sm text-body-sm whitespace-nowrap transition-colors ${
+                      activeTab === tab.id
+                        ? 'bg-primary text-on-primary font-semibold shadow-sm'
+                        : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
+                    }`}
                   >
-                    <TabIcon size={16} color={isCurrent ? 'var(--accent-green)' : 'currentColor'} />
-                    {tab.label}
+                    <span className="material-symbols-outlined text-base">{tab.icon}</span>
+                    <span>{tab.label}</span>
                     {tab.badge && (
-                      <span style={{
-                        fontSize: '0.7rem',
-                        padding: '1px 6px',
-                        borderRadius: '10px',
-                        background: isCurrent ? 'var(--accent-green)' : 'rgba(255,255,255,0.1)',
-                        color: isCurrent ? '#000' : 'inherit',
-                        fontWeight: 'bold'
-                      }}>
+                      <span className={`text-xs px-1.5 py-0.2 rounded font-code-sm ${activeTab === tab.id ? 'bg-on-primary text-primary font-bold' : 'bg-surface-container-high text-outline'}`}>
                         {tab.badge}
                       </span>
                     )}
                   </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* TAB 1: PRESENTATION SLIDES VIEW */}
-          {activeTab === 'slides' && (
-            <motion.div
-              key={`slides-${activeModule.id}-${currentSlideIndex}`}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="glass-panel"
-              style={{ padding: '32px', minHeight: '480px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
-            >
-              <div>
-                {/* Slide Header & Counter */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '14px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--accent-green)', background: 'rgba(0,255,65,0.1)', padding: '2px 8px', borderRadius: '4px' }}>
-                      SLIDE {currentSlideIndex + 1} OF {totalSlides}
-                    </span>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                      Use Left/Right arrow keys to navigate
-                    </span>
-                  </div>
-
-                  {/* Dot pagination */}
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    {activeModule.slides.map((_, i) => (
-                      <div
-                        key={i}
-                        onClick={() => setCurrentSlideIndex(i)}
-                        style={{
-                          width: i === currentSlideIndex ? '20px' : '8px',
-                          height: '8px',
-                          borderRadius: '4px',
-                          background: i === currentSlideIndex ? 'var(--accent-green)' : 'rgba(255,255,255,0.2)',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s'
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Slide Title */}
-                <h3 className="text-glow-green" style={{ fontSize: '1.6rem', marginBottom: '6px' }}>
-                  {currentSlide.title}
-                </h3>
-                <h4 style={{ color: 'var(--accent-cyan)', fontSize: '1rem', fontWeight: 'normal', marginBottom: '24px' }}>
-                  {currentSlide.subtitle}
-                </h4>
-
-                {/* Bullets */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '24px' }}>
-                  {currentSlide.bullets.map((bullet, bIdx) => (
-                    <div key={bIdx} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                      <span style={{ color: 'var(--accent-green)', fontSize: '1.2rem', lineHeight: '1.4' }}>▸</span>
-                      <p style={{ margin: 0, fontSize: '1rem', color: 'var(--text-primary)', lineHeight: '1.6' }}>
-                        {bullet}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Diagram / Visual Box */}
-                {currentSlide.diagram && (
-                  <div style={{
-                    background: '#040711',
-                    border: '1px solid var(--glass-border)',
-                    borderRadius: '8px',
-                    padding: '16px 20px',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.85rem',
-                    color: 'var(--accent-cyan)',
-                    overflowX: 'auto',
-                    whiteSpace: 'pre',
-                    marginBottom: '24px'
-                  }}>
-                    {currentSlide.diagram.trim()}
-                  </div>
-                )}
-
-                {/* Key Takeaway Callout */}
-                {currentSlide.takeaway && (
-                  <div style={{ padding: '12px 18px', background: 'rgba(0, 229, 255, 0.08)', borderLeft: '3px solid var(--accent-cyan)', borderRadius: '4px', fontSize: '0.9rem', color: 'var(--text-primary)' }}>
-                    <strong style={{ color: 'var(--accent-cyan)' }}>KEY TAKEAWAY: </strong>
-                    {currentSlide.takeaway}
-                  </div>
-                )}
+                ))}
               </div>
 
-              {/* Slide Navigation Buttons Footer */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '32px', paddingTop: '16px', borderTop: '1px solid var(--glass-border)' }}>
-                <button
-                  onClick={prevSlide}
-                  disabled={currentSlideIndex === 0}
-                  className="hack-btn"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    opacity: currentSlideIndex === 0 ? 0.4 : 1,
-                    cursor: currentSlideIndex === 0 ? 'not-allowed' : 'pointer'
-                  }}
-                >
-                  <ChevronLeft size={16} /> Previous Slide
-                </button>
-
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                  {currentSlideIndex + 1} / {totalSlides}
-                </span>
-
-                <button
-                  onClick={nextSlide}
-                  disabled={currentSlideIndex === totalSlides - 1}
-                  className="hack-btn"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    opacity: currentSlideIndex === totalSlides - 1 ? 0.4 : 1,
-                    cursor: currentSlideIndex === totalSlides - 1 ? 'not-allowed' : 'pointer'
-                  }}
-                >
-                  Next Slide <ChevronRight size={16} />
-                </button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* TAB 2: THEORY & CHEAT SHEETS VIEW */}
-          {activeTab === 'theory' && (
-            <motion.div
-              key={`theory-${activeModule.id}`}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="glass-panel"
-              style={{ padding: '32px' }}
-            >
-              <h3 className="text-glow-green" style={{ marginBottom: '16px' }}>
-                📖 In-Depth Technical Guide & Cheat Sheet
-              </h3>
-              <p style={{ color: 'var(--text-secondary)', lineHeight: '1.7', marginBottom: '28px' }}>
-                {activeModule.theory.overview}
-              </p>
-
-              {activeModule.theory.sections.map((sec, sIdx) => (
-                <div key={sIdx} style={{ marginBottom: '32px' }}>
-                  <h4 style={{ color: 'var(--accent-cyan)', fontSize: '1.15rem', marginBottom: '12px' }}>
-                    {sec.heading}
-                  </h4>
-                  <p style={{ color: 'var(--text-primary)', lineHeight: '1.6', marginBottom: '16px' }}>
-                    {sec.content}
-                  </p>
-
-                  {/* Steps List */}
-                  {sec.steps && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
-                      {sec.steps.map((st, stIdx) => (
-                        <div key={stIdx} style={{ padding: '10px 14px', background: 'rgba(0,0,0,0.3)', borderLeft: '3px solid var(--accent-green)', borderRadius: '4px', fontSize: '0.9rem' }}>
-                          {st}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Structured Table */}
-                  {sec.table && (
-                    <div style={{ overflowX: 'auto', marginBottom: '20px' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
-                        <thead>
-                          <tr style={{ background: 'rgba(0, 229, 255, 0.1)', borderBottom: '1px solid var(--accent-cyan)' }}>
-                            {sec.table.headers.map((h, hIdx) => (
-                              <th key={hIdx} style={{ padding: '10px 14px', textAlign: 'left', color: 'var(--accent-cyan)', fontFamily: 'var(--font-heading)' }}>
-                                {h}
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {sec.table.rows.map((row, rIdx) => (
-                            <tr key={rIdx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: rIdx % 2 === 0 ? 'rgba(0,0,0,0.2)' : 'transparent' }}>
-                              {row.map((cell, cIdx) => (
-                                <td key={cIdx} style={{ padding: '10px 14px', color: 'var(--text-primary)' }}>
-                                  {cell}
-                                </td>
-                              ))}
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-
-                  {/* Code Block with Copy Button */}
-                  {sec.codeBlock && (
-                    <div style={{ position: 'relative', marginTop: '12px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#030712', padding: '8px 14px', borderTopLeftRadius: '6px', borderTopRightRadius: '6px', border: '1px solid var(--glass-border)', borderBottom: 'none' }}>
-                        <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--accent-cyan)' }}>COMMAND REFERENCE</span>
-                        <button
-                          onClick={() => handleCopy(sec.codeBlock, `code-${sIdx}`)}
-                          style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem' }}
-                        >
-                          {copiedCode === `code-${sIdx}` ? <Check size={14} color="var(--accent-green)" /> : <Copy size={14} />}
-                          {copiedCode === `code-${sIdx}` ? 'Copied' : 'Copy'}
-                        </button>
-                      </div>
-                      <pre style={{ margin: 0, padding: '16px', background: '#050a18', border: '1px solid var(--glass-border)', borderBottomLeftRadius: '6px', borderBottomRightRadius: '6px', overflowX: 'auto', fontSize: '0.85rem', color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>
-                        <code>{sec.codeBlock}</code>
-                      </pre>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </motion.div>
-          )}
-
-          {/* TAB 3: INTERACTIVE HANDS-ON LAB */}
-          {activeTab === 'lab' && (
-            <motion.div
-              key={`lab-${activeModule.id}`}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="glass-panel"
-              style={{ padding: '32px' }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
-                <h3 className="text-glow-green" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Terminal size={22} /> {activeModule.lab.title}
-                </h3>
-                <span style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--accent-cyan)', background: 'rgba(0,229,255,0.1)', padding: '4px 10px', borderRadius: '4px' }}>
-                  SIMULATED SANDBOX ACTIVE
-                </span>
-              </div>
-
-              <div style={{ padding: '14px 18px', background: 'rgba(0,0,0,0.5)', borderLeft: '3px solid var(--accent-cyan)', borderRadius: '6px', marginBottom: '24px' }}>
-                <strong>MISSION SCENARIO:</strong> {activeModule.lab.scenario}
-              </div>
-
-              {/* LAB ENVIRONMENT 1: ALERT TRIAGE SIMULATOR (Module 1) */}
-              {activeModule.lab.type === 'alert-triage-sim' && (
-                <div>
-                  <h4 style={{ color: 'var(--accent-cyan)', fontSize: '0.95rem', marginBottom: '12px' }}>
-                    SIEM QUEUE: CLICK AN ALERT TO INSPECT PAYLOAD & TRIAGE
-                  </h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
-                    {activeModule.lab.alerts.map(al => (
-                      <div
-                        key={al.id}
-                        onClick={() => setSelectedAlert(al)}
-                        style={{
-                          padding: '12px 16px',
-                          borderRadius: '6px',
-                          background: selectedAlert?.id === al.id ? 'rgba(0,229,255,0.12)' : 'rgba(0,0,0,0.4)',
-                          border: selectedAlert?.id === al.id ? '1px solid var(--accent-cyan)' : '1px solid var(--glass-border)',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          flexWrap: 'wrap',
-                          gap: '8px'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <span style={{
-                            padding: '2px 8px',
-                            borderRadius: '4px',
-                            fontSize: '0.75rem',
-                            fontWeight: 'bold',
-                            fontFamily: 'var(--font-mono)',
-                            background: al.severity === 'CRITICAL' ? 'rgba(255,0,60,0.2)' : al.severity === 'HIGH' ? 'rgba(255,165,0,0.2)' : 'rgba(0,255,65,0.2)',
-                            color: al.severity === 'CRITICAL' ? 'var(--accent-red)' : al.severity === 'HIGH' ? 'orange' : 'var(--accent-green)'
-                          }}>
-                            {al.severity}
-                          </span>
-                          <strong style={{ fontSize: '0.9rem' }}>{al.rule}</strong>
-                        </div>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
-                          {al.host} · {al.timestamp}
+              {/* Modal Body */}
+              <div className="p-space-md lg:p-space-lg overflow-y-auto flex-1">
+                
+                {/* TAB 1: PRESENTATION SLIDES */}
+                {activeTab === 'slides' && selectedModule.slides && (
+                  <div className="flex flex-col justify-between min-h-[460px]">
+                    <div>
+                      <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3 mb-4">
+                        <span className="font-code-sm text-code-sm text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20">
+                          SLIDE {currentSlideIndex + 1} OF {selectedModule.slides.length}
                         </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Selected Alert Detailed Drawer */}
-                  {selectedAlert && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: '20px', background: '#040714', border: '1px solid var(--accent-cyan)', borderRadius: '8px', marginBottom: '24px' }}>
-                      <h4 style={{ color: 'var(--accent-cyan)', marginTop: 0 }}>Incident Details: {selectedAlert.id} - {selectedAlert.rule}</h4>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Target Host: <code>{selectedAlert.host}</code> | Compromised User: <code>{selectedAlert.user}</code></p>
-                      <div style={{ background: '#020308', padding: '12px', borderRadius: '4px', fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: '#e2e8f0', wordBreak: 'break-all', marginBottom: '16px' }}>
-                        {selectedAlert.details}
-                      </div>
-
-                      {/* Built-in Base64 Quick Decoder Tool */}
-                      {selectedAlert.details.includes('-Enc') && (
-                        <div style={{ marginTop: '14px', padding: '14px', background: 'rgba(0, 255, 65, 0.05)', border: '1px solid var(--accent-green)', borderRadius: '6px' }}>
-                          <strong style={{ color: 'var(--accent-green)', fontSize: '0.85rem' }}>🛠️ ANALYST DECODER TOOL (UTF-16LE Base64)</strong>
-                          <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                        <div className="flex gap-1.5">
+                          {selectedModule.slides.map((_, idx) => (
                             <button
-                              onClick={() => {
-                                try {
-                                  const b64 = "SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAiaAB0AHQAcAA6AC8ALwAxADkANQAuADIAMAAxAC4AMQAwAC4AMQA0ADoAOAAwADgAMAAvAG0AYQB0AHIAaQB4AC4AcABzADEAIgApAA==";
-                                  const binary = atob(b64);
-                                  let res = '';
-                                  for (let i = 0; i < binary.length; i += 2) {
-                                    res += binary[i];
-                                  }
-                                  setB64Decoded(res);
-                                } catch (e) {
-                                  setB64Decoded('Decode failed');
-                                }
-                              }}
-                              className="hack-btn"
-                              style={{ padding: '6px 14px', fontSize: '0.8rem' }}
-                            >
-                              Auto-Decode EncodedCommand Payload
-                            </button>
+                              key={idx}
+                              onClick={() => setCurrentSlideIndex(idx)}
+                              className={`h-2 rounded-full transition-all ${idx === currentSlideIndex ? 'w-6 bg-primary' : 'w-2 bg-outline-variant/40'}`}
+                            ></button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <h3 className="font-headline-md text-headline-md text-primary mb-1">
+                        {selectedModule.slides[currentSlideIndex]?.title}
+                      </h3>
+                      <h4 className="font-title-sm text-title-sm text-on-surface-variant mb-4 font-normal">
+                        {selectedModule.slides[currentSlideIndex]?.subtitle}
+                      </h4>
+
+                      <div className="flex flex-col gap-3 mb-6">
+                        {selectedModule.slides[currentSlideIndex]?.bullets?.map((b, bIdx) => (
+                          <div key={bIdx} className="flex items-start gap-2.5">
+                            <span className="text-secondary text-base leading-snug">▸</span>
+                            <p className="font-body-md text-body-md text-on-surface leading-relaxed m-0">
+                              {b}
+                            </p>
                           </div>
-                          {b64Decoded && (
-                            <pre style={{ marginTop: '10px', padding: '10px', background: '#000', color: 'var(--accent-green)', borderRadius: '4px', fontSize: '0.85rem', fontFamily: 'var(--font-mono)' }}>
-                              {b64Decoded}
-                            </pre>
-                          )}
+                        ))}
+                      </div>
+
+                      {/* Visual Diagram Box */}
+                      {selectedModule.slides[currentSlideIndex]?.diagram && (
+                        <pre className="p-4 rounded-lg bg-surface-container-lowest text-primary font-code-sm text-code-sm border border-outline-variant/30 overflow-x-auto whitespace-pre mb-4">
+                          {selectedModule.slides[currentSlideIndex].diagram.trim()}
+                        </pre>
+                      )}
+
+                      {/* Key Takeaway */}
+                      {selectedModule.slides[currentSlideIndex]?.takeaway && (
+                        <div className="p-3 rounded bg-secondary/10 border-l-4 border-secondary text-on-surface font-body-sm text-body-sm">
+                          <strong className="text-secondary">KEY TAKEAWAY: </strong>
+                          {selectedModule.slides[currentSlideIndex].takeaway}
                         </div>
                       )}
-                    </motion.div>
-                  )}
-                </div>
-              )}
+                    </div>
 
-              {/* LAB ENVIRONMENT 2: WIRESHARK PACKET INSPECTOR (Module 2) */}
-              {activeModule.lab.type === 'network-packet-sim' && (
-                <div>
-                  {/* Filter Toolbar */}
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '14px' }}>
-                    <span style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>FILTER:</span>
-                    {['ALL', 'DNS', 'ARP'].map(flt => (
+                    {/* Navigation Buttons Footer */}
+                    <div className="flex items-center justify-between pt-4 border-t border-outline-variant/20 mt-6">
                       <button
-                        key={flt}
-                        onClick={() => setPacketFilter(flt)}
-                        style={{
-                          padding: '4px 10px',
-                          borderRadius: '4px',
-                          border: packetFilter === flt ? '1px solid var(--accent-cyan)' : '1px solid var(--glass-border)',
-                          background: packetFilter === flt ? 'rgba(0,229,255,0.2)' : 'transparent',
-                          color: packetFilter === flt ? 'var(--accent-cyan)' : 'var(--text-secondary)',
-                          fontSize: '0.75rem',
-                          fontFamily: 'var(--font-mono)',
-                          cursor: 'pointer'
-                        }}
+                        onClick={prevSlide}
+                        disabled={currentSlideIndex === 0}
+                        className="px-3 py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-bright text-on-surface font-body-sm text-body-sm disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 border border-outline-variant/30"
                       >
-                        {flt}
+                        <span className="material-symbols-outlined text-base">chevron_left</span>
+                        Previous
                       </button>
+                      <span className="font-code-sm text-code-sm text-outline">
+                        Slide {currentSlideIndex + 1} / {selectedModule.slides.length}
+                      </span>
+                      <button
+                        onClick={nextSlide}
+                        disabled={currentSlideIndex === selectedModule.slides.length - 1}
+                        className="px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-body-sm text-body-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 shadow-sm"
+                      >
+                        Next
+                        <span className="material-symbols-outlined text-base">chevron_right</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 2: THEORY & CHEAT SHEETS */}
+                {activeTab === 'theory' && selectedModule.theory && (
+                  <div className="flex flex-col gap-6">
+                    <div>
+                      <h3 className="font-headline-md text-headline-md text-primary mb-2 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-xl">menu_book</span>
+                        In-Depth Technical Guide &amp; Cheat Sheet
+                      </h3>
+                      <p className="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                        {selectedModule.theory.overview}
+                      </p>
+                    </div>
+
+                    {selectedModule.theory.sections?.map((sec, sIdx) => (
+                      <div key={sIdx} className="flex flex-col gap-3">
+                        <h4 className="font-title-sm text-title-sm text-secondary border-b border-outline-variant/20 pb-1">
+                          {sec.heading}
+                        </h4>
+                        <p className="font-body-md text-body-md text-on-surface leading-relaxed">
+                          {sec.content}
+                        </p>
+
+                        {/* Steps */}
+                        {sec.steps && (
+                          <div className="flex flex-col gap-2">
+                            {sec.steps.map((st, stIdx) => (
+                              <div key={stIdx} className="p-2.5 rounded bg-surface-container-lowest border-l-2 border-primary text-on-surface font-body-sm text-body-sm">
+                                {st}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Table */}
+                        {sec.table && (
+                          <div className="overflow-x-auto rounded-lg border border-outline-variant/30">
+                            <table className="w-full text-left font-body-sm text-body-sm border-collapse">
+                              <thead>
+                                <tr className="bg-surface-container-lowest text-primary border-b border-outline-variant/30">
+                                  {sec.table.headers.map((h, hIdx) => (
+                                    <th key={hIdx} className="p-2.5 font-semibold font-code-sm">{h}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {sec.table.rows.map((row, rIdx) => (
+                                  <tr key={rIdx} className="border-b border-outline-variant/10 hover:bg-surface-container-lowest/50">
+                                    {row.map((c, cIdx) => (
+                                      <td key={cIdx} className="p-2.5 text-on-surface">{c}</td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+
+                        {/* Code Block with Copy */}
+                        {sec.codeBlock && (
+                          <div className="relative rounded-lg overflow-hidden border border-outline-variant/30 bg-surface-container-lowest">
+                            <div className="flex items-center justify-between px-3 py-1.5 bg-surface-container-high border-b border-outline-variant/20">
+                              <span className="font-code-sm text-code-sm text-primary">COMMAND REFERENCE</span>
+                              <button
+                                onClick={() => handleCopy(sec.codeBlock, `code-${sIdx}`)}
+                                className="text-outline hover:text-on-surface font-code-sm text-code-sm flex items-center gap-1"
+                              >
+                                {copiedCode === `code-${sIdx}` ? 'Copied!' : 'Copy'}
+                              </button>
+                            </div>
+                            <pre className="p-3 text-on-surface font-code-sm text-code-sm overflow-x-auto m-0">
+                              {sec.codeBlock}
+                            </pre>
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
+                )}
 
-                  {/* Packet Table */}
-                  <div style={{ overflowX: 'auto', background: '#020308', borderRadius: '6px', border: '1px solid var(--glass-border)', marginBottom: '20px' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', fontFamily: 'var(--font-mono)' }}>
-                      <thead>
-                        <tr style={{ background: '#090e1a', color: 'var(--accent-cyan)', borderBottom: '1px solid var(--glass-border)' }}>
-                          <th style={{ padding: '8px 12px', textAlign: 'left' }}>No.</th>
-                          <th style={{ padding: '8px 12px', textAlign: 'left' }}>Time</th>
-                          <th style={{ padding: '8px 12px', textAlign: 'left' }}>Source</th>
-                          <th style={{ padding: '8px 12px', textAlign: 'left' }}>Destination</th>
-                          <th style={{ padding: '8px 12px', textAlign: 'left' }}>Protocol</th>
-                          <th style={{ padding: '8px 12px', textAlign: 'left' }}>Info</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {activeModule.lab.packets
-                          .filter(p => packetFilter === 'ALL' || p.proto === packetFilter)
-                          .map(pkt => (
-                            <tr key={pkt.no} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', color: pkt.proto === 'DNS' ? '#67e8f9' : '#cbd5e1' }}>
-                              <td style={{ padding: '8px 12px' }}>{pkt.no}</td>
-                              <td style={{ padding: '8px 12px' }}>{pkt.time}</td>
-                              <td style={{ padding: '8px 12px' }}>{pkt.src}</td>
-                              <td style={{ padding: '8px 12px' }}>{pkt.dst}</td>
-                              <td style={{ padding: '8px 12px', fontWeight: 'bold' }}>{pkt.proto}</td>
-                              <td style={{ padding: '8px 12px' }}>{pkt.info}</td>
-                            </tr>
+                {/* TAB 3: HANDS-ON LAB */}
+                {activeTab === 'lab' && selectedModule.lab && (
+                  <div className="flex flex-col gap-6">
+                    <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3">
+                      <div>
+                        <h3 className="font-headline-md text-headline-md text-primary flex items-center gap-2">
+                          <span className="material-symbols-outlined text-xl">terminal</span>
+                          {selectedModule.lab.title}
+                        </h3>
+                        <p className="font-body-sm text-body-sm text-on-surface-variant pt-1">
+                          <strong>MISSION:</strong> {selectedModule.lab.scenario}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* LAB TYPE 1: ALERT TRIAGE SIM */}
+                    {selectedModule.lab.type === 'alert-triage-sim' && (
+                      <div className="flex flex-col gap-4">
+                        <span className="font-label-sm text-label-sm text-outline uppercase tracking-wider">
+                          SIEM ALERT QUEUE: Click alert to inspect
+                        </span>
+                        <div className="grid gap-2">
+                          {selectedModule.lab.alerts.map(al => (
+                            <div
+                              key={al.id}
+                              onClick={() => setSelectedAlert(al)}
+                              className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center justify-between ${
+                                selectedAlert?.id === al.id
+                                  ? 'bg-primary/10 border-primary'
+                                  : 'bg-surface-container-lowest border-outline-variant/20 hover:border-outline-variant'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className={`px-2 py-0.5 rounded font-code-sm text-code-sm font-bold ${
+                                  al.severity === 'CRITICAL' ? 'bg-error-container text-error' : al.severity === 'HIGH' ? 'bg-tertiary-container text-tertiary' : 'bg-secondary/20 text-secondary'
+                                }`}>
+                                  {al.severity}
+                                </span>
+                                <span className="font-body-sm text-body-sm font-semibold text-on-surface">{al.rule}</span>
+                              </div>
+                              <span className="font-code-sm text-code-sm text-outline">{al.host}</span>
+                            </div>
                           ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* LAB ENVIRONMENT 3: SYSMON PROCESS VIEWER (Module 3) */}
-              {activeModule.lab.type === 'sysmon-event-sim' && (
-                <div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '20px' }}>
-                    {activeModule.lab.events.map((ev, i) => (
-                      <div key={i} style={{ background: '#030612', border: '1px solid var(--glass-border)', borderRadius: '6px', padding: '16px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '6px' }}>
-                          <span style={{ color: 'var(--accent-green)', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>
-                            EVENT ID {ev.eventId} ({ev.task})
-                          </span>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                            {ev.computer} · {ev.time}
-                          </span>
                         </div>
-                        <pre style={{ margin: 0, fontSize: '0.82rem', fontFamily: 'var(--font-mono)', color: '#f1f5f9', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-                          {ev.data}
+
+                        {selectedAlert && (
+                          <div className="p-4 rounded-lg bg-surface-container-lowest border border-primary/40 flex flex-col gap-2">
+                            <span className="font-title-sm text-title-sm text-primary font-semibold">Incident Details: {selectedAlert.id}</span>
+                            <p className="font-code-sm text-code-sm text-on-surface-variant break-all m-0">
+                              {selectedAlert.details}
+                            </p>
+                            <button
+                              onClick={() => {
+                                const b64 = "SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAiaAB0AHQAcAA6AC8ALwAxADkANQAuADIAMAAxAC4AMQAwAC4AMQA0ADoAOAAwADgAMAAvAG0AYQB0AHIAaQB4AC4AcABzADEAIgApAA==";
+                                const binary = atob(b64);
+                                let res = '';
+                                for (let i = 0; i < binary.length; i += 2) res += binary[i];
+                                setB64Decoded(res);
+                              }}
+                              className="mt-2 w-fit px-3 py-1.5 rounded bg-primary text-on-primary font-code-sm text-code-sm font-semibold"
+                            >
+                              Auto-Decode Base64 UTF-16LE Payload
+                            </button>
+                            {b64Decoded && (
+                              <pre className="p-2.5 rounded bg-surface-container-high text-secondary font-code-sm text-code-sm m-0">
+                                {b64Decoded}
+                              </pre>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* LAB TYPE 2: NETWORK PACKET SIM */}
+                    {selectedModule.lab.type === 'network-packet-sim' && (
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-center gap-2">
+                          <span className="font-label-sm text-label-sm text-outline">FILTER:</span>
+                          {['ALL', 'DNS', 'ARP'].map(flt => (
+                            <button
+                              key={flt}
+                              onClick={() => setPacketFilter(flt)}
+                              className={`px-2.5 py-1 rounded font-code-sm text-code-sm ${packetFilter === flt ? 'bg-primary text-on-primary font-bold' : 'bg-surface-container-lowest text-outline'}`}
+                            >
+                              {flt}
+                            </button>
+                          ))}
+                        </div>
+
+                        <div className="overflow-x-auto rounded-lg border border-outline-variant/30">
+                          <table className="w-full text-left font-code-sm text-code-sm border-collapse bg-surface-container-lowest">
+                            <thead>
+                              <tr className="bg-surface-container-high text-primary border-b border-outline-variant/30">
+                                <th className="p-2">No.</th>
+                                <th className="p-2">Time</th>
+                                <th className="p-2">Source</th>
+                                <th className="p-2">Destination</th>
+                                <th className="p-2">Protocol</th>
+                                <th className="p-2">Info</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {selectedModule.lab.packets
+                                .filter(p => packetFilter === 'ALL' || p.proto === packetFilter)
+                                .map(p => (
+                                  <tr key={p.no} className="border-b border-outline-variant/10 text-on-surface">
+                                    <td className="p-2">{p.no}</td>
+                                    <td className="p-2">{p.time}</td>
+                                    <td className="p-2">{p.src}</td>
+                                    <td className="p-2">{p.dst}</td>
+                                    <td className="p-2 font-bold text-secondary">{p.proto}</td>
+                                    <td className="p-2 font-mono break-all">{p.info}</td>
+                                  </tr>
+                                ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* LAB TYPE 3: SYSMON EVENT SIM */}
+                    {selectedModule.lab.type === 'sysmon-event-sim' && (
+                      <div className="flex flex-col gap-3">
+                        {selectedModule.lab.events.map((ev, i) => (
+                          <div key={i} className="p-3 rounded-lg bg-surface-container-lowest border border-outline-variant/30 font-code-sm text-code-sm">
+                            <div className="flex items-center justify-between pb-1 border-b border-outline-variant/20 mb-2">
+                              <span className="text-secondary font-bold">EVENT ID {ev.eventId} ({ev.task})</span>
+                              <span className="text-outline">{ev.time}</span>
+                            </div>
+                            <p className="text-on-surface m-0 whitespace-pre-wrap break-all">{ev.data}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* LAB TYPE 4: SPLUNK QUERY SIM */}
+                    {selectedModule.lab.type === 'splunk-query-sim' && (
+                      <div className="flex flex-col gap-3">
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={splunkQuery}
+                            onChange={(e) => setSplunkQuery(e.target.value)}
+                            className="flex-1 px-3 py-2 rounded bg-surface-container-lowest border border-primary text-on-surface font-code-sm text-code-sm focus:outline-none"
+                          />
+                          <button
+                            onClick={() => setSplunkResults(selectedModule.lab.dataset)}
+                            className="px-4 py-2 rounded bg-primary text-on-primary font-code-sm text-code-sm font-semibold"
+                          >
+                            Run SPL
+                          </button>
+                        </div>
+
+                        <div className="overflow-x-auto rounded-lg border border-outline-variant/30 bg-surface-container-lowest">
+                          <table className="w-full text-left font-code-sm text-code-sm border-collapse">
+                            <thead>
+                              <tr className="bg-surface-container-high text-primary border-b border-outline-variant/30">
+                                <th className="p-2">_time</th>
+                                <th className="p-2">EventCode</th>
+                                <th className="p-2">User</th>
+                                <th className="p-2">Src_IP</th>
+                                <th className="p-2">Action</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {selectedModule.lab.dataset.map((row, rIdx) => (
+                                <tr key={rIdx} className="border-b border-outline-variant/10 text-on-surface">
+                                  <td className="p-2">{row._time}</td>
+                                  <td className="p-2 font-bold">{row.eventCode}</td>
+                                  <td className="p-2 font-semibold text-primary">{row.user}</td>
+                                  <td className="p-2">{row.src_ip}</td>
+                                  <td className={`p-2 font-bold ${row.action.includes('Success') ? 'text-secondary' : 'text-outline'}`}>{row.action}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* LAB TYPE 5: YARA VALIDATOR */}
+                    {selectedModule.lab.type === 'yara-validator-sim' && (
+                      <div className="flex flex-col gap-2">
+                        <span className="font-label-sm text-label-sm text-outline">EXTRACTED MEMORY STRINGS:</span>
+                        <div className="p-3 rounded-lg bg-surface-container-lowest border border-outline-variant/30 font-code-sm text-code-sm text-on-surface flex flex-col gap-1">
+                          {selectedModule.lab.memoryDumpStrings.map((s, idx) => (
+                            <div key={idx} className="flex gap-3">
+                              <span className="text-outline">[{idx.toString().padStart(2, '0')}]</span>
+                              <span className={s.includes('pipe') ? 'text-error font-bold' : ''}>{s}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* LAB TYPE 6: SANDBOX DETONATION */}
+                    {selectedModule.lab.type === 'sandbox-sim' && (
+                      <div className="flex flex-col gap-3">
+                        <span className="font-label-sm text-label-sm text-outline">VOLATILITY 3 MALFIND OUTPUT:</span>
+                        <pre className="p-3 rounded-lg bg-surface-container-lowest border border-outline-variant/30 font-code-sm text-code-sm text-primary overflow-x-auto whitespace-pre m-0">
+                          {selectedModule.lab.malfindOutput}
                         </pre>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                    )}
 
-              {/* LAB ENVIRONMENT 4: SPLUNK QUERY RUNNER (Module 4) */}
-              {activeModule.lab.type === 'splunk-query-sim' && (
-                <div>
-                  <div style={{ marginBottom: '16px' }}>
-                    <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                    {/* LAB TYPE 7: EMAIL HEADERS */}
+                    {selectedModule.lab.type === 'email-header-sim' && (
+                      <div className="flex flex-col gap-2">
+                        <span className="font-label-sm text-label-sm text-outline">RFC 5322 RAW HEADERS:</span>
+                        <pre className="p-3 rounded-lg bg-surface-container-lowest border border-outline-variant/30 font-code-sm text-code-sm text-secondary overflow-x-auto whitespace-pre m-0">
+                          {selectedModule.lab.rawHeaders}
+                        </pre>
+                      </div>
+                    )}
+
+                    {/* LAB TYPE 8: ACTIVE DIRECTORY CAPSTONE */}
+                    {selectedModule.lab.type === 'ad-defense-sim' && (
+                      <div className="flex flex-col gap-3">
+                        <span className="font-label-sm text-label-sm text-outline">DOMAIN CONTROLLER SECURITY EVENT LOGS:</span>
+                        <div className="overflow-x-auto rounded-lg border border-outline-variant/30 bg-surface-container-lowest">
+                          <table className="w-full text-left font-code-sm text-code-sm border-collapse">
+                            <thead>
+                              <tr className="bg-surface-container-high text-tertiary border-b border-outline-variant/30">
+                                <th className="p-2">Time</th>
+                                <th className="p-2">Event ID</th>
+                                <th className="p-2">Account</th>
+                                <th className="p-2">Target / Note</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {selectedModule.lab.logs.map((l, i) => (
+                                <tr key={i} className="border-b border-outline-variant/10 text-on-surface">
+                                  <td className="p-2">{l.time}</td>
+                                  <td className="p-2 font-bold text-tertiary">{l.id}</td>
+                                  <td className="p-2 font-bold text-primary">{l.account}</td>
+                                  <td className="p-2 font-mono text-outline">{l.note || l.object || l.service}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Lab Instructions Footer */}
+                    <div className="p-3 rounded-lg bg-surface-container-high border-l-4 border-primary font-body-sm text-body-sm text-on-surface">
+                      <strong className="text-primary">TASK INSTRUCTIONS:</strong>
+                      <p className="m-0 whitespace-pre-line pt-1 text-on-surface-variant font-code-sm text-code-sm">
+                        {selectedModule.lab.taskInstructions}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 4: CTF CHALLENGE */}
+                {activeTab === 'challenge' && selectedModule.challenge && (
+                  <div className="flex flex-col gap-6">
+                    <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3">
+                      <h3 className="font-headline-md text-headline-md text-secondary flex items-center gap-2">
+                        <span className="material-symbols-outlined text-xl">flag</span>
+                        Module CTF Challenge &amp; Flag Submission
+                      </h3>
+                      <span className="px-3 py-1 rounded-full bg-secondary/10 text-secondary font-code-sm text-code-sm font-bold border border-secondary/20">
+                        REWARD: +{selectedModule.challenge.points} XP
+                      </span>
+                    </div>
+
+                    <div className="p-4 rounded-lg bg-surface-container-lowest border-l-4 border-secondary flex flex-col gap-1">
+                      <span className="font-label-sm text-label-sm text-secondary uppercase tracking-wider font-semibold">
+                        OBJECTIVE / QUESTION:
+                      </span>
+                      <p className="font-title-sm text-title-sm text-on-surface font-semibold m-0 leading-relaxed">
+                        {selectedModule.challenge.question}
+                      </p>
+                    </div>
+
+                    {/* Challenge Status banner */}
+                    {challengeStatus === 'success' && (
+                      <div className="p-4 rounded-lg bg-secondary/15 border border-secondary text-secondary flex items-center gap-3">
+                        <span className="material-symbols-outlined text-2xl">check_circle</span>
+                        <div>
+                          <strong className="font-title-sm text-title-sm">FLAG VERIFIED! CHALLENGE SOLVED! (+{selectedModule.challenge.points} XP)</strong>
+                          <p className="m-0 font-body-sm text-body-sm">Your defense telemetry analysis is correct. Progress has been saved.</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {challengeStatus === 'error' && (
+                      <div className="p-3 rounded-lg bg-error-container/20 border border-error text-error flex items-center gap-2">
+                        <span className="material-symbols-outlined text-xl">error</span>
+                        <span className="font-body-sm text-body-sm font-semibold">INCORRECT FLAG OR TARGET KEY. Review the lab findings and try again!</span>
+                      </div>
+                    )}
+
+                    {/* Form */}
+                    <form onSubmit={handleFlagSubmit} className="flex flex-col sm:flex-row gap-3">
                       <input
                         type="text"
-                        value={splunkQuery}
-                        onChange={(e) => setSplunkQuery(e.target.value)}
-                        style={{
-                          flex: 1,
-                          padding: '10px 14px',
-                          background: '#010309',
-                          border: '1px solid var(--accent-cyan)',
-                          borderRadius: '6px',
-                          color: '#fff',
-                          fontFamily: 'var(--font-mono)',
-                          fontSize: '0.88rem',
-                          outline: 'none'
-                        }}
+                        value={flagInput}
+                        onChange={(e) => setFlagInput(e.target.value)}
+                        disabled={completedChallenges[selectedModule.id]}
+                        placeholder="Enter flag format: flag{...} or target keyword"
+                        className="flex-1 px-4 py-2.5 rounded-lg bg-surface-container-lowest border border-outline-variant/40 text-on-surface font-code-md text-code-md focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
                       />
-                      <button className="hack-btn" style={{ padding: '10px 20px' }}>
-                        Run Query
+                      <button
+                        type="submit"
+                        disabled={completedChallenges[selectedModule.id]}
+                        className="px-6 py-2.5 rounded-lg bg-secondary hover:bg-secondary-container text-on-secondary font-title-sm text-body-md font-bold transition-all disabled:opacity-50 shadow-sm"
+                      >
+                        {completedChallenges[selectedModule.id] ? 'Challenge Solved' : 'Submit Flag'}
                       </button>
+                    </form>
+
+                    {/* Hint */}
+                    <div className="border-t border-outline-variant/20 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowHint(!showHint)}
+                        className="text-primary hover:underline font-code-sm text-code-sm flex items-center gap-1"
+                      >
+                        <span className="material-symbols-outlined text-base">help</span>
+                        {showHint ? 'Hide Hint' : 'Need a Hint?'}
+                      </button>
+                      {showHint && (
+                        <div className="mt-2 p-3 rounded bg-primary/10 border border-primary/30 text-on-surface font-body-sm text-body-sm">
+                          💡 <strong>HINT:</strong> {selectedModule.challenge.hint}
+                        </div>
+                      )}
                     </div>
                   </div>
+                )}
 
-                  <div style={{ overflowX: 'auto', background: '#020308', borderRadius: '6px', border: '1px solid var(--glass-border)' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', fontFamily: 'var(--font-mono)' }}>
-                      <thead>
-                        <tr style={{ background: '#090e1a', color: 'var(--accent-cyan)', borderBottom: '1px solid var(--glass-border)' }}>
-                          <th style={{ padding: '8px 12px', textAlign: 'left' }}>_time</th>
-                          <th style={{ padding: '8px 12px', textAlign: 'left' }}>EventCode</th>
-                          <th style={{ padding: '8px 12px', textAlign: 'left' }}>User</th>
-                          <th style={{ padding: '8px 12px', textAlign: 'left' }}>Src_IP</th>
-                          <th style={{ padding: '8px 12px', textAlign: 'left' }}>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {activeModule.lab.dataset.map((row, rIdx) => (
-                          <tr key={rIdx} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', color: row.eventCode === 4624 ? 'var(--accent-green)' : 'var(--text-secondary)' }}>
-                            <td style={{ padding: '8px 12px' }}>{row._time}</td>
-                            <td style={{ padding: '8px 12px', fontWeight: 'bold' }}>{row.eventCode}</td>
-                            <td style={{ padding: '8px 12px' }}>{row.user}</td>
-                            <td style={{ padding: '8px 12px' }}>{row.src_ip}</td>
-                            <td style={{ padding: '8px 12px', fontWeight: 'bold' }}>{row.action}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* LAB ENVIRONMENT 5: YARA VALIDATOR (Module 5) */}
-              {activeModule.lab.type === 'yara-validator-sim' && (
-                <div>
-                  <h4 style={{ color: 'var(--accent-cyan)', fontSize: '0.9rem', marginBottom: '8px' }}>
-                    EXTRACTED PROCESS MEMORY STRINGS:
-                  </h4>
-                  <div style={{ background: '#02040a', border: '1px solid var(--glass-border)', padding: '16px', borderRadius: '6px', fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#e2e8f0', marginBottom: '20px' }}>
-                    {activeModule.lab.memoryDumpStrings.map((str, idx) => (
-                      <div key={idx} style={{ padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                        <span style={{ color: 'var(--text-secondary)', marginRight: '16px' }}>[{idx.toString().padStart(2, '0')}]</span>
-                        <span style={{ color: str.includes('\\pipe\\') ? 'var(--accent-red)' : 'inherit' }}>{str}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* LAB ENVIRONMENT 6: EMAIL HEADER INSPECTOR (Module 6) */}
-              {activeModule.lab.type === 'email-header-sim' && (
-                <div>
-                  <h4 style={{ color: 'var(--accent-cyan)', fontSize: '0.9rem', marginBottom: '8px' }}>
-                    RAW RFC 5322 EMAIL HEADERS:
-                  </h4>
-                  <pre style={{ background: '#02040a', border: '1px solid var(--glass-border)', padding: '16px', borderRadius: '6px', fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: '#67e8f9', whiteSpace: 'pre-wrap', marginBottom: '20px' }}>
-                    {activeModule.lab.rawHeaders}
-                  </pre>
-                </div>
-              )}
-
-              {/* Task Guide footer */}
-              <div style={{ padding: '14px 18px', background: 'rgba(0, 255, 65, 0.05)', border: '1px solid var(--accent-green)', borderRadius: '6px', fontSize: '0.88rem' }}>
-                <strong style={{ color: 'var(--accent-green)' }}>LAB INSTRUCTIONS:</strong>
-                <pre style={{ margin: '6px 0 0 0', background: 'transparent', padding: 0, color: 'var(--text-primary)', fontFamily: 'var(--font-sans)', whiteSpace: 'pre-line' }}>
-                  {activeModule.lab.taskInstructions}
-                </pre>
               </div>
             </motion.div>
-          )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-          {/* TAB 4: CTF CHALLENGE & FLAG SUBMISSION */}
-          {activeTab === 'challenge' && (
-            <motion.div
-              key={`challenge-${activeModule.id}`}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="glass-panel"
-              style={{ padding: '32px' }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
-                <h3 className="text-glow-green" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Flag size={22} /> Module Challenge & Flag Submission
-                </h3>
-                <span style={{ padding: '4px 12px', borderRadius: '20px', background: 'rgba(0, 255, 65, 0.1)', border: '1px solid var(--accent-green)', color: 'var(--accent-green)', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}>
-                  REWARD: +{activeModule.challenge.points} XP
-                </span>
-              </div>
-
-              <div style={{ padding: '18px 20px', background: 'rgba(0,0,0,0.5)', borderLeft: '3px solid var(--accent-cyan)', borderRadius: '6px', marginBottom: '24px' }}>
-                <div style={{ color: 'var(--accent-cyan)', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', marginBottom: '4px' }}>
-                  QUESTION // OBJECTIVE:
-                </div>
-                <div style={{ fontSize: '1.05rem', color: '#fff', fontWeight: 'bold', lineHeight: '1.5' }}>
-                  {activeModule.challenge.question}
-                </div>
-              </div>
-
-              {/* Status Banner */}
-              <AnimatePresence>
-                {challengeStatus === 'success' && (
-                  <motion.div
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    style={{
-                      padding: '16px 20px',
-                      background: 'rgba(0, 255, 65, 0.15)',
-                      border: '1px solid var(--accent-green)',
-                      borderRadius: '8px',
-                      color: 'var(--accent-green)',
-                      marginBottom: '20px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px'
-                    }}
-                  >
-                    <CheckCircle size={24} />
-                    <div>
-                      <strong style={{ fontSize: '1rem' }}>CHALLENGE SOLVED! (+100 XP)</strong>
-                      <p style={{ margin: 0, fontSize: '0.85rem' }}>Your defense telemetry analysis is spot on. Progress saved!</p>
-                    </div>
-                  </motion.div>
-                )}
-
-                {challengeStatus === 'error' && (
-                  <motion.div
-                    initial={{ x: -10 }}
-                    animate={{ x: [0, -10, 10, -10, 10, 0] }}
-                    style={{
-                      padding: '14px 18px',
-                      background: 'rgba(255, 0, 60, 0.15)',
-                      border: '1px solid var(--accent-red)',
-                      borderRadius: '8px',
-                      color: 'var(--accent-red)',
-                      marginBottom: '20px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px'
-                    }}
-                  >
-                    <AlertTriangle size={20} />
-                    <span>INVALID FLAG OR ANSWER. Review the lab findings and try again!</span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Flag Submission Form */}
-              <form onSubmit={handleFlagSubmit} style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '24px' }}>
-                <input
-                  type="text"
-                  placeholder="Enter flag format: flag{...} or target keyword"
-                  value={flagInput}
-                  onChange={(e) => setFlagInput(e.target.value)}
-                  disabled={completedChallenges[activeModule.id]}
-                  style={{
-                    flex: 1,
-                    minWidth: '280px',
-                    padding: '12px 16px',
-                    background: 'rgba(0,0,0,0.6)',
-                    border: '1px solid var(--glass-border)',
-                    borderRadius: '6px',
-                    color: '#fff',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.95rem',
-                    outline: 'none'
-                  }}
-                />
-                <button
-                  type="submit"
-                  disabled={completedChallenges[activeModule.id]}
-                  className="hack-btn"
-                  style={{
-                    padding: '12px 24px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    background: completedChallenges[activeModule.id] ? 'rgba(0, 255, 65, 0.2)' : undefined,
-                    borderColor: completedChallenges[activeModule.id] ? 'var(--accent-green)' : undefined
-                  }}
-                >
-                  <Send size={16} />
-                  {completedChallenges[activeModule.id] ? 'Solved' : 'Submit Flag'}
-                </button>
-              </form>
-
-              {/* Progressive Hint Drawer */}
-              <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '20px' }}>
-                <button
-                  type="button"
-                  onClick={() => setShowHint(!showHint)}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'var(--accent-cyan)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.85rem'
-                  }}
-                >
-                  <HelpCircle size={16} /> {showHint ? 'Hide Hint' : 'Need a Hint?'}
-                </button>
-
-                {showHint && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    style={{
-                      marginTop: '12px',
-                      padding: '14px',
-                      background: 'rgba(0, 229, 255, 0.05)',
-                      border: '1px dashed var(--accent-cyan)',
-                      borderRadius: '6px',
-                      fontSize: '0.88rem',
-                      color: 'var(--text-primary)'
-                    }}
-                  >
-                    💡 <strong>HINT:</strong> {activeModule.challenge.hint}
-                  </motion.div>
-                )}
-              </div>
-            </motion.div>
-          )}
-
-        </div>
-      </div>
-
-      {/* 3. Certificate of Completion Modal */}
+      {/* 5. CERTIFICATE OF COMPLETION MODAL */}
       <AnimatePresence>
         {showCertificate && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            style={{
-              position: 'fixed',
-              top: 0, left: 0, right: 0, bottom: 0,
-              background: 'rgba(0,0,0,0.85)',
-              backdropFilter: 'blur(8px)',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              zIndex: 10000,
-              padding: '16px'
-            }}
+            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex justify-center items-center p-4"
             onClick={() => setShowCertificate(false)}
           >
             <motion.div
-              initial={{ scale: 0.85, y: 30 }}
+              initial={{ scale: 0.9, y: 30 }}
               animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.85, y: 30 }}
+              exit={{ scale: 0.9, y: 30 }}
               onClick={(e) => e.stopPropagation()}
-              className="glass-panel"
-              style={{
-                maxWidth: '700px',
-                width: '100%',
-                padding: '40px',
-                border: '2px solid var(--accent-green)',
-                boxShadow: '0 0 50px rgba(0, 255, 65, 0.3)',
-                textAlign: 'center',
-                position: 'relative'
-              }}
+              className="bg-surface-container rounded-2xl border-2 border-primary/60 p-6 md:p-10 max-w-2xl w-full text-center relative shadow-[0_0_50px_rgba(76,215,246,0.25)]"
             >
               <button
                 onClick={() => setShowCertificate(false)}
-                style={{ position: 'absolute', top: '16px', right: '16px', background: 'transparent', border: 'none', color: '#fff', fontSize: '24px', cursor: 'pointer' }}
+                className="absolute top-4 right-4 text-outline hover:text-on-surface p-1"
               >
-                &times;
+                <span className="material-symbols-outlined text-2xl">close</span>
               </button>
 
-              <div style={{ display: 'inline-flex', padding: '16px', borderRadius: '50%', background: 'rgba(0, 255, 65, 0.1)', border: '2px solid var(--accent-green)', marginBottom: '16px' }}>
-                <Award size={48} color="var(--accent-green)" />
+              <div className="w-16 h-16 rounded-full bg-primary/15 border border-primary/40 flex items-center justify-center text-primary mx-auto mb-4">
+                <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                  military_tech
+                </span>
               </div>
 
-              <h2 className="text-glow-green" style={{ fontSize: '1.8rem', marginBottom: '8px' }}>
-                CERTIFICATE OF COMPLETION
+              <span className="font-label-sm text-label-sm uppercase tracking-widest text-primary font-bold">
+                MOSHII CYBERSOC ACADEMY
+              </span>
+              <h2 className="font-headline-lg text-headline-lg text-on-surface tracking-tight mt-1 mb-2">
+                Certificate of Completion
               </h2>
-              <h4 style={{ color: 'var(--accent-cyan)', fontSize: '1rem', fontWeight: 'normal', marginBottom: '24px' }}>
-                SOC Analyst & Blue Team Defense Pathway
-              </h4>
-
-              <p style={{ color: 'var(--text-secondary)', marginBottom: '8px' }}>This certifies that</p>
-              
-              <div style={{ margin: '0 auto 20px', maxWidth: '360px' }}>
-                <input
-                  type="text"
-                  value={studentName}
-                  onChange={(e) => setStudentName(e.target.value)}
-                  placeholder="Enter your name"
-                  style={{
-                    width: '100%',
-                    textAlign: 'center',
-                    fontSize: '1.4rem',
-                    fontFamily: 'var(--font-heading)',
-                    background: 'transparent',
-                    border: 'none',
-                    borderBottom: '2px solid var(--accent-green)',
-                    color: '#fff',
-                    outline: 'none',
-                    padding: '6px'
-                  }}
-                />
-              </div>
-
-              <p style={{ color: 'var(--text-primary)', maxWidth: '540px', margin: '0 auto 24px', lineHeight: '1.6', fontSize: '0.9rem' }}>
-                Has demonstrated proficiency in Alert Triage, Network Traffic Deep Packet Inspection, Windows Sysmon Hunting, SIEM Detection Engineering, MITRE ATT&CK Mapping, and Incident Response Playbooks.
+              <p className="font-body-sm text-body-sm text-secondary mb-6 font-semibold">
+                Certified SOC Analyst (CSA Tier 2) Practical Cyber Defense
               </p>
 
-              <div style={{ display: 'flex', justifyContent: 'space-around', borderTop: '1px solid var(--glass-border)', paddingTop: '20px', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
+              <p className="font-body-sm text-body-sm text-on-surface-variant mb-2">
+                This credential is officially conferred upon:
+              </p>
+
+              <input
+                type="text"
+                value={studentName}
+                onChange={(e) => setStudentName(e.target.value)}
+                className="font-headline-md text-headline-md text-center text-primary bg-transparent border-b-2 border-primary/40 focus:border-primary focus:outline-none w-full max-w-sm mx-auto mb-6 py-1"
+              />
+
+              <p className="font-body-sm text-body-sm text-on-surface-variant max-w-lg mx-auto leading-relaxed mb-8">
+                For demonstrating end-to-end operational proficiency in SIEM Alert Triage, Deep Packet Forensics, Sysmon Threat Hunting, SPL Detection Engineering, and Incident Response Containment.
+              </p>
+
+              <div className="grid grid-cols-3 gap-2 border-t border-outline-variant/30 pt-6 font-code-sm text-code-sm text-outline">
                 <div>
-                  <span>INSTRUCTOR</span>
-                  <div style={{ color: '#fff', fontWeight: 'bold' }}>Mohammed Moshii (CSA)</div>
+                  <span className="block text-xs uppercase text-on-surface-variant">INSTRUCTOR</span>
+                  <strong className="text-on-surface">Mohammed Moshii</strong>
+                  <span className="block text-xs text-secondary">Lead Cyber Analyst</span>
                 </div>
                 <div>
-                  <span>ISSUED BY</span>
-                  <div style={{ color: 'var(--accent-green)', fontWeight: 'bold' }}>Moshii Cyber Defense Lab</div>
+                  <span className="block text-xs uppercase text-on-surface-variant">CURRICULUM</span>
+                  <strong className="text-on-surface">8 Enterprise Modules</strong>
+                  <span className="block text-xs text-primary">24 CEUs Accredited</span>
                 </div>
                 <div>
-                  <span>CREDENTIAL ID</span>
-                  <div style={{ color: 'var(--accent-cyan)' }}>SOC-{Math.floor(100000 + Math.random() * 900000)}</div>
+                  <span className="block text-xs uppercase text-on-surface-variant">VERIFICATION</span>
+                  <strong className="text-on-surface font-mono">SOC-CSA-2026</strong>
+                  <span className="block text-xs text-secondary">VERIFIED ON CHAIN</span>
                 </div>
               </div>
             </motion.div>

