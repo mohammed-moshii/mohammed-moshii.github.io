@@ -178,8 +178,8 @@ const SocCourse = () => {
                 </span>
               </div>
               <div className="flex flex-col">
-                <span className="font-title-sm text-title-sm text-on-surface tracking-tight leading-none">
-                  CyberSOC
+                <span className="font-title-sm text-title-sm text-on-surface tracking-tight leading-none font-bold">
+                  SOC ANALYST COURSE
                 </span>
                 <span className="font-label-sm text-label-sm text-primary tracking-widest uppercase">
                   Tier 1 &amp; 2 Analyst
@@ -378,142 +378,144 @@ const SocCourse = () => {
           <div className="flex flex-col w-full">
             <div className="w-full px-space-md lg:px-margin-lg py-space-lg flex flex-col gap-space-xl">
               
-              {/* HERO / COURSE MASTER OVERVIEW BANNER */}
-              <div className="relative w-full rounded-xl bg-surface-container-low p-space-lg lg:p-margin-lg overflow-hidden shadow-xl border border-outline-variant/30">
+              {/* HERO / COURSE MASTER OVERVIEW BANNER - 1:1 MATCH TO NEW DESIGN */}
+              <div className="relative w-full rounded-2xl bg-gradient-to-br from-[#0c162d] via-[#091124] to-[#060b17] p-6 sm:p-8 lg:p-10 overflow-hidden shadow-2xl border border-outline-variant/30">
                 {/* Ambient Cyber Glows */}
                 <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
                 <div className="absolute -bottom-24 -left-12 w-80 h-80 bg-secondary/10 rounded-full blur-3xl pointer-events-none"></div>
 
-                <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-lg">
-                  {/* Left: Course Identifier & Badges */}
-                  <div className="flex flex-col gap-space-sm max-w-3xl">
-                    <div className="flex flex-wrap items-center gap-space-sm">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-highest text-primary font-label-sm text-label-sm uppercase tracking-widest shadow-inner border border-primary/20">
-                        <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                        Tier 1 / Tier 2 Ready
-                      </span>
-                      <span className="px-2.5 py-0.5 rounded-full bg-surface-container text-secondary font-label-sm text-label-sm tracking-wider border border-secondary/20">
-                        24 CEUs Accredited
-                      </span>
-                      <span className="px-2.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm tracking-wider border border-outline-variant/30">
-                        MITRE ATT&CK® v14.1 Aligned
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-space-md pt-space-xs">
-                      <div className="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center text-primary shadow-sm shrink-0 border border-primary/30">
-                        <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
-                          security
+                <div className="relative z-10 flex flex-col justify-between">
+                  {/* Left: Identifier, Title, Description, and Badges */}
+                  <div className="flex flex-col gap-4 max-w-3xl">
+                    {/* Shield Icon + Title */}
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-2xl bg-surface-container-high/60 flex items-center justify-center text-primary shadow-[0_0_20px_rgba(76,215,246,0.3)] shrink-0 border border-primary/40 backdrop-blur-sm">
+                        <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                          shield
                         </span>
                       </div>
-                      <div>
-                        <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight">
-                          SOC Analyst Operations &amp; Threat Hunting Masterclass
-                        </h1>
-                        <p className="font-body-md text-body-md text-on-surface-variant pt-0.5">
-                          Comprehensive practitioner curriculum spanning telemetry ingest, packet forensics, SIEM detection engineering, and full-spectrum incident response.
-                        </p>
-                      </div>
+                      <h1 className="font-headline-lg text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-wider text-white uppercase font-sans">
+                        SOC ANALYST COURSE
+                      </h1>
                     </div>
 
-                    {/* High-level specs line */}
-                    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-space-xs text-on-surface-variant font-code-sm text-code-sm">
-                      <span className="flex items-center gap-1.5 text-on-surface">
-                        <span className="material-symbols-outlined text-primary text-base">view_carousel</span> 8 Modules
+                    {/* Description */}
+                    <p className="font-body-md text-slate-300 text-sm sm:text-base leading-relaxed max-w-2xl font-normal">
+                      Comprehensive practitioner curriculum spanning telemetry ingest, packet forensics, SIEM detection engineering, and full-spectrum Incident response.
+                    </p>
+
+                    {/* 4 Feature Badges exactly as in image */}
+                    <div className="flex flex-wrap items-center gap-x-6 gap-y-3 pt-2 font-code-sm text-code-sm">
+                      <span className="flex items-center gap-2 text-white font-medium">
+                        <span className="material-symbols-outlined text-primary text-base">view_carousel</span>
+                        <span>8 Modules</span>
                       </span>
-                      <span className="flex items-center gap-1.5">
-                        <span className="material-symbols-outlined text-outline text-base">slideshow</span> 142 Interactive Slides
+
+                      <span className="flex items-center gap-2 text-slate-300 font-medium">
+                        <span className="material-symbols-outlined text-outline text-base">slideshow</span>
+                        <span>Interactive Slides</span>
                       </span>
-                      <span className="flex items-center gap-1.5">
-                        <span className="material-symbols-outlined text-secondary text-base">terminal</span> 36 Live Fire Cyber Labs
+
+                      <span className="flex items-center gap-2 text-slate-300 font-medium">
+                        <span className="material-symbols-outlined text-secondary text-base">terminal</span>
+                        <span>Live Fire Cyber Labs</span>
                       </span>
-                      <span className="flex items-center gap-1.5">
-                        <span className="material-symbols-outlined text-tertiary text-base">military_tech</span> 4 Capstone Drills
+
+                      <span className="flex items-center gap-2 text-slate-300 font-medium">
+                        <span className="material-symbols-outlined text-tertiary text-base">military_tech</span>
+                        <span>Capstone Drills</span>
                       </span>
                     </div>
                   </div>
 
-                  {/* Right: Progress HUD Card */}
-                  <div className="w-full lg:w-96 p-space-md rounded-xl bg-surface-container flex flex-col gap-space-sm shadow-md border border-outline-variant/30">
-                    <div className="flex items-center justify-between">
-                      <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
-                        Mastery Pipeline
-                      </span>
-                      <span className="font-code-md text-code-md text-primary font-bold">
-                        {progressPercent}% Completed
-                      </span>
-                    </div>
-
-                    {/* Segmented Progress Bar */}
-                    <div className="relative w-full h-2.5 bg-surface-container-lowest rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-secondary via-primary to-primary-container rounded-full transition-all duration-500"
-                        style={{ width: `${progressPercent}%` }}
-                      ></div>
-                    </div>
-
-                    <div className="flex items-center justify-between font-label-sm text-label-sm text-outline">
-                      <span>{completedCount} of 8 Modules Mastered</span>
-                      <span className="text-secondary font-semibold">
-                        {8 - completedCount} Remaining
-                      </span>
-                    </div>
-
-                    {/* Quick Action Button */}
-                    <button
-                      onClick={() => {
-                        const nextMod = SOC_MODULES.find(m => !completedChallenges[m.id]) || SOC_MODULES[3];
-                        setSelectedModule(nextMod);
-                        setActiveTab('lab');
+                  {/* Right: Golden Cursive Signature "moshii" */}
+                  <div className="sm:absolute bottom-6 right-8 lg:bottom-8 lg:right-12 mt-8 sm:mt-0 flex items-end justify-end select-none pointer-events-none">
+                    <span
+                      className="text-4xl sm:text-5xl lg:text-6xl text-[#ffdf7e] tracking-wide"
+                      style={{
+                        fontFamily: "'Great Vibes', 'Dancing Script', cursive",
+                        textShadow: "0 0 15px rgba(255, 223, 126, 0.75), 0 0 35px rgba(255, 190, 50, 0.45)",
+                        transform: "rotate(-3deg)",
+                        display: "inline-block",
                       }}
-                      className="mt-space-xs w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-title-sm text-body-md transition-all shadow-[0_0_16px_rgba(6,182,212,0.3)] hover:shadow-[0_0_24px_rgba(6,182,212,0.5)] font-semibold"
                     >
-                      <span className="material-symbols-outlined text-lg">play_arrow</span>
-                      <span>Resume Lab 4.2: Hunting APT29</span>
-                    </button>
+                      moshii
+                    </span>
                   </div>
                 </div>
+              </div>
 
-                {/* Quick Telemetry Stats Strip */}
-                <div className="mt-space-lg pt-space-md grid grid-cols-2 md:grid-cols-4 gap-space-md">
-                  <div className="flex items-center gap-space-sm p-3 rounded-lg bg-surface-container-lowest/80 backdrop-blur-sm border border-outline-variant/20">
-                    <div className="p-2 rounded bg-surface-container text-primary">
-                      <span className="material-symbols-outlined text-xl">timer</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="font-code-md text-code-md font-bold text-on-surface">64.5 hrs</span>
-                      <span className="font-label-sm text-label-sm text-on-surface-variant">Study Time In-Range</span>
-                    </div>
+              {/* Mastery Progress Bar & Telemetry Stats */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-md">
+                <div className="lg:col-span-5 p-space-md rounded-xl bg-surface-container-low flex flex-col justify-between gap-space-sm border border-outline-variant/30 shadow-md">
+                  <div className="flex items-center justify-between">
+                    <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                      Mastery Pipeline
+                    </span>
+                    <span className="font-code-md text-code-md text-primary font-bold">
+                      {progressPercent}% Completed
+                    </span>
                   </div>
 
-                  <div className="flex items-center gap-space-sm p-3 rounded-lg bg-surface-container-lowest/80 backdrop-blur-sm border border-outline-variant/20">
-                    <div className="p-2 rounded bg-surface-container text-secondary">
-                      <span className="material-symbols-outlined text-xl">fact_check</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="font-code-md text-code-md font-bold text-on-surface">{completedCount * 4 + 6} / 36</span>
-                      <span className="font-label-sm text-label-sm text-on-surface-variant">Hands-on Labs Done</span>
-                    </div>
+                  <div className="relative w-full h-2 bg-surface-container-lowest rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-secondary via-primary to-primary-container rounded-full transition-all duration-500"
+                      style={{ width: `${progressPercent}%` }}
+                    ></div>
                   </div>
 
-                  <div className="flex items-center gap-space-sm p-3 rounded-lg bg-surface-container-lowest/80 backdrop-blur-sm border border-outline-variant/20">
-                    <div className="p-2 rounded bg-surface-container text-tertiary">
-                      <span className="material-symbols-outlined text-xl">target</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="font-code-md text-code-md font-bold text-on-surface">94.2%</span>
-                      <span className="font-label-sm text-label-sm text-on-surface-variant">IoC Triage Accuracy</span>
-                    </div>
+                  <div className="flex items-center justify-between font-label-sm text-label-sm text-outline">
+                    <span>{completedCount} of 8 Modules Mastered</span>
+                    <span className="text-secondary font-semibold">
+                      {8 - completedCount} Remaining
+                    </span>
                   </div>
 
-                  <div className="flex items-center gap-space-sm p-3 rounded-lg bg-surface-container-lowest/80 backdrop-blur-sm border border-outline-variant/20">
-                    <div className="p-2 rounded bg-surface-container text-secondary">
-                      <span className="material-symbols-outlined text-xl">local_fire_department</span>
+                  <button
+                    onClick={() => {
+                      const nextMod = SOC_MODULES.find(m => !completedChallenges[m.id]) || SOC_MODULES[3];
+                      setSelectedModule(nextMod);
+                      setActiveTab('lab');
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-title-sm text-body-sm transition-all shadow-[0_0_12px_rgba(6,182,212,0.25)] font-semibold"
+                  >
+                    <span className="material-symbols-outlined text-base">play_arrow</span>
+                    <span>Resume Active Lab</span>
+                  </button>
+                </div>
+
+                <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-space-sm">
+                  <div className="flex flex-col justify-center p-3 rounded-xl bg-surface-container-low border border-outline-variant/30">
+                    <div className="flex items-center gap-1.5 text-primary mb-1">
+                      <span className="material-symbols-outlined text-lg">timer</span>
+                      <span className="font-label-sm text-xs text-on-surface-variant">Range Time</span>
                     </div>
-                    <div className="flex flex-col">
-                      <span className="font-code-md text-code-md font-bold text-on-surface">14 Days</span>
-                      <span className="font-label-sm text-label-sm text-on-surface-variant">Active Defense Streak</span>
+                    <span className="font-code-md text-code-md font-bold text-on-surface">64.5 hrs</span>
+                  </div>
+
+                  <div className="flex flex-col justify-center p-3 rounded-xl bg-surface-container-low border border-outline-variant/30">
+                    <div className="flex items-center gap-1.5 text-secondary mb-1">
+                      <span className="material-symbols-outlined text-lg">fact_check</span>
+                      <span className="font-label-sm text-xs text-on-surface-variant">Labs Done</span>
                     </div>
+                    <span className="font-code-md text-code-md font-bold text-on-surface">{completedCount * 4 + 6} / 36</span>
+                  </div>
+
+                  <div className="flex flex-col justify-center p-3 rounded-xl bg-surface-container-low border border-outline-variant/30">
+                    <div className="flex items-center gap-1.5 text-tertiary mb-1">
+                      <span className="material-symbols-outlined text-lg">target</span>
+                      <span className="font-label-sm text-xs text-on-surface-variant">IoC Accuracy</span>
+                    </div>
+                    <span className="font-code-md text-code-md font-bold text-on-surface">94.2%</span>
+                  </div>
+
+                  <div className="flex flex-col justify-center p-3 rounded-xl bg-surface-container-low border border-outline-variant/30">
+                    <div className="flex items-center gap-1.5 text-secondary mb-1">
+                      <span className="material-symbols-outlined text-lg">local_fire_department</span>
+                      <span className="font-label-sm text-xs text-on-surface-variant">Defense Streak</span>
+                    </div>
+                    <span className="font-code-md text-code-md font-bold text-on-surface">14 Days</span>
                   </div>
                 </div>
               </div>
