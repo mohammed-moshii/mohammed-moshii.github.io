@@ -829,7 +829,7 @@ const SocCourse = () => {
                 <div className="flex items-center gap-space-sm">
                   <span className="material-symbols-outlined text-secondary text-2xl">verified</span>
                   <span>
-                    Completing all 8 modules unlocks the <strong>Certified SOC Analyst (CSA Tier 2) Practical Cyber Exam</strong> voucher.
+                    Complete all 8 modules to become a qualified <strong>SOC Analyst</strong>.
                   </span>
                 </div>
                 <div className="flex items-center gap-space-md">
