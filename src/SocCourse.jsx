@@ -834,11 +834,13 @@ const SocCourse = () => {
                 </div>
                 <div className="flex items-center gap-space-md">
                   <button
-                    onClick={() => setShowCertificate(true)}
-                    className="text-primary hover:underline font-semibold flex items-center gap-1"
+                    disabled
+                    aria-disabled="true"
+                    className="text-outline/40 cursor-not-allowed font-medium flex items-center gap-1 select-none"
+                    title="Certificate function is currently disabled"
                   >
                     <span>View / Claim Certificate</span>
-                    <span className="material-symbols-outlined text-sm">workspace_premium</span>
+                    <span className="material-symbols-outlined text-sm">lock</span>
                   </button>
                 </div>
               </div>
