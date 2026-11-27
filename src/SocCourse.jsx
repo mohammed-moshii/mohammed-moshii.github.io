@@ -587,49 +587,6 @@ const SocCourse = () => {
                 </div>
               </div>
 
-              {/* TELEMETRY RANGE BAR / VIRTUAL GATEWAY */}
-              <div className="w-full p-space-md rounded-xl bg-surface-container flex flex-col md:flex-row items-center justify-between gap-space-md shadow-sm border border-outline-variant/30">
-                <div className="flex items-center gap-space-md w-full md:w-auto">
-                  <div className="flex items-center gap-2">
-                    <span className="relative flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-secondary"></span>
-                    </span>
-                    <span className="font-title-sm text-title-sm text-on-surface">Cyber Range Lab Gateway</span>
-                  </div>
-                  <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded bg-surface-container-lowest text-on-surface-variant font-code-sm text-code-sm border border-outline-variant/20">
-                    <span className="text-secondary font-semibold">ONLINE</span>
-                    <span>•</span>
-                    <span>us-east-zone-4 (24ms)</span>
-                    <span>•</span>
-                    <span className="text-primary font-mono">10.240.12.8/24</span>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-space-sm w-full md:w-auto justify-end">
-                  <button
-                    onClick={() => { setSelectedModule(SOC_MODULES[0]); setActiveTab('lab'); }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-bright text-on-surface font-code-sm text-code-sm transition-colors border border-outline-variant/30"
-                  >
-                    <span className="material-symbols-outlined text-primary text-base">terminal</span>
-                    <span>Web Terminal</span>
-                  </button>
-                  <button
-                    onClick={() => { setSelectedModule(SOC_MODULES[1]); setActiveTab('lab'); }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-bright text-on-surface font-code-sm text-code-sm transition-colors border border-outline-variant/30"
-                  >
-                    <span className="material-symbols-outlined text-secondary text-base">network_check</span>
-                    <span>Wireshark Hub</span>
-                  </button>
-                  <button
-                    onClick={() => { setSelectedModule(SOC_MODULES[3]); setActiveTab('lab'); }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-highest hover:bg-surface-bright text-primary font-code-sm text-code-sm transition-colors border border-primary/30"
-                  >
-                    <span className="material-symbols-outlined text-base">database</span>
-                    <span>Splunk Instance [Active]</span>
-                  </button>
-                </div>
-              </div>
 
               {/* FILTER PILLS, SEARCH & VIEW CONTROLS */}
               <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-md">
