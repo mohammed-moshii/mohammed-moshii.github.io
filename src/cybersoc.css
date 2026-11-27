@@ -135,3 +135,22 @@
 .font-code-sm { font-family: 'JetBrains Mono', monospace !important; font-size: 11px !important; line-height: 16px !important; font-weight: 400 !important; }
 .font-label-md { font-family: 'JetBrains Mono', monospace !important; font-size: 12px !important; line-height: 16px !important; font-weight: 500 !important; }
 .font-label-sm { font-family: 'JetBrains Mono', monospace !important; font-size: 10px !important; line-height: 14px !important; font-weight: 500 !important; }
+
+/* Neutralize root cyberpunk link glow and heading uppercase rules on SOC UI */
+.soc-page-wrapper a,
+.soc-page-wrapper a:hover {
+  text-shadow: none !important;
+}
+
+.soc-module-card,
+.soc-module-card:hover {
+  color: inherit !important;
+  text-shadow: none !important;
+}
+
+.soc-clean-heading {
+  font-family: 'Inter', sans-serif !important;
+  text-transform: none !important;
+  letter-spacing: -0.01em !important;
+  margin: 0 !important;
+}

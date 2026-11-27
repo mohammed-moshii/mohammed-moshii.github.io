@@ -1,145 +1,138 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom';
 import { SOC_MODULES } from './data/socModulesData';
 import './cybersoc.css';
 
-// Visual theme and cyber vector artwork configuration for all 8 modules
+// Visual theme and cyber vector artwork configuration for all 8 square modules
 const getModuleCoverConfig = (num) => {
   switch (num) {
     case '01':
       return {
-        gradient: 'from-[#0a1e3f] via-[#07152b] to-[#030913]',
+        gradient: 'from-[#0b2347] via-[#07162e] to-[#040a17]',
         accent: '#4cd7f6',
         glow: 'rgba(76, 215, 246, 0.45)',
         icon: 'security',
-        domain: 'SOC CORE',
         pattern: (
-          <svg className="absolute inset-0 w-full h-full opacity-40 pointer-events-none" viewBox="0 0 400 200" fill="none">
-            <circle cx="200" cy="100" r="80" stroke="#4cd7f6" strokeWidth="1" strokeDasharray="4 4" />
-            <circle cx="200" cy="100" r="50" stroke="#4cd7f6" strokeWidth="1.5" />
-            <circle cx="200" cy="100" r="20" fill="#4cd7f6" fillOpacity="0.1" />
-            <line x1="80" y1="100" x2="320" y2="100" stroke="#4cd7f6" strokeWidth="0.75" strokeDasharray="3 3" />
-            <line x1="200" y1="20" x2="200" y2="180" stroke="#4cd7f6" strokeWidth="0.75" strokeDasharray="3 3" />
-            <rect x="140" y="50" width="120" height="100" rx="8" stroke="#4cd7f6" strokeWidth="1" strokeOpacity="0.4" />
+          <svg className="absolute inset-0 w-full h-full opacity-45 pointer-events-none" viewBox="0 0 320 320" preserveAspectRatio="xMidYMid slice" fill="none">
+            <circle cx="160" cy="105" r="95" stroke="#4cd7f6" strokeWidth="1" strokeDasharray="4 4" />
+            <circle cx="160" cy="105" r="65" stroke="#4cd7f6" strokeWidth="1.5" />
+            <circle cx="160" cy="105" r="35" fill="#4cd7f6" fillOpacity="0.08" stroke="#4cd7f6" strokeWidth="1" />
+            <line x1="20" y1="105" x2="300" y2="105" stroke="#4cd7f6" strokeWidth="0.75" strokeDasharray="3 3" />
+            <line x1="160" y1="10" x2="160" y2="210" stroke="#4cd7f6" strokeWidth="0.75" strokeDasharray="3 3" />
+            <rect x="70" y="30" width="180" height="150" rx="12" stroke="#4cd7f6" strokeWidth="1" strokeOpacity="0.35" />
           </svg>
         )
       };
     case '02':
       return {
-        gradient: 'from-[#380e16] via-[#24080e] to-[#0e0205]',
+        gradient: 'from-[#3d0f18] via-[#26080f] to-[#0f0306]',
         accent: '#f87171',
         glow: 'rgba(248, 113, 113, 0.45)',
         icon: 'crisis_alert',
-        domain: 'THREAT INTEL',
         pattern: (
-          <svg className="absolute inset-0 w-full h-full opacity-40 pointer-events-none" viewBox="0 0 400 200" fill="none">
-            <polygon points="200,25 330,175 70,175" stroke="#f87171" strokeWidth="1.5" strokeDasharray="6 4" />
-            <polygon points="200,65 290,165 110,165" stroke="#f87171" strokeWidth="1" />
-            <circle cx="200" cy="100" r="35" stroke="#f87171" strokeWidth="1.5" />
-            <line x1="160" y1="100" x2="240" y2="100" stroke="#f87171" strokeWidth="2" />
-            <line x1="200" y1="60" x2="200" y2="140" stroke="#f87171" strokeWidth="2" />
+          <svg className="absolute inset-0 w-full h-full opacity-45 pointer-events-none" viewBox="0 0 320 320" preserveAspectRatio="xMidYMid slice" fill="none">
+            <polygon points="160,20 285,190 35,190" stroke="#f87171" strokeWidth="1.5" strokeDasharray="6 4" />
+            <polygon points="160,55 245,175 75,175" stroke="#f87171" strokeWidth="1" />
+            <circle cx="160" cy="105" r="42" stroke="#f87171" strokeWidth="1.5" fill="#f87171" fillOpacity="0.06" />
+            <line x1="105" y1="105" x2="215" y2="105" stroke="#f87171" strokeWidth="1.5" />
+            <line x1="160" y1="50" x2="160" y2="160" stroke="#f87171" strokeWidth="1.5" />
           </svg>
         )
       };
     case '03':
       return {
-        gradient: 'from-[#082a1c] via-[#051a11] to-[#020d09]',
+        gradient: 'from-[#092e1f] via-[#051d13] to-[#020d09]',
         accent: '#4edea3',
         glow: 'rgba(78, 222, 163, 0.45)',
         icon: 'receipt_long',
-        domain: 'TELEMETRY',
         pattern: (
-          <svg className="absolute inset-0 w-full h-full opacity-40 pointer-events-none" viewBox="0 0 400 200" fill="none">
-            <path d="M50 40 H350 M50 70 H300 M50 100 H320 M50 130 H280 M50 160 H340" stroke="#4edea3" strokeWidth="1.2" strokeDasharray="8 6" />
-            <rect x="70" y="30" width="80" height="140" rx="6" stroke="#4edea3" strokeWidth="1" strokeOpacity="0.5" />
-            <circle cx="250" cy="100" r="45" stroke="#4edea3" strokeWidth="1.5" fill="#4edea3" fillOpacity="0.05" />
+          <svg className="absolute inset-0 w-full h-full opacity-45 pointer-events-none" viewBox="0 0 320 320" preserveAspectRatio="xMidYMid slice" fill="none">
+            <path d="M25 45 H295 M25 75 H260 M25 105 H280 M25 135 H240 M25 165 H290" stroke="#4edea3" strokeWidth="1.2" strokeDasharray="8 6" />
+            <rect x="45" y="25" width="90" height="160" rx="8" stroke="#4edea3" strokeWidth="1" strokeOpacity="0.45" />
+            <circle cx="215" cy="105" r="52" stroke="#4edea3" strokeWidth="1.5" fill="#4edea3" fillOpacity="0.06" />
+            <circle cx="215" cy="105" r="24" stroke="#4edea3" strokeWidth="1" strokeDasharray="3 3" />
           </svg>
         )
       };
     case '04':
       return {
-        gradient: 'from-[#08233d] via-[#051729] to-[#020b14]',
+        gradient: 'from-[#092642] via-[#05182b] to-[#020b14]',
         accent: '#38bdf8',
         glow: 'rgba(56, 189, 248, 0.45)',
         icon: 'travel_explore',
-        domain: 'SIEM & TRIAGE',
         pattern: (
-          <svg className="absolute inset-0 w-full h-full opacity-40 pointer-events-none" viewBox="0 0 400 200" fill="none">
-            <circle cx="200" cy="100" r="75" stroke="#38bdf8" strokeWidth="1" />
-            <circle cx="200" cy="100" r="50" stroke="#38bdf8" strokeWidth="1.5" />
-            <circle cx="200" cy="100" r="25" stroke="#38bdf8" strokeWidth="1" />
-            <path d="M200 100 L260 40" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" />
-            <circle cx="260" cy="40" r="4" fill="#38bdf8" />
-            <circle cx="150" cy="70" r="3" fill="#38bdf8" />
-            <circle cx="230" cy="140" r="3" fill="#38bdf8" />
+          <svg className="absolute inset-0 w-full h-full opacity-45 pointer-events-none" viewBox="0 0 320 320" preserveAspectRatio="xMidYMid slice" fill="none">
+            <circle cx="160" cy="105" r="85" stroke="#38bdf8" strokeWidth="1" />
+            <circle cx="160" cy="105" r="56" stroke="#38bdf8" strokeWidth="1.5" />
+            <circle cx="160" cy="105" r="28" stroke="#38bdf8" strokeWidth="1" />
+            <path d="M160 105 L228 38" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" />
+            <circle cx="228" cy="38" r="5" fill="#38bdf8" />
+            <circle cx="105" cy="68" r="3.5" fill="#38bdf8" />
+            <circle cx="205" cy="148" r="3.5" fill="#38bdf8" />
           </svg>
         )
       };
     case '05':
       return {
-        gradient: 'from-[#24103c] via-[#160a26] to-[#0a0412]',
+        gradient: 'from-[#281242] via-[#170a28] to-[#0a0412]',
         accent: '#c084fc',
         glow: 'rgba(192, 132, 252, 0.45)',
         icon: 'manage_search',
-        domain: 'THREAT HUNTING',
         pattern: (
-          <svg className="absolute inset-0 w-full h-full opacity-40 pointer-events-none" viewBox="0 0 400 200" fill="none">
-            <circle cx="200" cy="100" r="60" stroke="#c084fc" strokeWidth="1.5" />
-            <path d="M120 100 H180 M220 100 H280 M200 40 V80 M200 120 V160" stroke="#c084fc" strokeWidth="2" />
-            <rect x="160" y="60" width="80" height="80" rx="8" stroke="#c084fc" strokeWidth="1" strokeDasharray="4 4" />
+          <svg className="absolute inset-0 w-full h-full opacity-45 pointer-events-none" viewBox="0 0 320 320" preserveAspectRatio="xMidYMid slice" fill="none">
+            <circle cx="160" cy="105" r="68" stroke="#c084fc" strokeWidth="1.5" />
+            <path d="M70 105 H135 M185 105 H250 M160 30 V80 M160 130 V180" stroke="#c084fc" strokeWidth="2" />
+            <rect x="115" y="60" width="90" height="90" rx="10" stroke="#c084fc" strokeWidth="1" strokeDasharray="4 4" />
+            <circle cx="160" cy="105" r="95" stroke="#c084fc" strokeWidth="0.75" strokeDasharray="2 6" />
           </svg>
         )
       };
     case '06':
       return {
-        gradient: 'from-[#381905] via-[#230f03] to-[#0f0601]',
+        gradient: 'from-[#3d1c06] via-[#261003] to-[#0f0601]',
         accent: '#fb923c',
         glow: 'rgba(251, 146, 60, 0.45)',
         icon: 'emergency',
-        domain: 'INCIDENT RESPONSE',
         pattern: (
-          <svg className="absolute inset-0 w-full h-full opacity-40 pointer-events-none" viewBox="0 0 400 200" fill="none">
-            <polygon points="200,30 260,65 260,135 200,170 140,135 140,65" stroke="#fb923c" strokeWidth="1.8" />
-            <polygon points="200,55 240,78 240,122 200,145 160,122 160,78" stroke="#fb923c" strokeWidth="1" strokeDasharray="4 4" />
-            <line x1="100" y1="100" x2="300" y2="100" stroke="#fb923c" strokeWidth="1" strokeDasharray="6 6" />
+          <svg className="absolute inset-0 w-full h-full opacity-45 pointer-events-none" viewBox="0 0 320 320" preserveAspectRatio="xMidYMid slice" fill="none">
+            <polygon points="160,25 232,65 232,145 160,185 88,145 88,65" stroke="#fb923c" strokeWidth="1.8" />
+            <polygon points="160,52 208,79 208,131 160,158 112,131 112,79" stroke="#fb923c" strokeWidth="1" strokeDasharray="4 4" />
+            <line x1="40" y1="105" x2="280" y2="105" stroke="#fb923c" strokeWidth="1" strokeDasharray="6 6" />
           </svg>
         )
       };
     case '07':
       return {
-        gradient: 'from-[#300d33] via-[#1e0720] to-[#0c020d]',
+        gradient: 'from-[#360e38] via-[#200822] to-[#0c020d]',
         accent: '#f472b6',
         glow: 'rgba(244, 114, 182, 0.45)',
         icon: 'biotech',
-        domain: 'MALWARE FORENSICS',
         pattern: (
-          <svg className="absolute inset-0 w-full h-full opacity-40 pointer-events-none" viewBox="0 0 400 200" fill="none">
-            <rect x="120" y="40" width="160" height="120" rx="10" stroke="#f472b6" strokeWidth="1.5" />
-            <circle cx="160" cy="80" r="15" stroke="#f472b6" strokeWidth="1" />
-            <circle cx="240" cy="80" r="15" stroke="#f472b6" strokeWidth="1" />
-            <circle cx="200" cy="130" r="18" stroke="#f472b6" strokeWidth="1.5" fill="#f472b6" fillOpacity="0.1" />
-            <line x1="160" y1="95" x2="190" y2="115" stroke="#f472b6" strokeWidth="1" />
-            <line x1="240" y1="95" x2="210" y2="115" stroke="#f472b6" strokeWidth="1" />
+          <svg className="absolute inset-0 w-full h-full opacity-45 pointer-events-none" viewBox="0 0 320 320" preserveAspectRatio="xMidYMid slice" fill="none">
+            <rect x="75" y="35" width="170" height="140" rx="12" stroke="#f472b6" strokeWidth="1.5" />
+            <circle cx="120" cy="80" r="18" stroke="#f472b6" strokeWidth="1" />
+            <circle cx="200" cy="80" r="18" stroke="#f472b6" strokeWidth="1" />
+            <circle cx="160" cy="135" r="22" stroke="#f472b6" strokeWidth="1.5" fill="#f472b6" fillOpacity="0.1" />
+            <line x1="120" y1="98" x2="148" y2="118" stroke="#f472b6" strokeWidth="1.2" />
+            <line x1="200" y1="98" x2="172" y2="118" stroke="#f472b6" strokeWidth="1.2" />
           </svg>
         )
       };
     case '08':
     default:
       return {
-        gradient: 'from-[#0b2842] via-[#07192a] to-[#020b12]',
+        gradient: 'from-[#0d2d4a] via-[#081b2e] to-[#020b12]',
         accent: '#60a5fa',
         glow: 'rgba(96, 165, 250, 0.45)',
         icon: 'cloud_done',
-        domain: 'CLOUD DEFENSE',
         pattern: (
-          <svg className="absolute inset-0 w-full h-full opacity-40 pointer-events-none" viewBox="0 0 400 200" fill="none">
-            <ellipse cx="200" cy="100" rx="90" ry="40" stroke="#60a5fa" strokeWidth="1.5" strokeDasharray="6 4" />
-            <circle cx="140" cy="90" r="25" stroke="#60a5fa" strokeWidth="1.2" />
-            <circle cx="200" cy="75" r="35" stroke="#60a5fa" strokeWidth="1.5" />
-            <circle cx="260" cy="95" r="28" stroke="#60a5fa" strokeWidth="1.2" />
-            <circle cx="110" cy="100" r="4" fill="#60a5fa" />
-            <circle cx="290" cy="100" r="4" fill="#60a5fa" />
+          <svg className="absolute inset-0 w-full h-full opacity-45 pointer-events-none" viewBox="0 0 320 320" preserveAspectRatio="xMidYMid slice" fill="none">
+            <ellipse cx="160" cy="105" rx="100" ry="48" stroke="#60a5fa" strokeWidth="1.5" strokeDasharray="6 4" />
+            <circle cx="98" cy="95" r="28" stroke="#60a5fa" strokeWidth="1.2" />
+            <circle cx="160" cy="78" r="38" stroke="#60a5fa" strokeWidth="1.5" />
+            <circle cx="222" cy="98" r="30" stroke="#60a5fa" strokeWidth="1.2" />
+            <circle cx="60" cy="105" r="4.5" fill="#60a5fa" />
+            <circle cx="260" cy="105" r="4.5" fill="#60a5fa" />
           </svg>
         )
       };
@@ -148,7 +141,11 @@ const getModuleCoverConfig = (num) => {
 
 const SocCourse = () => {
   const { moduleId } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  const tabParam = searchParams.get('tab');
+  const validInitialTab = ['slides', 'theory', 'lab', 'challenge'].includes(tabParam) ? tabParam : 'slides';
 
   // Search & Filter state
   const [currentFilter, setCurrentFilter] = useState('all');
@@ -156,11 +153,12 @@ const SocCourse = () => {
   const [viewLayout, setViewLayout] = useState('grid'); // 'grid' | 'syllabus'
   const [activeSidebarTrack, setActiveSidebarTrack] = useState('modules');
 
-  // Selected module for modal/drawer study workspace
-  const [selectedModule, setSelectedModule] = useState(null);
-  const [activeTab, setActiveTab] = useState('slides'); // 'slides' | 'theory' | 'lab' | 'challenge'
+  // Module workspace state (full-screen tab when moduleId is present)
+  const [activeTab, setActiveTab] = useState(validInitialTab); // 'slides' | 'theory' | 'lab' | 'challenge'
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [copiedCode, setCopiedCode] = useState(null);
+  const [isWorkspaceSidebarOpen, setIsWorkspaceSidebarOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Persistence of completed challenges
   const [completedChallenges, setCompletedChallenges] = useState(() => {
@@ -187,8 +185,6 @@ const SocCourse = () => {
   const [flagInput, setFlagInput] = useState('');
   const [challengeStatus, setChallengeStatus] = useState(null); // 'success' | 'error' | null
   const [showHint, setShowHint] = useState(false);
-  const [showCertificate, setShowCertificate] = useState(false);
-  const [studentName, setStudentName] = useState('Mohammed Moshii');
 
   // Lab Simulators State
   const [selectedAlert, setSelectedAlert] = useState(null);
@@ -196,6 +192,33 @@ const SocCourse = () => {
   const [packetFilter, setPacketFilter] = useState('ALL');
   const [splunkQuery, setSplunkQuery] = useState('index=botsv3 sourcetype="stream:http" http_method="POST"');
   const [splunkResults, setSplunkResults] = useState(null);
+
+  // Reset workspace state during render when navigating to a different module or tab query
+  const currentRouteKey = `${moduleId || ''}:${tabParam || ''}`;
+  const [trackedRouteKey, setTrackedRouteKey] = useState(currentRouteKey);
+  if (currentRouteKey !== trackedRouteKey) {
+    setTrackedRouteKey(currentRouteKey);
+    setActiveTab(validInitialTab);
+    setCurrentSlideIndex(0);
+    setFlagInput('');
+    setChallengeStatus(null);
+    setShowHint(false);
+    setSelectedAlert(null);
+    setB64Decoded('');
+    setSplunkResults(null);
+    setIsWorkspaceSidebarOpen(false);
+  }
+
+  // Resolve full-screen route module from URL parameter
+  const routeModule = useMemo(() => {
+    if (!moduleId) return null;
+    return SOC_MODULES.find(m => m.slug === moduleId || m.id === moduleId) || null;
+  }, [moduleId]);
+
+  const routeModuleIndex = useMemo(() => {
+    if (!routeModule) return -1;
+    return SOC_MODULES.findIndex(m => m.id === routeModule.id);
+  }, [routeModule]);
 
   // Save progress
   useEffect(() => {
@@ -206,28 +229,43 @@ const SocCourse = () => {
     }
   }, [completedChallenges]);
 
-  // Open module from URL params if present
+  // Sync browser tab title
   useEffect(() => {
-    if (moduleId) {
-      const found = SOC_MODULES.find(m => m.slug === moduleId || m.id === moduleId);
-      if (found) {
-        setSelectedModule(found);
-      }
+    if (routeModule) {
+      document.title = `Module ${routeModule.moduleNumber}: ${routeModule.title} | SOC Analyst Course`;
+    } else {
+      document.title = 'SOC Analyst Course | Mohammed Moshii';
     }
-  }, [moduleId]);
+  }, [routeModule]);
 
-  // Reset slide index & challenge state on module change
+  // Fullscreen listener
   useEffect(() => {
-    if (selectedModule) {
-      setCurrentSlideIndex(0);
-      setFlagInput('');
-      setChallengeStatus(null);
-      setShowHint(false);
-      setSelectedAlert(null);
-      setB64Decoded('');
-      setSplunkResults(null);
+    const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
+
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch {
+      // Browser policy prevented native fullscreen toggle
     }
-  }, [selectedModule?.id]);
+  };
+
+  // Slide controls (declared before keyboard listener)
+  const totalSlides = routeModule?.slides?.length || 0;
+  const nextSlide = useCallback(() => {
+    setCurrentSlideIndex(prev => (prev < totalSlides - 1 ? prev + 1 : prev));
+  }, [totalSlides]);
+
+  const prevSlide = useCallback(() => {
+    setCurrentSlideIndex(prev => (prev > 0 ? prev - 1 : prev));
+  }, []);
 
   // Keyboard navigation for slides
   useEffect(() => {
@@ -237,13 +275,13 @@ const SocCourse = () => {
         e.preventDefault();
         document.getElementById('module-search')?.focus();
       }
-      if (!selectedModule || activeTab !== 'slides') return;
+      if (!routeModule || activeTab !== 'slides') return;
       if (e.key === 'ArrowRight') nextSlide();
       if (e.key === 'ArrowLeft') prevSlide();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedModule, activeTab, currentSlideIndex]);
+  }, [routeModule, activeTab, nextSlide, prevSlide]);
 
   // Copy helper
   const handleCopy = (text, id) => {
@@ -252,25 +290,16 @@ const SocCourse = () => {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
-  // Slide controls
-  const totalSlides = selectedModule?.slides?.length || 0;
-  const nextSlide = () => {
-    if (currentSlideIndex < totalSlides - 1) setCurrentSlideIndex(prev => prev + 1);
-  };
-  const prevSlide = () => {
-    if (currentSlideIndex > 0) setCurrentSlideIndex(prev => prev - 1);
-  };
-
   // Flag submission
   const handleFlagSubmit = (e) => {
     e.preventDefault();
-    if (!selectedModule) return;
+    if (!routeModule) return;
     const clean = flagInput.trim();
-    if (clean === selectedModule.challenge.flag || clean === selectedModule.challenge.targetKey) {
+    if (clean === routeModule.challenge.flag || clean === routeModule.challenge.targetKey) {
       setChallengeStatus('success');
       setCompletedChallenges(prev => ({
         ...prev,
-        [selectedModule.id]: true
+        [routeModule.id]: true
       }));
     } else {
       setChallengeStatus('error');
@@ -282,7 +311,6 @@ const SocCourse = () => {
   const totalModules = SOC_MODULES.length;
   const completedCount = Object.keys(completedChallenges).filter(k => completedChallenges[k]).length;
   const progressPercent = Math.round((completedCount / totalModules) * 100);
-  const totalXP = 3500 + completedCount * 150;
 
   // Filter modules
   const filteredModules = useMemo(() => {
@@ -303,6 +331,884 @@ const SocCourse = () => {
       return matchesCategory && matchesSearch;
     });
   }, [currentFilter, searchQuery, completedChallenges]);
+
+  // FULL-SCREEN MODULE WORKSPACE VIEW (Opened in New Tab via /soc/:moduleId)
+  if (moduleId) {
+    if (!routeModule) {
+      return (
+        <div className="bg-surface font-body-md text-on-surface min-h-screen w-full flex flex-col items-center justify-center p-6 text-center gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-surface-container-high border border-error/40 flex items-center justify-center text-error">
+            <span className="material-symbols-outlined text-4xl">error_outline</span>
+          </div>
+          <h1 className="soc-clean-heading text-2xl font-bold text-white">Module Not Found</h1>
+          <p className="text-on-surface-variant max-w-md m-0">
+            The requested SOC module could not be found. Return to the main curriculum to browse all 8 modules.
+          </p>
+          <Link
+            to="/soc"
+            className="px-5 py-2.5 rounded-lg bg-primary text-on-primary font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity"
+          >
+            <span className="material-symbols-outlined text-lg">arrow_back</span>
+            <span>Back to SOC Analyst Course</span>
+          </Link>
+        </div>
+      );
+    }
+
+    const cfg = getModuleCoverConfig(routeModule.moduleNumber);
+    const prevModule = routeModuleIndex > 0 ? SOC_MODULES[routeModuleIndex - 1] : null;
+    const nextModule = routeModuleIndex < SOC_MODULES.length - 1 ? SOC_MODULES[routeModuleIndex + 1] : null;
+    const isChallengeSolved = !!completedChallenges[routeModule.id];
+    const moduleSkills = routeModule.skills || routeModule.tags || [];
+
+    return (
+      <div className="bg-surface font-body-md text-on-surface antialiased min-h-screen lg:h-screen w-full flex flex-col lg:overflow-hidden">
+        {/* TOP FULL-SCREEN HEADER */}
+        <header className="h-16 shrink-0 bg-surface-container/95 backdrop-blur-xl border-b border-outline-variant/30 px-4 lg:px-6 flex items-center justify-between gap-3 z-40">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Mobile Sidebar Drawer Toggle */}
+            <button
+              type="button"
+              onClick={() => setIsWorkspaceSidebarOpen(!isWorkspaceSidebarOpen)}
+              aria-label="Toggle Slides and Labs Sidebar"
+              className="lg:hidden p-2 rounded-lg bg-surface-container-high text-on-surface hover:text-primary border border-outline-variant/30 transition-colors"
+            >
+              <span className="material-symbols-outlined text-xl leading-none">
+                {isWorkspaceSidebarOpen ? 'close' : 'menu'}
+              </span>
+            </button>
+
+            {/* Back to Course */}
+            <Link
+              to="/soc"
+              className="px-2.5 py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-bright text-on-surface-variant border border-outline-variant/30 flex items-center gap-1.5 text-xs font-medium shrink-0 transition-colors group"
+              title="Back to SOC Analyst Course Overview"
+            >
+              <span className="material-symbols-outlined text-base text-primary group-hover:-translate-x-0.5 transition-transform">arrow_back</span>
+              <span className="hidden sm:inline text-slate-200">All Modules</span>
+            </Link>
+
+            <div className="h-5 w-px bg-outline-variant/40 hidden sm:block shrink-0"></div>
+
+            {/* Module Title & Badge */}
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div
+                className="hidden sm:flex w-8 h-8 rounded-lg bg-[#060e20] border items-center justify-center shrink-0"
+                style={{ borderColor: `${cfg.accent}55`, color: cfg.accent }}
+              >
+                <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>
+                  {cfg.icon}
+                </span>
+              </div>
+              <span
+                className="px-2 py-0.5 rounded font-mono text-[11px] font-bold tracking-wider uppercase shrink-0 border"
+                style={{
+                  backgroundColor: `${cfg.accent}15`,
+                  borderColor: `${cfg.accent}40`,
+                  color: cfg.accent,
+                }}
+              >
+                MODULE {routeModule.moduleNumber}
+              </span>
+              <h1 className="soc-clean-heading text-sm sm:text-base lg:text-lg font-bold text-white truncate">
+                {routeModule.title}
+              </h1>
+            </div>
+          </div>
+
+          {/* Right Header Controls */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Prev / Next Module Switcher */}
+            <div className="hidden md:flex items-center gap-1 bg-surface-container-low p-1 rounded-lg border border-outline-variant/30">
+              <button
+                type="button"
+                disabled={!prevModule}
+                onClick={() => prevModule && navigate(`/soc/${prevModule.slug}`)}
+                className="px-2 py-1 rounded text-xs font-medium flex items-center gap-1 text-on-surface-variant hover:text-white hover:bg-surface-container-high disabled:opacity-35 disabled:cursor-not-allowed transition-colors"
+                title={prevModule ? `Previous: Module ${prevModule.moduleNumber}` : 'First Module'}
+              >
+                <span className="material-symbols-outlined text-base leading-none">chevron_left</span>
+                <span className="hidden xl:inline">Prev</span>
+              </button>
+              <span className="text-[11px] font-mono text-outline px-1.5">
+                {routeModule.moduleNumber} / {SOC_MODULES.length.toString().padStart(2, '0')}
+              </span>
+              <button
+                type="button"
+                disabled={!nextModule}
+                onClick={() => nextModule && navigate(`/soc/${nextModule.slug}`)}
+                className="px-2 py-1 rounded text-xs font-medium flex items-center gap-1 text-on-surface-variant hover:text-white hover:bg-surface-container-high disabled:opacity-35 disabled:cursor-not-allowed transition-colors"
+                title={nextModule ? `Next: Module ${nextModule.moduleNumber}` : 'Last Module'}
+              >
+                <span className="hidden xl:inline">Next</span>
+                <span className="material-symbols-outlined text-base leading-none">chevron_right</span>
+              </button>
+            </div>
+
+            {isChallengeSolved && (
+              <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary/15 text-secondary border border-secondary/30 font-mono text-[11px] font-bold">
+                <span className="material-symbols-outlined text-sm">check_circle</span>
+                <span>Completed</span>
+              </span>
+            )}
+
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              title={isFullscreen ? 'Exit Full Screen' : 'Enter Full Screen'}
+              className="p-2 rounded-lg bg-surface-container-high hover:bg-surface-bright text-on-surface hover:text-primary border border-outline-variant/30 transition-colors"
+            >
+              <span className="material-symbols-outlined text-xl leading-none">
+                {isFullscreen ? 'fullscreen_exit' : 'fullscreen'}
+              </span>
+            </button>
+          </div>
+        </header>
+
+        {/* FULL-SCREEN BODY: SIDEBAR ("SLIDES AND LABS") + MAIN STAGE */}
+        <div className="flex-1 flex relative overflow-hidden">
+          {/* Mobile Overlay Backdrop */}
+          {isWorkspaceSidebarOpen && (
+            <div
+              className="fixed inset-0 top-16 bg-black/70 backdrop-blur-sm z-30 lg:hidden"
+              onClick={() => setIsWorkspaceSidebarOpen(false)}
+            ></div>
+          )}
+
+          {/* LEFT SIDEBAR: SLIDES AND LABS */}
+          <aside
+            className={`fixed lg:static top-16 bottom-0 left-0 z-30 w-72 xl:w-80 shrink-0 bg-surface-container-low border-r border-outline-variant/30 flex flex-col justify-between overflow-y-auto transition-transform duration-300 ${
+              isWorkspaceSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+            }`}
+          >
+            <div className="p-4 flex flex-col gap-5">
+              {/* Sidebar Heading */}
+              <div className="flex items-center justify-between pb-2 border-b border-outline-variant/25">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cfg.accent }}></span>
+                  <span className="font-mono text-xs font-bold uppercase tracking-widest text-white">
+                    Slides and Labs
+                  </span>
+                </div>
+                <span className="text-[11px] font-mono text-outline">
+                  {routeModule.slides?.length || 0} Slides • 1 Lab
+                </span>
+              </div>
+
+              {/* SECTION 1: SLIDES */}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between px-1">
+                  <span className="flex items-center gap-1.5 text-[11px] font-mono font-bold uppercase tracking-wider text-primary">
+                    <span className="material-symbols-outlined text-base">slideshow</span>
+                    Slides
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-mono text-[10px] font-semibold">
+                    {routeModule.slides?.length || 0} Decks
+                  </span>
+                </div>
+
+                {/* Slide Items List */}
+                <div className="flex flex-col gap-1">
+                  {routeModule.slides?.map((slide, idx) => {
+                    const isActiveSlide = activeTab === 'slides' && currentSlideIndex === idx;
+                    return (
+                      <button
+                        key={slide.id || idx}
+                        type="button"
+                        onClick={() => {
+                          setActiveTab('slides');
+                          setCurrentSlideIndex(idx);
+                          setIsWorkspaceSidebarOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-lg flex items-start gap-2.5 transition-all border ${
+                          isActiveSlide
+                            ? 'bg-primary/15 border-primary/50 text-white shadow-sm'
+                            : 'bg-transparent border-transparent text-on-surface-variant hover:bg-surface-container hover:text-white'
+                        }`}
+                      >
+                        <span
+                          className={`mt-0.5 px-1.5 py-0.5 rounded font-mono text-[10px] font-bold shrink-0 ${
+                            isActiveSlide
+                              ? 'bg-primary text-on-primary'
+                              : 'bg-surface-container-high text-outline'
+                          }`}
+                        >
+                          {(idx + 1).toString().padStart(2, '0')}
+                        </span>
+                        <span className="text-xs font-medium leading-snug line-clamp-2">
+                          {slide.title}
+                        </span>
+                      </button>
+                    );
+                  })}
+
+                  {/* Theory & Cheat Sheet under Slides / Reference */}
+                  {routeModule.theory && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab('theory');
+                        setIsWorkspaceSidebarOpen(false);
+                      }}
+                      className={`mt-1 w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-2.5 transition-all border ${
+                        activeTab === 'theory'
+                          ? 'bg-primary/15 border-primary/50 text-white shadow-sm'
+                          : 'bg-surface-container/40 border-outline-variant/20 text-on-surface-variant hover:bg-surface-container hover:text-white'
+                      }`}
+                    >
+                      <span className={`material-symbols-outlined text-lg ${activeTab === 'theory' ? 'text-primary' : 'text-outline'}`}>
+                        menu_book
+                      </span>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-semibold leading-tight">Theory &amp; Cheat Sheets</span>
+                        <span className="text-[10px] text-outline truncate">Commands &amp; technical guide</span>
+                      </div>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* SECTION 2: LABS */}
+              <div className="flex flex-col gap-2 pt-1 border-t border-outline-variant/20">
+                <div className="flex items-center justify-between px-1 pt-1">
+                  <span className="flex items-center gap-1.5 text-[11px] font-mono font-bold uppercase tracking-wider text-secondary">
+                    <span className="material-symbols-outlined text-base">terminal</span>
+                    Labs
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded bg-secondary/10 text-secondary font-mono text-[10px] font-semibold">
+                    Hands-On
+                  </span>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  {/* Hands-On Simulator Lab */}
+                  {routeModule.lab && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab('lab');
+                        setIsWorkspaceSidebarOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2.5 rounded-lg flex items-start gap-2.5 transition-all border ${
+                        activeTab === 'lab'
+                          ? 'bg-secondary/15 border-secondary/50 text-white shadow-sm'
+                          : 'bg-surface-container/40 border-outline-variant/20 text-on-surface-variant hover:bg-surface-container hover:text-white'
+                      }`}
+                    >
+                      <span className={`material-symbols-outlined text-lg mt-0.5 shrink-0 ${activeTab === 'lab' ? 'text-secondary' : 'text-outline'}`}>
+                        science
+                      </span>
+                      <div className="flex flex-col min-w-0 gap-1">
+                        <span className="text-xs font-semibold leading-snug">
+                          {routeModule.lab.title}
+                        </span>
+                        <span className="w-fit px-1.5 py-0.5 rounded bg-secondary/15 text-secondary font-mono text-[10px] font-semibold">
+                          Interactive Lab
+                        </span>
+                      </div>
+                    </button>
+                  )}
+
+                  {/* CTF Challenge */}
+                  {routeModule.challenge && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab('challenge');
+                        setIsWorkspaceSidebarOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2.5 rounded-lg flex items-start gap-2.5 transition-all border ${
+                        activeTab === 'challenge'
+                          ? 'bg-tertiary/15 border-tertiary/50 text-white shadow-sm'
+                          : 'bg-surface-container/40 border-outline-variant/20 text-on-surface-variant hover:bg-surface-container hover:text-white'
+                      }`}
+                    >
+                      <span className={`material-symbols-outlined text-lg mt-0.5 shrink-0 ${activeTab === 'challenge' ? 'text-tertiary' : 'text-outline'}`}>
+                        flag
+                      </span>
+                      <div className="flex flex-col min-w-0 gap-1">
+                        <span className="text-xs font-semibold leading-snug">
+                          CTF Challenge Lab
+                        </span>
+                        <span className={`w-fit px-1.5 py-0.5 rounded font-mono text-[10px] font-bold ${
+                          isChallengeSolved
+                            ? 'bg-secondary/20 text-secondary'
+                            : 'bg-surface-container-high text-tertiary'
+                        }`}>
+                          {isChallengeSolved ? 'Solved' : `+${routeModule.challenge.points} XP`}
+                        </span>
+                      </div>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Sidebar Bottom Module Skills Card */}
+            <div className="p-4 border-t border-outline-variant/20 bg-surface-container-lowest/60 flex flex-col gap-2">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-outline font-semibold">
+                Module Skills
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {moduleSkills.map((sk, i) => (
+                  <span
+                    key={i}
+                    className="px-2 py-0.5 rounded bg-surface-container text-slate-300 text-[10.5px] font-sans border border-outline-variant/30"
+                  >
+                    {sk}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </aside>
+
+          {/* MAIN FULL-SCREEN CONTENT WORKSPACE */}
+          <main className="flex-1 overflow-y-auto p-5 sm:p-8 lg:p-10 bg-surface">
+            <div className="max-w-5xl mx-auto w-full">
+
+              {/* VIEW 1: PRESENTATION SLIDES */}
+              {activeTab === 'slides' && routeModule.slides && (
+                <div className="flex flex-col justify-between min-h-[calc(100vh-10rem)] bg-surface-container rounded-2xl border border-outline-variant/30 p-6 sm:p-8 lg:p-10 shadow-2xl relative overflow-hidden">
+                  {/* Subtle Top Glow */}
+                  <div
+                    className="absolute -top-24 right-0 w-72 h-72 rounded-full blur-3xl opacity-20 pointer-events-none"
+                    style={{ backgroundColor: cfg.glow }}
+                  ></div>
+
+                  <div className="relative z-10">
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/25 pb-4 mb-6">
+                      <span
+                        className="font-mono text-xs font-bold px-2.5 py-1 rounded border"
+                        style={{
+                          backgroundColor: `${cfg.accent}15`,
+                          borderColor: `${cfg.accent}40`,
+                          color: cfg.accent,
+                        }}
+                      >
+                        SLIDE {currentSlideIndex + 1} OF {routeModule.slides.length}
+                      </span>
+                      <div className="flex gap-1.5">
+                        {routeModule.slides.map((_, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => setCurrentSlideIndex(idx)}
+                            aria-label={`Go to slide ${idx + 1}`}
+                            className={`h-2 rounded-full transition-all ${idx === currentSlideIndex ? 'w-7 bg-primary' : 'w-2 bg-outline-variant/40 hover:bg-outline'}`}
+                          ></button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <h2 className="soc-clean-heading text-2xl sm:text-3xl font-bold text-white mb-2">
+                      {routeModule.slides[currentSlideIndex]?.title}
+                    </h2>
+                    <p className="text-sm sm:text-base text-primary font-medium mb-6 mt-0">
+                      {routeModule.slides[currentSlideIndex]?.subtitle}
+                    </p>
+
+                    <div className="flex flex-col gap-3.5 mb-7">
+                      {routeModule.slides[currentSlideIndex]?.bullets?.map((b, bIdx) => (
+                        <div key={bIdx} className="flex items-start gap-3 p-3 rounded-lg bg-surface-container-low/60 border border-outline-variant/20">
+                          <span className="text-secondary text-lg leading-snug shrink-0">▸</span>
+                          <p className="font-body-md text-body-md text-on-surface leading-relaxed m-0">
+                            {b}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Visual Diagram Box */}
+                    {routeModule.slides[currentSlideIndex]?.diagram && (
+                      <pre className="p-4 sm:p-5 rounded-xl bg-surface-container-lowest text-primary font-code-sm text-code-sm border border-outline-variant/30 overflow-x-auto whitespace-pre mb-6 shadow-inner">
+                        {routeModule.slides[currentSlideIndex].diagram.trim()}
+                      </pre>
+                    )}
+
+                    {/* Key Takeaway */}
+                    {routeModule.slides[currentSlideIndex]?.takeaway && (
+                      <div className="p-4 rounded-xl bg-secondary/10 border-l-4 border-secondary text-on-surface font-body-sm text-body-sm">
+                        <strong className="text-secondary">KEY TAKEAWAY: </strong>
+                        {routeModule.slides[currentSlideIndex].takeaway}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Navigation Buttons Footer */}
+                  <div className="relative z-10 flex items-center justify-between pt-6 border-t border-outline-variant/25 mt-8">
+                    <button
+                      onClick={prevSlide}
+                      disabled={currentSlideIndex === 0}
+                      className="px-4 py-2 rounded-lg bg-surface-container-high hover:bg-surface-bright text-on-surface font-body-sm text-body-sm disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 border border-outline-variant/30 transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-base">chevron_left</span>
+                      Previous Slide
+                    </button>
+                    <span className="font-code-sm text-code-sm text-outline hidden sm:inline">
+                      Use ← / → arrow keys • Slide {currentSlideIndex + 1} / {routeModule.slides.length}
+                    </span>
+                    {currentSlideIndex < routeModule.slides.length - 1 ? (
+                      <button
+                        onClick={nextSlide}
+                        className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-body-sm text-body-sm font-semibold flex items-center gap-1.5 shadow-sm transition-colors"
+                      >
+                        Next Slide
+                        <span className="material-symbols-outlined text-base">chevron_right</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setActiveTab('lab')}
+                        className="px-4 py-2 rounded-lg bg-secondary hover:bg-secondary-container text-on-secondary font-body-sm text-body-sm font-bold flex items-center gap-1.5 shadow-sm transition-colors"
+                      >
+                        Open Hands-On Lab
+                        <span className="material-symbols-outlined text-base">terminal</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* VIEW 2: THEORY & CHEAT SHEETS */}
+              {activeTab === 'theory' && routeModule.theory && (
+                <div className="bg-surface-container rounded-2xl border border-outline-variant/30 p-6 sm:p-8 lg:p-10 shadow-2xl flex flex-col gap-6">
+                  <div>
+                    <h2 className="soc-clean-heading text-2xl font-bold text-primary mb-2 flex items-center gap-2.5">
+                      <span className="material-symbols-outlined text-2xl">menu_book</span>
+                      In-Depth Technical Guide &amp; Cheat Sheet
+                    </h2>
+                    <p className="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                      {routeModule.theory.overview}
+                    </p>
+                  </div>
+
+                  {routeModule.theory.sections?.map((sec, sIdx) => (
+                    <div key={sIdx} className="flex flex-col gap-3">
+                      <h3 className="soc-clean-heading text-base sm:text-lg font-bold text-secondary border-b border-outline-variant/25 pb-2">
+                        {sec.heading}
+                      </h3>
+                      <p className="font-body-md text-body-md text-on-surface leading-relaxed m-0">
+                        {sec.content}
+                      </p>
+
+                      {/* Steps */}
+                      {sec.steps && (
+                        <div className="flex flex-col gap-2">
+                          {sec.steps.map((st, stIdx) => (
+                            <div key={stIdx} className="p-3 rounded-lg bg-surface-container-lowest border-l-2 border-primary text-on-surface font-body-sm text-body-sm">
+                              {st}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Table */}
+                      {sec.table && (
+                        <div className="overflow-x-auto rounded-xl border border-outline-variant/30">
+                          <table className="w-full text-left font-body-sm text-body-sm border-collapse">
+                            <thead>
+                              <tr className="bg-surface-container-lowest text-primary border-b border-outline-variant/30">
+                                {sec.table.headers.map((h, hIdx) => (
+                                  <th key={hIdx} className="p-3 font-semibold font-code-sm">{h}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {sec.table.rows.map((row, rIdx) => (
+                                <tr key={rIdx} className="border-b border-outline-variant/10 hover:bg-surface-container-lowest/50">
+                                  {row.map((c, cIdx) => (
+                                    <td key={cIdx} className="p-3 text-on-surface">{c}</td>
+                                  ))}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+
+                      {/* Code Block with Copy */}
+                      {sec.codeBlock && (
+                        <div className="relative rounded-xl overflow-hidden border border-outline-variant/30 bg-surface-container-lowest">
+                          <div className="flex items-center justify-between px-4 py-2 bg-surface-container-high border-b border-outline-variant/20">
+                            <span className="font-code-sm text-code-sm text-primary">COMMAND REFERENCE</span>
+                            <button
+                              onClick={() => handleCopy(sec.codeBlock, `code-${sIdx}`)}
+                              className="text-outline hover:text-on-surface font-code-sm text-code-sm flex items-center gap-1"
+                            >
+                              {copiedCode === `code-${sIdx}` ? 'Copied!' : 'Copy'}
+                            </button>
+                          </div>
+                          <pre className="p-4 text-on-surface font-code-sm text-code-sm overflow-x-auto m-0">
+                            {sec.codeBlock}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* VIEW 3: HANDS-ON LAB */}
+              {activeTab === 'lab' && routeModule.lab && (
+                <div className="bg-surface-container rounded-2xl border border-outline-variant/30 p-6 sm:p-8 lg:p-10 shadow-2xl flex flex-col gap-6">
+                  <div className="flex flex-wrap items-start justify-between gap-4 border-b border-outline-variant/25 pb-4">
+                    <div>
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-secondary/15 text-secondary font-mono text-[11px] font-bold mb-2">
+                        <span className="material-symbols-outlined text-sm">terminal</span>
+                        HANDS-ON LAB WORKSPACE
+                      </span>
+                      <h2 className="soc-clean-heading text-2xl font-bold text-white">
+                        {routeModule.lab.title}
+                      </h2>
+                      <p className="font-body-md text-body-md text-on-surface-variant pt-2 m-0">
+                        <strong className="text-primary">MISSION:</strong> {routeModule.lab.scenario}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* LAB TYPE 1: ALERT TRIAGE SIM */}
+                  {routeModule.lab.type === 'alert-triage-sim' && (
+                    <div className="flex flex-col gap-4">
+                      <span className="font-label-sm text-label-sm text-outline uppercase tracking-wider">
+                        SIEM ALERT QUEUE: Click alert to inspect
+                      </span>
+                      <div className="grid gap-2.5">
+                        {routeModule.lab.alerts.map(al => (
+                          <div
+                            key={al.id}
+                            onClick={() => setSelectedAlert(al)}
+                            className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
+                              selectedAlert?.id === al.id
+                                ? 'bg-primary/10 border-primary'
+                                : 'bg-surface-container-lowest border-outline-variant/25 hover:border-outline-variant'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className={`px-2.5 py-0.5 rounded font-code-sm text-code-sm font-bold ${
+                                al.severity === 'CRITICAL' ? 'bg-error-container text-error' : al.severity === 'HIGH' ? 'bg-tertiary-container text-tertiary' : 'bg-secondary/20 text-secondary'
+                              }`}>
+                                {al.severity}
+                              </span>
+                              <span className="font-body-sm text-body-sm font-semibold text-on-surface">{al.rule}</span>
+                            </div>
+                            <span className="font-code-sm text-code-sm text-outline">{al.host}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {selectedAlert && (
+                        <div className="p-4 rounded-xl bg-surface-container-lowest border border-primary/40 flex flex-col gap-2">
+                          <span className="font-title-sm text-title-sm text-primary font-semibold">Incident Details: {selectedAlert.id}</span>
+                          <p className="font-code-sm text-code-sm text-on-surface-variant break-all m-0">
+                            {selectedAlert.details}
+                          </p>
+                          <button
+                            onClick={() => {
+                              const b64 = "SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAiaAB0AHQAcAA6AC8ALwAxADkANQAuADIAMAAxAC4AMQAwAC4AMQA0ADoAOAAwADgAMAAvAG0AYQB0AHIAaQB4AC4AcABzADEAIgApAA==";
+                              const binary = atob(b64);
+                              let res = '';
+                              for (let i = 0; i < binary.length; i += 2) res += binary[i];
+                              setB64Decoded(res);
+                            }}
+                            className="mt-2 w-fit px-3.5 py-1.5 rounded-lg bg-primary text-on-primary font-code-sm text-code-sm font-semibold"
+                          >
+                            Auto-Decode Base64 UTF-16LE Payload
+                          </button>
+                          {b64Decoded && (
+                            <pre className="p-3 rounded-lg bg-surface-container-high text-secondary font-code-sm text-code-sm m-0">
+                              {b64Decoded}
+                            </pre>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* LAB TYPE 2: NETWORK PACKET SIM */}
+                  {routeModule.lab.type === 'network-packet-sim' && (
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="font-label-sm text-label-sm text-outline">FILTER:</span>
+                        {['ALL', 'DNS', 'ARP'].map(flt => (
+                          <button
+                            key={flt}
+                            onClick={() => setPacketFilter(flt)}
+                            className={`px-3 py-1 rounded-lg font-code-sm text-code-sm ${packetFilter === flt ? 'bg-primary text-on-primary font-bold' : 'bg-surface-container-lowest text-outline'}`}
+                          >
+                            {flt}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="overflow-x-auto rounded-xl border border-outline-variant/30">
+                        <table className="w-full text-left font-code-sm text-code-sm border-collapse bg-surface-container-lowest">
+                          <thead>
+                            <tr className="bg-surface-container-high text-primary border-b border-outline-variant/30">
+                              <th className="p-2.5">No.</th>
+                              <th className="p-2.5">Time</th>
+                              <th className="p-2.5">Source</th>
+                              <th className="p-2.5">Destination</th>
+                              <th className="p-2.5">Protocol</th>
+                              <th className="p-2.5">Info</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {routeModule.lab.packets
+                              .filter(p => packetFilter === 'ALL' || p.proto === packetFilter)
+                              .map(p => (
+                                <tr key={p.no} className="border-b border-outline-variant/10 text-on-surface">
+                                  <td className="p-2.5">{p.no}</td>
+                                  <td className="p-2.5">{p.time}</td>
+                                  <td className="p-2.5">{p.src}</td>
+                                  <td className="p-2.5">{p.dst}</td>
+                                  <td className="p-2.5 font-bold text-secondary">{p.proto}</td>
+                                  <td className="p-2.5 font-mono break-all">{p.info}</td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* LAB TYPE 3: SYSMON EVENT SIM */}
+                  {routeModule.lab.type === 'sysmon-event-sim' && (
+                    <div className="flex flex-col gap-3">
+                      {routeModule.lab.events.map((ev, i) => (
+                        <div key={i} className="p-3.5 rounded-xl bg-surface-container-lowest border border-outline-variant/30 font-code-sm text-code-sm">
+                          <div className="flex items-center justify-between pb-1.5 border-b border-outline-variant/20 mb-2">
+                            <span className="text-secondary font-bold">EVENT ID {ev.eventId} ({ev.task})</span>
+                            <span className="text-outline">{ev.time}</span>
+                          </div>
+                          <p className="text-on-surface m-0 whitespace-pre-wrap break-all">{ev.data}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* LAB TYPE 4: SPLUNK QUERY SIM */}
+                  {routeModule.lab.type === 'splunk-query-sim' && (
+                    <div className="flex flex-col gap-3">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={splunkQuery}
+                          onChange={(e) => setSplunkQuery(e.target.value)}
+                          className="flex-1 px-3.5 py-2.5 rounded-lg bg-surface-container-lowest border border-primary text-on-surface font-code-sm text-code-sm focus:outline-none"
+                        />
+                        <button
+                          onClick={() => setSplunkResults(routeModule.lab.dataset)}
+                          className="px-4 py-2.5 rounded-lg bg-primary text-on-primary font-code-sm text-code-sm font-semibold"
+                        >
+                          Run SPL
+                        </button>
+                      </div>
+
+                      <div className="overflow-x-auto rounded-xl border border-outline-variant/30 bg-surface-container-lowest">
+                        <table className="w-full text-left font-code-sm text-code-sm border-collapse">
+                          <thead>
+                            <tr className="bg-surface-container-high text-primary border-b border-outline-variant/30">
+                              <th className="p-2.5">_time</th>
+                              <th className="p-2.5">EventCode</th>
+                              <th className="p-2.5">User</th>
+                              <th className="p-2.5">Src_IP</th>
+                              <th className="p-2.5">Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(splunkResults || routeModule.lab.dataset).map((row, rIdx) => (
+                              <tr key={rIdx} className="border-b border-outline-variant/10 text-on-surface">
+                                <td className="p-2.5">{row._time}</td>
+                                <td className="p-2.5 font-bold">{row.eventCode}</td>
+                                <td className="p-2.5 font-semibold text-primary">{row.user}</td>
+                                <td className="p-2.5">{row.src_ip}</td>
+                                <td className={`p-2.5 font-bold ${row.action.includes('Success') ? 'text-secondary' : 'text-outline'}`}>{row.action}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* LAB TYPE 5: YARA VALIDATOR */}
+                  {routeModule.lab.type === 'yara-validator-sim' && (
+                    <div className="flex flex-col gap-2">
+                      <span className="font-label-sm text-label-sm text-outline">EXTRACTED MEMORY STRINGS:</span>
+                      <div className="p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/30 font-code-sm text-code-sm text-on-surface flex flex-col gap-1.5">
+                        {routeModule.lab.memoryDumpStrings.map((s, idx) => (
+                          <div key={idx} className="flex gap-3">
+                            <span className="text-outline">[{idx.toString().padStart(2, '0')}]</span>
+                            <span className={s.includes('pipe') ? 'text-error font-bold' : ''}>{s}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* LAB TYPE 6: SANDBOX DETONATION */}
+                  {routeModule.lab.type === 'sandbox-sim' && (
+                    <div className="flex flex-col gap-3">
+                      <span className="font-label-sm text-label-sm text-outline">VOLATILITY 3 MALFIND OUTPUT:</span>
+                      <pre className="p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/30 font-code-sm text-code-sm text-primary overflow-x-auto whitespace-pre m-0">
+                        {routeModule.lab.malfindOutput}
+                      </pre>
+                    </div>
+                  )}
+
+                  {/* LAB TYPE 7: EMAIL HEADERS */}
+                  {routeModule.lab.type === 'email-header-sim' && (
+                    <div className="flex flex-col gap-2">
+                      <span className="font-label-sm text-label-sm text-outline">RFC 5322 RAW HEADERS:</span>
+                      <pre className="p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/30 font-code-sm text-code-sm text-secondary overflow-x-auto whitespace-pre m-0">
+                        {routeModule.lab.rawHeaders}
+                      </pre>
+                    </div>
+                  )}
+
+                  {/* LAB TYPE 8: CLOUD AUDIT SIMULATOR */}
+                  {routeModule.lab.type === 'cloud-sim' && (
+                    <div className="flex flex-col gap-2">
+                      <span className="font-label-sm text-label-sm text-outline">AWS CLOUDTRAIL JSON SECURITY AUDIT LOG:</span>
+                      <pre className="p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/30 font-code-sm text-code-sm text-primary overflow-x-auto whitespace-pre m-0">
+                        {routeModule.lab.cloudTrailEvent}
+                      </pre>
+                    </div>
+                  )}
+
+                  {/* LAB TYPE 9: ACTIVE DIRECTORY CAPSTONE */}
+                  {routeModule.lab.type === 'ad-defense-sim' && (
+                    <div className="flex flex-col gap-3">
+                      <span className="font-label-sm text-label-sm text-outline">DOMAIN CONTROLLER SECURITY EVENT LOGS:</span>
+                      <div className="overflow-x-auto rounded-xl border border-outline-variant/30 bg-surface-container-lowest">
+                        <table className="w-full text-left font-code-sm text-code-sm border-collapse">
+                          <thead>
+                            <tr className="bg-surface-container-high text-tertiary border-b border-outline-variant/30">
+                              <th className="p-2.5">Time</th>
+                              <th className="p-2.5">Event ID</th>
+                              <th className="p-2.5">Account</th>
+                              <th className="p-2.5">Target / Note</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {routeModule.lab.logs.map((l, i) => (
+                              <tr key={i} className="border-b border-outline-variant/10 text-on-surface">
+                                <td className="p-2.5">{l.time}</td>
+                                <td className="p-2.5 font-bold text-tertiary">{l.id}</td>
+                                <td className="p-2.5 font-bold text-primary">{l.account}</td>
+                                <td className="p-2.5 font-mono text-outline">{l.note || l.object || l.service}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Lab Instructions Footer */}
+                  <div className="p-4 rounded-xl bg-surface-container-high border-l-4 border-primary font-body-sm text-body-sm text-on-surface flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <strong className="text-primary">TASK INSTRUCTIONS:</strong>
+                      <p className="m-0 whitespace-pre-line pt-1 text-on-surface-variant font-code-sm text-code-sm">
+                        {routeModule.lab.taskInstructions}
+                      </p>
+                    </div>
+                    {routeModule.challenge && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('challenge')}
+                        className="px-4 py-2 rounded-lg bg-secondary hover:bg-secondary-container text-on-secondary font-semibold text-xs shrink-0 flex items-center gap-1.5 shadow-sm transition-colors"
+                      >
+                        <span>Submit CTF Flag</span>
+                        <span className="material-symbols-outlined text-base">flag</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* VIEW 4: CTF CHALLENGE */}
+              {activeTab === 'challenge' && routeModule.challenge && (
+                <div className="bg-surface-container rounded-2xl border border-outline-variant/30 p-6 sm:p-8 lg:p-10 shadow-2xl flex flex-col gap-6">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/25 pb-4">
+                    <h2 className="soc-clean-heading text-2xl font-bold text-secondary flex items-center gap-2.5">
+                      <span className="material-symbols-outlined text-2xl">flag</span>
+                      Module CTF Challenge &amp; Flag Submission
+                    </h2>
+                    <span className="px-3.5 py-1 rounded-full bg-secondary/10 text-secondary font-code-sm text-code-sm font-bold border border-secondary/25">
+                      REWARD: +{routeModule.challenge.points} XP
+                    </span>
+                  </div>
+
+                  <div className="p-5 rounded-xl bg-surface-container-lowest border-l-4 border-secondary flex flex-col gap-1.5">
+                    <span className="font-label-sm text-label-sm text-secondary uppercase tracking-wider font-semibold">
+                      OBJECTIVE / QUESTION:
+                    </span>
+                    <p className="font-title-sm text-title-sm text-on-surface font-semibold m-0 leading-relaxed">
+                      {routeModule.challenge.question}
+                    </p>
+                  </div>
+
+                  {/* Challenge Status banner */}
+                  {challengeStatus === 'success' && (
+                    <div className="p-4 rounded-xl bg-secondary/15 border border-secondary text-secondary flex items-center gap-3">
+                      <span className="material-symbols-outlined text-2xl">check_circle</span>
+                      <div>
+                        <strong className="font-title-sm text-title-sm">FLAG VERIFIED! CHALLENGE SOLVED! (+{routeModule.challenge.points} XP)</strong>
+                        <p className="m-0 font-body-sm text-body-sm">Your defense telemetry analysis is correct. Progress has been saved.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {challengeStatus === 'error' && (
+                    <div className="p-3.5 rounded-xl bg-error-container/20 border border-error text-error flex items-center gap-2">
+                      <span className="material-symbols-outlined text-xl">error</span>
+                      <span className="font-body-sm text-body-sm font-semibold">INCORRECT FLAG OR TARGET KEY. Review the lab findings and try again!</span>
+                    </div>
+                  )}
+
+                  {/* Form */}
+                  <form onSubmit={handleFlagSubmit} className="flex flex-col sm:flex-row gap-3">
+                    <input
+                      type="text"
+                      value={flagInput}
+                      onChange={(e) => setFlagInput(e.target.value)}
+                      disabled={isChallengeSolved}
+                      placeholder="Enter flag format: flag{...} or target keyword"
+                      className="flex-1 px-4 py-3 rounded-xl bg-surface-container-lowest border border-outline-variant/40 text-on-surface font-code-md text-code-md focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+                    />
+                    <button
+                      type="submit"
+                      disabled={isChallengeSolved}
+                      className="px-6 py-3 rounded-xl bg-secondary hover:bg-secondary-container text-on-secondary font-title-sm text-body-md font-bold transition-all disabled:opacity-50 shadow-sm"
+                    >
+                      {isChallengeSolved ? 'Challenge Solved' : 'Submit Flag'}
+                    </button>
+                  </form>
+
+                  {/* Hint */}
+                  <div className="border-t border-outline-variant/25 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowHint(!showHint)}
+                      className="text-primary hover:underline font-code-sm text-code-sm flex items-center gap-1"
+                    >
+                      <span className="material-symbols-outlined text-base">help</span>
+                      {showHint ? 'Hide Hint' : 'Need a Hint?'}
+                    </button>
+                    {showHint && (
+                      <div className="mt-2.5 p-3.5 rounded-xl bg-primary/10 border border-primary/30 text-on-surface font-body-sm text-body-sm">
+                        💡 <strong>HINT:</strong> {routeModule.challenge.hint}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-surface font-body-md text-on-surface antialiased min-h-screen">
@@ -415,9 +1321,12 @@ const SocCourse = () => {
           </div>
 
           <nav className="flex flex-col gap-1">
-            <button
-              onClick={() => { setActiveSidebarTrack('console'); setSelectedModule(SOC_MODULES[3]); setActiveTab('lab'); }}
-              className={`flex items-center gap-space-sm px-3 py-2 rounded-lg transition-colors font-body-sm text-body-sm w-full text-left ${
+            <a
+              href={`#/soc/${SOC_MODULES[3].slug}?tab=lab`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setActiveSidebarTrack('console')}
+              className={`soc-module-card flex items-center gap-space-sm px-3 py-2 rounded-lg transition-colors font-body-sm text-body-sm w-full text-left no-underline ${
                 activeSidebarTrack === 'console'
                   ? 'bg-surface-container-high text-primary font-semibold'
                   : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
@@ -425,12 +1334,12 @@ const SocCourse = () => {
             >
               <span className="material-symbols-outlined text-lg">terminal</span>
               <span>Analyst Console</span>
-            </button>
+            </a>
 
             <button
-              onClick={() => { setActiveSidebarTrack('modules'); setSelectedModule(null); }}
+              onClick={() => setActiveSidebarTrack('modules')}
               className={`flex items-center gap-space-sm px-3 py-2 rounded-lg transition-colors font-body-sm text-body-sm w-full text-left ${
-                activeSidebarTrack === 'modules' && !selectedModule
+                activeSidebarTrack === 'modules'
                   ? 'bg-surface-container-high text-primary font-semibold'
                   : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
               }`}
@@ -439,9 +1348,12 @@ const SocCourse = () => {
               <span>Modules &amp; Curriculum</span>
             </button>
 
-            <button
-              onClick={() => { setActiveSidebarTrack('range'); setSelectedModule(SOC_MODULES[1]); setActiveTab('lab'); }}
-              className={`flex items-center gap-space-sm px-3 py-2 rounded-lg transition-colors font-body-sm text-body-sm w-full text-left ${
+            <a
+              href={`#/soc/${SOC_MODULES[1].slug}?tab=lab`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setActiveSidebarTrack('range')}
+              className={`soc-module-card flex items-center gap-space-sm px-3 py-2 rounded-lg transition-colors font-body-sm text-body-sm w-full text-left no-underline ${
                 activeSidebarTrack === 'range'
                   ? 'bg-surface-container-high text-primary font-semibold'
                   : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
@@ -449,11 +1361,14 @@ const SocCourse = () => {
             >
               <span className="material-symbols-outlined text-lg">radar</span>
               <span>Cyber Range Labs</span>
-            </button>
+            </a>
 
-            <button
-              onClick={() => { setActiveSidebarTrack('siem'); setSelectedModule(SOC_MODULES[3]); setActiveTab('lab'); }}
-              className={`flex items-center gap-space-sm px-3 py-2 rounded-lg transition-colors font-body-sm text-body-sm w-full text-left ${
+            <a
+              href={`#/soc/${SOC_MODULES[3].slug}?tab=lab`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setActiveSidebarTrack('siem')}
+              className={`soc-module-card flex items-center gap-space-sm px-3 py-2 rounded-lg transition-colors font-body-sm text-body-sm w-full text-left no-underline ${
                 activeSidebarTrack === 'siem'
                   ? 'bg-surface-container-high text-primary font-semibold'
                   : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
@@ -461,11 +1376,14 @@ const SocCourse = () => {
             >
               <span className="material-symbols-outlined text-lg">data_object</span>
               <span>SIEM Telemetry</span>
-            </button>
+            </a>
 
-            <button
-              onClick={() => { setActiveSidebarTrack('mitre'); setSelectedModule(SOC_MODULES[4]); setActiveTab('theory'); }}
-              className={`flex items-center gap-space-sm px-3 py-2 rounded-lg transition-colors font-body-sm text-body-sm w-full text-left ${
+            <a
+              href={`#/soc/${SOC_MODULES[4].slug}?tab=theory`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setActiveSidebarTrack('mitre')}
+              className={`soc-module-card flex items-center gap-space-sm px-3 py-2 rounded-lg transition-colors font-body-sm text-body-sm w-full text-left no-underline ${
                 activeSidebarTrack === 'mitre'
                   ? 'bg-surface-container-high text-primary font-semibold'
                   : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
@@ -473,11 +1391,14 @@ const SocCourse = () => {
             >
               <span className="material-symbols-outlined text-lg">grid_view</span>
               <span>MITRE Navigator</span>
-            </button>
+            </a>
 
-            <button
-              onClick={() => { setActiveSidebarTrack('drills'); setSelectedModule(SOC_MODULES[6]); setActiveTab('lab'); }}
-              className={`flex items-center gap-space-sm px-3 py-2 rounded-lg transition-colors font-body-sm text-body-sm w-full text-left ${
+            <a
+              href={`#/soc/${SOC_MODULES[6].slug}?tab=lab`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setActiveSidebarTrack('drills')}
+              className={`soc-module-card flex items-center gap-space-sm px-3 py-2 rounded-lg transition-colors font-body-sm text-body-sm w-full text-left no-underline ${
                 activeSidebarTrack === 'drills'
                   ? 'bg-surface-container-high text-primary font-semibold'
                   : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
@@ -485,7 +1406,7 @@ const SocCourse = () => {
             >
               <span className="material-symbols-outlined text-lg">crisis_alert</span>
               <span>Incident Drills</span>
-            </button>
+            </a>
           </nav>
         </div>
 
@@ -650,92 +1571,150 @@ const SocCourse = () => {
               <div
                 className={`grid gap-space-md ${
                   viewLayout === 'grid'
-                    ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-4'
-                    : 'grid-cols-1 md:grid-cols-2'
+                    ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-4'
+                    : 'grid-cols-1 lg:grid-cols-2'
                 }`}
               >
                 {filteredModules.map((m) => {
                   const cfg = getModuleCoverConfig(m.moduleNumber);
                   const skillsList = m.skills || m.tags || [];
 
+                  if (viewLayout === 'syllabus') {
+                    return (
+                      <a
+                        key={m.id}
+                        href={`#/soc/${m.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="soc-module-card group flex flex-row rounded-xl overflow-hidden transition-all duration-300 shadow-md hover:shadow-2xl hover:-translate-y-1 border border-outline-variant/30 hover:border-primary/50 bg-surface-container cursor-pointer relative no-underline"
+                      >
+                        {/* SQUARE COVER */}
+                        <div className={`relative w-36 sm:w-44 aspect-square shrink-0 overflow-hidden bg-gradient-to-br ${cfg.gradient} flex items-center justify-center border-r border-outline-variant/30`}>
+                          <div
+                            className="absolute w-32 h-32 rounded-full blur-3xl pointer-events-none transition-all duration-500 group-hover:scale-125"
+                            style={{ backgroundColor: cfg.glow }}
+                          ></div>
+                          <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-105">
+                            {cfg.pattern}
+                          </div>
+                          <div
+                            className="relative z-10 w-12 h-12 rounded-2xl bg-[#060e20]/80 backdrop-blur-md flex items-center justify-center border shadow-xl transition-all duration-300 group-hover:scale-110"
+                            style={{
+                              borderColor: `${cfg.accent}60`,
+                              color: cfg.accent,
+                              boxShadow: `0 0 24px ${cfg.glow}`,
+                            }}
+                          >
+                            <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                              {cfg.icon}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* BODY: ONLY MODULE NAME & SKILLS */}
+                        <div className="p-4 flex flex-col justify-between gap-3 flex-1 bg-surface-container min-w-0">
+                          <h3
+                            style={{ fontFamily: "'Inter', sans-serif", textTransform: 'none', letterSpacing: '-0.01em', margin: 0 }}
+                            className="text-sm sm:text-base font-bold text-white group-hover:text-primary transition-colors leading-snug"
+                          >
+                            Module {m.moduleNumber}: {m.title}
+                          </h3>
+                          <div className="flex flex-col gap-1.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: cfg.accent }}></span>
+                              <span className="text-[10px] font-sans font-semibold uppercase tracking-wider text-outline leading-none">
+                                Skills
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {skillsList.map((skill, sIdx) => (
+                                <span
+                                  key={sIdx}
+                                  className="px-2 py-0.5 rounded-md bg-surface-container-highest/60 text-slate-300 font-sans text-[11px] font-medium border border-outline-variant/30 group-hover:border-primary/30 group-hover:text-white transition-colors"
+                                >
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </a>
+                    );
+                  }
+
                   return (
-                    <div
+                    <a
                       key={m.id}
-                      onClick={() => setSelectedModule(m)}
-                      className="group flex flex-col justify-between rounded-xl overflow-hidden transition-all duration-300 shadow-md hover:shadow-2xl hover:-translate-y-1.5 border border-outline-variant/30 hover:border-primary/50 bg-surface-container cursor-pointer relative"
+                      href={`#/soc/${m.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="soc-module-card group relative aspect-square w-full overflow-hidden rounded-xl flex flex-col transition-all duration-300 shadow-lg hover:shadow-2xl hover:-translate-y-1.5 border border-outline-variant/35 hover:border-primary/60 cursor-pointer no-underline"
                     >
-                      {/* IMPRESSIVE COVER */}
-                      <div className={`relative w-full h-44 sm:h-48 overflow-hidden bg-gradient-to-br ${cfg.gradient} flex items-center justify-center border-b border-outline-variant/30`}>
+                      {/* FULL-SQUARE IMPRESSIVE CYBER COVER BACKGROUND */}
+                      <div className={`absolute inset-0 bg-gradient-to-br ${cfg.gradient} pointer-events-none`}>
                         {/* Ambient Neon Glow */}
                         <div
-                          className="absolute w-40 h-40 rounded-full blur-3xl pointer-events-none transition-all duration-500 group-hover:scale-125"
+                          className="absolute -top-8 left-1/2 -translate-x-1/2 w-44 h-44 rounded-full blur-3xl transition-all duration-500 group-hover:scale-125"
                           style={{ backgroundColor: cfg.glow }}
                         ></div>
 
-                        {/* Cyber Vector Overlay Pattern */}
+                        {/* Cyber Vector Overlay Artwork */}
                         <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-105">
                           {cfg.pattern}
                         </div>
 
-                        {/* Top Badges */}
-                        <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10">
-                          <span
-                            className="px-2.5 py-1 rounded-md text-xs font-mono font-bold tracking-widest uppercase bg-[#060e20]/80 backdrop-blur-md border shadow-sm"
-                            style={{ borderColor: `${cfg.accent}50`, color: cfg.accent }}
-                          >
-                            MODULE {m.moduleNumber}
-                          </span>
-                          <span className="px-2 py-0.5 rounded text-[10px] font-mono tracking-wider uppercase bg-[#0b1326]/70 backdrop-blur-md text-slate-300 border border-outline-variant/30">
-                            {cfg.domain}
-                          </span>
-                        </div>
-
-                        {/* Center Floating Glassmorphism Emblem */}
-                        <div
-                          className="relative z-10 w-14 h-14 rounded-2xl bg-[#060e20]/75 backdrop-blur-md flex items-center justify-center border shadow-xl transition-all duration-300 group-hover:scale-110"
-                          style={{
-                            borderColor: `${cfg.accent}60`,
-                            color: cfg.accent,
-                            boxShadow: `0 0 24px ${cfg.glow}`,
-                          }}
-                        >
-                          <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>
-                            {cfg.icon}
-                          </span>
-                        </div>
-
-                        {/* Bottom Gradient Fade */}
-                        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-surface-container to-transparent pointer-events-none"></div>
+                        {/* Bottom Gradient Scrim for Sharp Readability */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#050b16] via-[#050b16]/85 via-50% to-transparent"></div>
                       </div>
 
-                      {/* CARD BODY: ONLY MODULE NAME & SKILLS */}
-                      <div className="p-4 sm:p-5 flex flex-col justify-between gap-4 flex-1 bg-surface-container">
-                        {/* Module Name */}
-                        <h3 className="font-headline-md text-base sm:text-lg font-bold text-white group-hover:text-primary transition-colors leading-snug">
-                          Module {m.moduleNumber}: {m.title}
-                        </h3>
-
-                        {/* Skills List */}
-                        <div className="flex flex-col gap-2 pt-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cfg.accent }}></span>
-                            <span className="font-code-sm text-xs font-semibold uppercase tracking-wider text-outline">
-                              Skills
+                      {/* SQUARE FOREGROUND: COVER EMBLEM + ONLY MODULE NAME & SKILLS */}
+                      <div className="relative z-10 flex-1 min-h-0 w-full p-3.5 xl:p-4 2xl:p-5 flex flex-col justify-between">
+                        {/* Upper Cover Focal Emblem */}
+                        <div className="flex-1 min-h-[52px] flex items-center justify-center">
+                          <div
+                            className="w-11 h-11 2xl:w-14 2xl:h-14 rounded-2xl bg-[#060e20]/80 backdrop-blur-md flex items-center justify-center border shadow-xl transition-all duration-300 group-hover:scale-110"
+                            style={{
+                              borderColor: `${cfg.accent}60`,
+                              color: cfg.accent,
+                              boxShadow: `0 0 24px ${cfg.glow}`,
+                            }}
+                          >
+                            <span className="material-symbols-outlined text-2xl 2xl:text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                              {cfg.icon}
                             </span>
                           </div>
-                          <div className="flex flex-wrap gap-1.5">
-                            {skillsList.map((skill, sIdx) => (
-                              <span
-                                key={sIdx}
-                                className="px-2.5 py-1 rounded-md bg-surface-container-highest/60 text-slate-300 font-code-sm text-xs border border-outline-variant/30 group-hover:border-primary/30 group-hover:text-white transition-colors"
-                              >
-                                {skill}
+                        </div>
+
+                        {/* Lower Content: ONLY Module Name & Skills */}
+                        <div className="flex flex-col gap-2 2xl:gap-2.5">
+                          <h3
+                            style={{ fontFamily: "'Inter', sans-serif", textTransform: 'none', letterSpacing: '-0.01em', margin: 0 }}
+                            className="text-[13.5px] xl:text-[13.5px] 2xl:text-[15px] font-bold text-white group-hover:text-primary transition-colors leading-snug"
+                          >
+                            Module {m.moduleNumber}: {m.title}
+                          </h3>
+
+                          <div className="flex flex-col gap-1.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: cfg.accent }}></span>
+                              <span className="text-[10px] font-sans font-semibold uppercase tracking-wider text-slate-400 leading-none">
+                                Skills
                               </span>
-                            ))}
+                            </div>
+                            <div className="flex flex-wrap gap-1 2xl:gap-1.5">
+                              {skillsList.map((skill, sIdx) => (
+                                <span
+                                  key={sIdx}
+                                  className="px-1.5 py-0.5 2xl:px-2 2xl:py-0.5 rounded bg-white/5 text-slate-200 font-sans text-[10px] 2xl:text-[11px] font-medium leading-tight border border-white/10 group-hover:border-primary/35 group-hover:text-white transition-colors"
+                                >
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </a>
                   );
                 })}
               </div>
@@ -765,654 +1744,6 @@ const SocCourse = () => {
           </div>
         </main>
       </div>
-
-      {/* 4. INTERACTIVE MODULE WORKSPACE MODAL / DRAWER */}
-      <AnimatePresence>
-        {selectedModule && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex justify-center items-center p-3 md:p-6"
-            onClick={() => setSelectedModule(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-surface-container rounded-xl border border-outline-variant/40 w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl"
-            >
-              {/* Modal Top Header */}
-              <div className="px-space-md py-space-sm bg-surface-container-low border-b border-outline-variant/30 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="px-2 py-0.5 rounded bg-primary/10 text-primary font-code-sm text-code-sm font-bold border border-primary/20">
-                    MODULE {selectedModule.moduleNumber}
-                  </span>
-                  <h2 className="font-headline-md text-headline-md text-on-surface truncate">
-                    {selectedModule.title}
-                  </h2>
-                </div>
-                <button
-                  onClick={() => setSelectedModule(null)}
-                  className="p-1.5 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container-high transition-colors"
-                >
-                  <span className="material-symbols-outlined text-2xl leading-none">close</span>
-                </button>
-              </div>
-
-              {/* Mode Switcher Tabs */}
-              <div className="px-space-md py-2 bg-surface-container-lowest border-b border-outline-variant/20 flex items-center gap-2 overflow-x-auto">
-                {[
-                  { id: 'slides', label: '1. Presentation Slides', icon: 'slideshow', badge: `${selectedModule.slides?.length || 0} Slides` },
-                  { id: 'theory', label: '2. Theory & Cheat Sheets', icon: 'menu_book' },
-                  { id: 'lab', label: '3. Hands-On Lab', icon: 'terminal', badge: 'Interactive' },
-                  { id: 'challenge', label: '4. CTF Challenge', icon: 'flag', badge: completedChallenges[selectedModule.id] ? 'Solved' : '+150 XP' }
-                ].map(tab => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-body-sm text-body-sm whitespace-nowrap transition-colors ${
-                      activeTab === tab.id
-                        ? 'bg-primary text-on-primary font-semibold shadow-sm'
-                        : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-base">{tab.icon}</span>
-                    <span>{tab.label}</span>
-                    {tab.badge && (
-                      <span className={`text-xs px-1.5 py-0.2 rounded font-code-sm ${activeTab === tab.id ? 'bg-on-primary text-primary font-bold' : 'bg-surface-container-high text-outline'}`}>
-                        {tab.badge}
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-
-              {/* Modal Body */}
-              <div className="p-space-md lg:p-space-lg overflow-y-auto flex-1">
-                
-                {/* TAB 1: PRESENTATION SLIDES */}
-                {activeTab === 'slides' && selectedModule.slides && (
-                  <div className="flex flex-col justify-between min-h-[460px]">
-                    <div>
-                      <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3 mb-4">
-                        <span className="font-code-sm text-code-sm text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20">
-                          SLIDE {currentSlideIndex + 1} OF {selectedModule.slides.length}
-                        </span>
-                        <div className="flex gap-1.5">
-                          {selectedModule.slides.map((_, idx) => (
-                            <button
-                              key={idx}
-                              onClick={() => setCurrentSlideIndex(idx)}
-                              className={`h-2 rounded-full transition-all ${idx === currentSlideIndex ? 'w-6 bg-primary' : 'w-2 bg-outline-variant/40'}`}
-                            ></button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <h3 className="font-headline-md text-headline-md text-primary mb-1">
-                        {selectedModule.slides[currentSlideIndex]?.title}
-                      </h3>
-                      <h4 className="font-title-sm text-title-sm text-on-surface-variant mb-4 font-normal">
-                        {selectedModule.slides[currentSlideIndex]?.subtitle}
-                      </h4>
-
-                      <div className="flex flex-col gap-3 mb-6">
-                        {selectedModule.slides[currentSlideIndex]?.bullets?.map((b, bIdx) => (
-                          <div key={bIdx} className="flex items-start gap-2.5">
-                            <span className="text-secondary text-base leading-snug">▸</span>
-                            <p className="font-body-md text-body-md text-on-surface leading-relaxed m-0">
-                              {b}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Visual Diagram Box */}
-                      {selectedModule.slides[currentSlideIndex]?.diagram && (
-                        <pre className="p-4 rounded-lg bg-surface-container-lowest text-primary font-code-sm text-code-sm border border-outline-variant/30 overflow-x-auto whitespace-pre mb-4">
-                          {selectedModule.slides[currentSlideIndex].diagram.trim()}
-                        </pre>
-                      )}
-
-                      {/* Key Takeaway */}
-                      {selectedModule.slides[currentSlideIndex]?.takeaway && (
-                        <div className="p-3 rounded bg-secondary/10 border-l-4 border-secondary text-on-surface font-body-sm text-body-sm">
-                          <strong className="text-secondary">KEY TAKEAWAY: </strong>
-                          {selectedModule.slides[currentSlideIndex].takeaway}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Navigation Buttons Footer */}
-                    <div className="flex items-center justify-between pt-4 border-t border-outline-variant/20 mt-6">
-                      <button
-                        onClick={prevSlide}
-                        disabled={currentSlideIndex === 0}
-                        className="px-3 py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-bright text-on-surface font-body-sm text-body-sm disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 border border-outline-variant/30"
-                      >
-                        <span className="material-symbols-outlined text-base">chevron_left</span>
-                        Previous
-                      </button>
-                      <span className="font-code-sm text-code-sm text-outline">
-                        Slide {currentSlideIndex + 1} / {selectedModule.slides.length}
-                      </span>
-                      <button
-                        onClick={nextSlide}
-                        disabled={currentSlideIndex === selectedModule.slides.length - 1}
-                        className="px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-body-sm text-body-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 shadow-sm"
-                      >
-                        Next
-                        <span className="material-symbols-outlined text-base">chevron_right</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* TAB 2: THEORY & CHEAT SHEETS */}
-                {activeTab === 'theory' && selectedModule.theory && (
-                  <div className="flex flex-col gap-6">
-                    <div>
-                      <h3 className="font-headline-md text-headline-md text-primary mb-2 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-xl">menu_book</span>
-                        In-Depth Technical Guide &amp; Cheat Sheet
-                      </h3>
-                      <p className="font-body-md text-body-md text-on-surface-variant leading-relaxed">
-                        {selectedModule.theory.overview}
-                      </p>
-                    </div>
-
-                    {selectedModule.theory.sections?.map((sec, sIdx) => (
-                      <div key={sIdx} className="flex flex-col gap-3">
-                        <h4 className="font-title-sm text-title-sm text-secondary border-b border-outline-variant/20 pb-1">
-                          {sec.heading}
-                        </h4>
-                        <p className="font-body-md text-body-md text-on-surface leading-relaxed">
-                          {sec.content}
-                        </p>
-
-                        {/* Steps */}
-                        {sec.steps && (
-                          <div className="flex flex-col gap-2">
-                            {sec.steps.map((st, stIdx) => (
-                              <div key={stIdx} className="p-2.5 rounded bg-surface-container-lowest border-l-2 border-primary text-on-surface font-body-sm text-body-sm">
-                                {st}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Table */}
-                        {sec.table && (
-                          <div className="overflow-x-auto rounded-lg border border-outline-variant/30">
-                            <table className="w-full text-left font-body-sm text-body-sm border-collapse">
-                              <thead>
-                                <tr className="bg-surface-container-lowest text-primary border-b border-outline-variant/30">
-                                  {sec.table.headers.map((h, hIdx) => (
-                                    <th key={hIdx} className="p-2.5 font-semibold font-code-sm">{h}</th>
-                                  ))}
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {sec.table.rows.map((row, rIdx) => (
-                                  <tr key={rIdx} className="border-b border-outline-variant/10 hover:bg-surface-container-lowest/50">
-                                    {row.map((c, cIdx) => (
-                                      <td key={cIdx} className="p-2.5 text-on-surface">{c}</td>
-                                    ))}
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
-
-                        {/* Code Block with Copy */}
-                        {sec.codeBlock && (
-                          <div className="relative rounded-lg overflow-hidden border border-outline-variant/30 bg-surface-container-lowest">
-                            <div className="flex items-center justify-between px-3 py-1.5 bg-surface-container-high border-b border-outline-variant/20">
-                              <span className="font-code-sm text-code-sm text-primary">COMMAND REFERENCE</span>
-                              <button
-                                onClick={() => handleCopy(sec.codeBlock, `code-${sIdx}`)}
-                                className="text-outline hover:text-on-surface font-code-sm text-code-sm flex items-center gap-1"
-                              >
-                                {copiedCode === `code-${sIdx}` ? 'Copied!' : 'Copy'}
-                              </button>
-                            </div>
-                            <pre className="p-3 text-on-surface font-code-sm text-code-sm overflow-x-auto m-0">
-                              {sec.codeBlock}
-                            </pre>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* TAB 3: HANDS-ON LAB */}
-                {activeTab === 'lab' && selectedModule.lab && (
-                  <div className="flex flex-col gap-6">
-                    <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3">
-                      <div>
-                        <h3 className="font-headline-md text-headline-md text-primary flex items-center gap-2">
-                          <span className="material-symbols-outlined text-xl">terminal</span>
-                          {selectedModule.lab.title}
-                        </h3>
-                        <p className="font-body-sm text-body-sm text-on-surface-variant pt-1">
-                          <strong>MISSION:</strong> {selectedModule.lab.scenario}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* LAB TYPE 1: ALERT TRIAGE SIM */}
-                    {selectedModule.lab.type === 'alert-triage-sim' && (
-                      <div className="flex flex-col gap-4">
-                        <span className="font-label-sm text-label-sm text-outline uppercase tracking-wider">
-                          SIEM ALERT QUEUE: Click alert to inspect
-                        </span>
-                        <div className="grid gap-2">
-                          {selectedModule.lab.alerts.map(al => (
-                            <div
-                              key={al.id}
-                              onClick={() => setSelectedAlert(al)}
-                              className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center justify-between ${
-                                selectedAlert?.id === al.id
-                                  ? 'bg-primary/10 border-primary'
-                                  : 'bg-surface-container-lowest border-outline-variant/20 hover:border-outline-variant'
-                              }`}
-                            >
-                              <div className="flex items-center gap-3">
-                                <span className={`px-2 py-0.5 rounded font-code-sm text-code-sm font-bold ${
-                                  al.severity === 'CRITICAL' ? 'bg-error-container text-error' : al.severity === 'HIGH' ? 'bg-tertiary-container text-tertiary' : 'bg-secondary/20 text-secondary'
-                                }`}>
-                                  {al.severity}
-                                </span>
-                                <span className="font-body-sm text-body-sm font-semibold text-on-surface">{al.rule}</span>
-                              </div>
-                              <span className="font-code-sm text-code-sm text-outline">{al.host}</span>
-                            </div>
-                          ))}
-                        </div>
-
-                        {selectedAlert && (
-                          <div className="p-4 rounded-lg bg-surface-container-lowest border border-primary/40 flex flex-col gap-2">
-                            <span className="font-title-sm text-title-sm text-primary font-semibold">Incident Details: {selectedAlert.id}</span>
-                            <p className="font-code-sm text-code-sm text-on-surface-variant break-all m-0">
-                              {selectedAlert.details}
-                            </p>
-                            <button
-                              onClick={() => {
-                                const b64 = "SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAiaAB0AHQAcAA6AC8ALwAxADkANQAuADIAMAAxAC4AMQAwAC4AMQA0ADoAOAAwADgAMAAvAG0AYQB0AHIAaQB4AC4AcABzADEAIgApAA==";
-                                const binary = atob(b64);
-                                let res = '';
-                                for (let i = 0; i < binary.length; i += 2) res += binary[i];
-                                setB64Decoded(res);
-                              }}
-                              className="mt-2 w-fit px-3 py-1.5 rounded bg-primary text-on-primary font-code-sm text-code-sm font-semibold"
-                            >
-                              Auto-Decode Base64 UTF-16LE Payload
-                            </button>
-                            {b64Decoded && (
-                              <pre className="p-2.5 rounded bg-surface-container-high text-secondary font-code-sm text-code-sm m-0">
-                                {b64Decoded}
-                              </pre>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* LAB TYPE 2: NETWORK PACKET SIM */}
-                    {selectedModule.lab.type === 'network-packet-sim' && (
-                      <div className="flex flex-col gap-3">
-                        <div className="flex items-center gap-2">
-                          <span className="font-label-sm text-label-sm text-outline">FILTER:</span>
-                          {['ALL', 'DNS', 'ARP'].map(flt => (
-                            <button
-                              key={flt}
-                              onClick={() => setPacketFilter(flt)}
-                              className={`px-2.5 py-1 rounded font-code-sm text-code-sm ${packetFilter === flt ? 'bg-primary text-on-primary font-bold' : 'bg-surface-container-lowest text-outline'}`}
-                            >
-                              {flt}
-                            </button>
-                          ))}
-                        </div>
-
-                        <div className="overflow-x-auto rounded-lg border border-outline-variant/30">
-                          <table className="w-full text-left font-code-sm text-code-sm border-collapse bg-surface-container-lowest">
-                            <thead>
-                              <tr className="bg-surface-container-high text-primary border-b border-outline-variant/30">
-                                <th className="p-2">No.</th>
-                                <th className="p-2">Time</th>
-                                <th className="p-2">Source</th>
-                                <th className="p-2">Destination</th>
-                                <th className="p-2">Protocol</th>
-                                <th className="p-2">Info</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {selectedModule.lab.packets
-                                .filter(p => packetFilter === 'ALL' || p.proto === packetFilter)
-                                .map(p => (
-                                  <tr key={p.no} className="border-b border-outline-variant/10 text-on-surface">
-                                    <td className="p-2">{p.no}</td>
-                                    <td className="p-2">{p.time}</td>
-                                    <td className="p-2">{p.src}</td>
-                                    <td className="p-2">{p.dst}</td>
-                                    <td className="p-2 font-bold text-secondary">{p.proto}</td>
-                                    <td className="p-2 font-mono break-all">{p.info}</td>
-                                  </tr>
-                                ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* LAB TYPE 3: SYSMON EVENT SIM */}
-                    {selectedModule.lab.type === 'sysmon-event-sim' && (
-                      <div className="flex flex-col gap-3">
-                        {selectedModule.lab.events.map((ev, i) => (
-                          <div key={i} className="p-3 rounded-lg bg-surface-container-lowest border border-outline-variant/30 font-code-sm text-code-sm">
-                            <div className="flex items-center justify-between pb-1 border-b border-outline-variant/20 mb-2">
-                              <span className="text-secondary font-bold">EVENT ID {ev.eventId} ({ev.task})</span>
-                              <span className="text-outline">{ev.time}</span>
-                            </div>
-                            <p className="text-on-surface m-0 whitespace-pre-wrap break-all">{ev.data}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* LAB TYPE 4: SPLUNK QUERY SIM */}
-                    {selectedModule.lab.type === 'splunk-query-sim' && (
-                      <div className="flex flex-col gap-3">
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            value={splunkQuery}
-                            onChange={(e) => setSplunkQuery(e.target.value)}
-                            className="flex-1 px-3 py-2 rounded bg-surface-container-lowest border border-primary text-on-surface font-code-sm text-code-sm focus:outline-none"
-                          />
-                          <button
-                            onClick={() => setSplunkResults(selectedModule.lab.dataset)}
-                            className="px-4 py-2 rounded bg-primary text-on-primary font-code-sm text-code-sm font-semibold"
-                          >
-                            Run SPL
-                          </button>
-                        </div>
-
-                        <div className="overflow-x-auto rounded-lg border border-outline-variant/30 bg-surface-container-lowest">
-                          <table className="w-full text-left font-code-sm text-code-sm border-collapse">
-                            <thead>
-                              <tr className="bg-surface-container-high text-primary border-b border-outline-variant/30">
-                                <th className="p-2">_time</th>
-                                <th className="p-2">EventCode</th>
-                                <th className="p-2">User</th>
-                                <th className="p-2">Src_IP</th>
-                                <th className="p-2">Action</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {selectedModule.lab.dataset.map((row, rIdx) => (
-                                <tr key={rIdx} className="border-b border-outline-variant/10 text-on-surface">
-                                  <td className="p-2">{row._time}</td>
-                                  <td className="p-2 font-bold">{row.eventCode}</td>
-                                  <td className="p-2 font-semibold text-primary">{row.user}</td>
-                                  <td className="p-2">{row.src_ip}</td>
-                                  <td className={`p-2 font-bold ${row.action.includes('Success') ? 'text-secondary' : 'text-outline'}`}>{row.action}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* LAB TYPE 5: YARA VALIDATOR */}
-                    {selectedModule.lab.type === 'yara-validator-sim' && (
-                      <div className="flex flex-col gap-2">
-                        <span className="font-label-sm text-label-sm text-outline">EXTRACTED MEMORY STRINGS:</span>
-                        <div className="p-3 rounded-lg bg-surface-container-lowest border border-outline-variant/30 font-code-sm text-code-sm text-on-surface flex flex-col gap-1">
-                          {selectedModule.lab.memoryDumpStrings.map((s, idx) => (
-                            <div key={idx} className="flex gap-3">
-                              <span className="text-outline">[{idx.toString().padStart(2, '0')}]</span>
-                              <span className={s.includes('pipe') ? 'text-error font-bold' : ''}>{s}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* LAB TYPE 6: SANDBOX DETONATION */}
-                    {selectedModule.lab.type === 'sandbox-sim' && (
-                      <div className="flex flex-col gap-3">
-                        <span className="font-label-sm text-label-sm text-outline">VOLATILITY 3 MALFIND OUTPUT:</span>
-                        <pre className="p-3 rounded-lg bg-surface-container-lowest border border-outline-variant/30 font-code-sm text-code-sm text-primary overflow-x-auto whitespace-pre m-0">
-                          {selectedModule.lab.malfindOutput}
-                        </pre>
-                      </div>
-                    )}
-
-                    {/* LAB TYPE 7: EMAIL HEADERS */}
-                    {selectedModule.lab.type === 'email-header-sim' && (
-                      <div className="flex flex-col gap-2">
-                        <span className="font-label-sm text-label-sm text-outline">RFC 5322 RAW HEADERS:</span>
-                        <pre className="p-3 rounded-lg bg-surface-container-lowest border border-outline-variant/30 font-code-sm text-code-sm text-secondary overflow-x-auto whitespace-pre m-0">
-                          {selectedModule.lab.rawHeaders}
-                        </pre>
-                      </div>
-                    )}
-
-                    {/* LAB TYPE 8: CLOUD AUDIT SIMULATOR */}
-                    {selectedModule.lab.type === 'cloud-sim' && (
-                      <div className="flex flex-col gap-2">
-                        <span className="font-label-sm text-label-sm text-outline">AWS CLOUDTRAIL JSON SECURITY AUDIT LOG:</span>
-                        <pre className="p-3 rounded-lg bg-surface-container-lowest border border-outline-variant/30 font-code-sm text-code-sm text-primary overflow-x-auto whitespace-pre m-0">
-                          {selectedModule.lab.cloudTrailEvent}
-                        </pre>
-                      </div>
-                    )}
-
-                    {/* LAB TYPE 8: ACTIVE DIRECTORY CAPSTONE */}
-                    {selectedModule.lab.type === 'ad-defense-sim' && (
-                      <div className="flex flex-col gap-3">
-                        <span className="font-label-sm text-label-sm text-outline">DOMAIN CONTROLLER SECURITY EVENT LOGS:</span>
-                        <div className="overflow-x-auto rounded-lg border border-outline-variant/30 bg-surface-container-lowest">
-                          <table className="w-full text-left font-code-sm text-code-sm border-collapse">
-                            <thead>
-                              <tr className="bg-surface-container-high text-tertiary border-b border-outline-variant/30">
-                                <th className="p-2">Time</th>
-                                <th className="p-2">Event ID</th>
-                                <th className="p-2">Account</th>
-                                <th className="p-2">Target / Note</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {selectedModule.lab.logs.map((l, i) => (
-                                <tr key={i} className="border-b border-outline-variant/10 text-on-surface">
-                                  <td className="p-2">{l.time}</td>
-                                  <td className="p-2 font-bold text-tertiary">{l.id}</td>
-                                  <td className="p-2 font-bold text-primary">{l.account}</td>
-                                  <td className="p-2 font-mono text-outline">{l.note || l.object || l.service}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Lab Instructions Footer */}
-                    <div className="p-3 rounded-lg bg-surface-container-high border-l-4 border-primary font-body-sm text-body-sm text-on-surface">
-                      <strong className="text-primary">TASK INSTRUCTIONS:</strong>
-                      <p className="m-0 whitespace-pre-line pt-1 text-on-surface-variant font-code-sm text-code-sm">
-                        {selectedModule.lab.taskInstructions}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* TAB 4: CTF CHALLENGE */}
-                {activeTab === 'challenge' && selectedModule.challenge && (
-                  <div className="flex flex-col gap-6">
-                    <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3">
-                      <h3 className="font-headline-md text-headline-md text-secondary flex items-center gap-2">
-                        <span className="material-symbols-outlined text-xl">flag</span>
-                        Module CTF Challenge &amp; Flag Submission
-                      </h3>
-                      <span className="px-3 py-1 rounded-full bg-secondary/10 text-secondary font-code-sm text-code-sm font-bold border border-secondary/20">
-                        REWARD: +{selectedModule.challenge.points} XP
-                      </span>
-                    </div>
-
-                    <div className="p-4 rounded-lg bg-surface-container-lowest border-l-4 border-secondary flex flex-col gap-1">
-                      <span className="font-label-sm text-label-sm text-secondary uppercase tracking-wider font-semibold">
-                        OBJECTIVE / QUESTION:
-                      </span>
-                      <p className="font-title-sm text-title-sm text-on-surface font-semibold m-0 leading-relaxed">
-                        {selectedModule.challenge.question}
-                      </p>
-                    </div>
-
-                    {/* Challenge Status banner */}
-                    {challengeStatus === 'success' && (
-                      <div className="p-4 rounded-lg bg-secondary/15 border border-secondary text-secondary flex items-center gap-3">
-                        <span className="material-symbols-outlined text-2xl">check_circle</span>
-                        <div>
-                          <strong className="font-title-sm text-title-sm">FLAG VERIFIED! CHALLENGE SOLVED! (+{selectedModule.challenge.points} XP)</strong>
-                          <p className="m-0 font-body-sm text-body-sm">Your defense telemetry analysis is correct. Progress has been saved.</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {challengeStatus === 'error' && (
-                      <div className="p-3 rounded-lg bg-error-container/20 border border-error text-error flex items-center gap-2">
-                        <span className="material-symbols-outlined text-xl">error</span>
-                        <span className="font-body-sm text-body-sm font-semibold">INCORRECT FLAG OR TARGET KEY. Review the lab findings and try again!</span>
-                      </div>
-                    )}
-
-                    {/* Form */}
-                    <form onSubmit={handleFlagSubmit} className="flex flex-col sm:flex-row gap-3">
-                      <input
-                        type="text"
-                        value={flagInput}
-                        onChange={(e) => setFlagInput(e.target.value)}
-                        disabled={completedChallenges[selectedModule.id]}
-                        placeholder="Enter flag format: flag{...} or target keyword"
-                        className="flex-1 px-4 py-2.5 rounded-lg bg-surface-container-lowest border border-outline-variant/40 text-on-surface font-code-md text-code-md focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
-                      />
-                      <button
-                        type="submit"
-                        disabled={completedChallenges[selectedModule.id]}
-                        className="px-6 py-2.5 rounded-lg bg-secondary hover:bg-secondary-container text-on-secondary font-title-sm text-body-md font-bold transition-all disabled:opacity-50 shadow-sm"
-                      >
-                        {completedChallenges[selectedModule.id] ? 'Challenge Solved' : 'Submit Flag'}
-                      </button>
-                    </form>
-
-                    {/* Hint */}
-                    <div className="border-t border-outline-variant/20 pt-4">
-                      <button
-                        type="button"
-                        onClick={() => setShowHint(!showHint)}
-                        className="text-primary hover:underline font-code-sm text-code-sm flex items-center gap-1"
-                      >
-                        <span className="material-symbols-outlined text-base">help</span>
-                        {showHint ? 'Hide Hint' : 'Need a Hint?'}
-                      </button>
-                      {showHint && (
-                        <div className="mt-2 p-3 rounded bg-primary/10 border border-primary/30 text-on-surface font-body-sm text-body-sm">
-                          💡 <strong>HINT:</strong> {selectedModule.challenge.hint}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* 5. CERTIFICATE OF COMPLETION MODAL */}
-      <AnimatePresence>
-        {showCertificate && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex justify-center items-center p-4"
-            onClick={() => setShowCertificate(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 30 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 30 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-surface-container rounded-2xl border-2 border-primary/60 p-6 md:p-10 max-w-2xl w-full text-center relative shadow-[0_0_50px_rgba(76,215,246,0.25)]"
-            >
-              <button
-                onClick={() => setShowCertificate(false)}
-                className="absolute top-4 right-4 text-outline hover:text-on-surface p-1"
-              >
-                <span className="material-symbols-outlined text-2xl">close</span>
-              </button>
-
-              <div className="w-16 h-16 rounded-full bg-primary/15 border border-primary/40 flex items-center justify-center text-primary mx-auto mb-4">
-                <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>
-                  military_tech
-                </span>
-              </div>
-
-              <span className="font-label-sm text-label-sm uppercase tracking-widest text-primary font-bold">
-                MOSHII CYBERSOC ACADEMY
-              </span>
-              <h2 className="font-headline-lg text-headline-lg text-on-surface tracking-tight mt-1 mb-2">
-                Certificate of Completion
-              </h2>
-              <p className="font-body-sm text-body-sm text-secondary mb-6 font-semibold">
-                Certified SOC Analyst (CSA Tier 2) Practical Cyber Defense
-              </p>
-
-              <p className="font-body-sm text-body-sm text-on-surface-variant mb-2">
-                This credential is officially conferred upon:
-              </p>
-
-              <input
-                type="text"
-                value={studentName}
-                onChange={(e) => setStudentName(e.target.value)}
-                className="font-headline-md text-headline-md text-center text-primary bg-transparent border-b-2 border-primary/40 focus:border-primary focus:outline-none w-full max-w-sm mx-auto mb-6 py-1"
-              />
-
-              <p className="font-body-sm text-body-sm text-on-surface-variant max-w-lg mx-auto leading-relaxed mb-8">
-                For demonstrating end-to-end operational proficiency in SIEM Alert Triage, Deep Packet Forensics, Sysmon Threat Hunting, SPL Detection Engineering, and Incident Response Containment.
-              </p>
-
-              <div className="grid grid-cols-3 gap-2 border-t border-outline-variant/30 pt-6 font-code-sm text-code-sm text-outline">
-                <div>
-                  <span className="block text-xs uppercase text-on-surface-variant">INSTRUCTOR</span>
-                  <strong className="text-on-surface">Mohammed Moshii</strong>
-                  <span className="block text-xs text-secondary">CyberSecurity Instructor</span>
-                </div>
-                <div>
-                  <span className="block text-xs uppercase text-on-surface-variant">CURRICULUM</span>
-                  <strong className="text-on-surface">8 Enterprise Modules</strong>
-                  <span className="block text-xs text-primary">24 CEUs Accredited</span>
-                </div>
-                <div>
-                  <span className="block text-xs uppercase text-on-surface-variant">VERIFICATION</span>
-                  <strong className="text-on-surface font-mono">SOC-CSA-2026</strong>
-                  <span className="block text-xs text-secondary">VERIFIED ON CHAIN</span>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
     </div>
   );
