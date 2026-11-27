@@ -4,6 +4,148 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { SOC_MODULES } from './data/socModulesData';
 import './cybersoc.css';
 
+// Visual theme and cyber vector artwork configuration for all 8 modules
+const getModuleCoverConfig = (num) => {
+  switch (num) {
+    case '01':
+      return {
+        gradient: 'from-[#0a1e3f] via-[#07152b] to-[#030913]',
+        accent: '#4cd7f6',
+        glow: 'rgba(76, 215, 246, 0.45)',
+        icon: 'security',
+        domain: 'SOC CORE',
+        pattern: (
+          <svg className="absolute inset-0 w-full h-full opacity-40 pointer-events-none" viewBox="0 0 400 200" fill="none">
+            <circle cx="200" cy="100" r="80" stroke="#4cd7f6" strokeWidth="1" strokeDasharray="4 4" />
+            <circle cx="200" cy="100" r="50" stroke="#4cd7f6" strokeWidth="1.5" />
+            <circle cx="200" cy="100" r="20" fill="#4cd7f6" fillOpacity="0.1" />
+            <line x1="80" y1="100" x2="320" y2="100" stroke="#4cd7f6" strokeWidth="0.75" strokeDasharray="3 3" />
+            <line x1="200" y1="20" x2="200" y2="180" stroke="#4cd7f6" strokeWidth="0.75" strokeDasharray="3 3" />
+            <rect x="140" y="50" width="120" height="100" rx="8" stroke="#4cd7f6" strokeWidth="1" strokeOpacity="0.4" />
+          </svg>
+        )
+      };
+    case '02':
+      return {
+        gradient: 'from-[#380e16] via-[#24080e] to-[#0e0205]',
+        accent: '#f87171',
+        glow: 'rgba(248, 113, 113, 0.45)',
+        icon: 'crisis_alert',
+        domain: 'THREAT INTEL',
+        pattern: (
+          <svg className="absolute inset-0 w-full h-full opacity-40 pointer-events-none" viewBox="0 0 400 200" fill="none">
+            <polygon points="200,25 330,175 70,175" stroke="#f87171" strokeWidth="1.5" strokeDasharray="6 4" />
+            <polygon points="200,65 290,165 110,165" stroke="#f87171" strokeWidth="1" />
+            <circle cx="200" cy="100" r="35" stroke="#f87171" strokeWidth="1.5" />
+            <line x1="160" y1="100" x2="240" y2="100" stroke="#f87171" strokeWidth="2" />
+            <line x1="200" y1="60" x2="200" y2="140" stroke="#f87171" strokeWidth="2" />
+          </svg>
+        )
+      };
+    case '03':
+      return {
+        gradient: 'from-[#082a1c] via-[#051a11] to-[#020d09]',
+        accent: '#4edea3',
+        glow: 'rgba(78, 222, 163, 0.45)',
+        icon: 'receipt_long',
+        domain: 'TELEMETRY',
+        pattern: (
+          <svg className="absolute inset-0 w-full h-full opacity-40 pointer-events-none" viewBox="0 0 400 200" fill="none">
+            <path d="M50 40 H350 M50 70 H300 M50 100 H320 M50 130 H280 M50 160 H340" stroke="#4edea3" strokeWidth="1.2" strokeDasharray="8 6" />
+            <rect x="70" y="30" width="80" height="140" rx="6" stroke="#4edea3" strokeWidth="1" strokeOpacity="0.5" />
+            <circle cx="250" cy="100" r="45" stroke="#4edea3" strokeWidth="1.5" fill="#4edea3" fillOpacity="0.05" />
+          </svg>
+        )
+      };
+    case '04':
+      return {
+        gradient: 'from-[#08233d] via-[#051729] to-[#020b14]',
+        accent: '#38bdf8',
+        glow: 'rgba(56, 189, 248, 0.45)',
+        icon: 'travel_explore',
+        domain: 'SIEM & TRIAGE',
+        pattern: (
+          <svg className="absolute inset-0 w-full h-full opacity-40 pointer-events-none" viewBox="0 0 400 200" fill="none">
+            <circle cx="200" cy="100" r="75" stroke="#38bdf8" strokeWidth="1" />
+            <circle cx="200" cy="100" r="50" stroke="#38bdf8" strokeWidth="1.5" />
+            <circle cx="200" cy="100" r="25" stroke="#38bdf8" strokeWidth="1" />
+            <path d="M200 100 L260 40" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" />
+            <circle cx="260" cy="40" r="4" fill="#38bdf8" />
+            <circle cx="150" cy="70" r="3" fill="#38bdf8" />
+            <circle cx="230" cy="140" r="3" fill="#38bdf8" />
+          </svg>
+        )
+      };
+    case '05':
+      return {
+        gradient: 'from-[#24103c] via-[#160a26] to-[#0a0412]',
+        accent: '#c084fc',
+        glow: 'rgba(192, 132, 252, 0.45)',
+        icon: 'manage_search',
+        domain: 'THREAT HUNTING',
+        pattern: (
+          <svg className="absolute inset-0 w-full h-full opacity-40 pointer-events-none" viewBox="0 0 400 200" fill="none">
+            <circle cx="200" cy="100" r="60" stroke="#c084fc" strokeWidth="1.5" />
+            <path d="M120 100 H180 M220 100 H280 M200 40 V80 M200 120 V160" stroke="#c084fc" strokeWidth="2" />
+            <rect x="160" y="60" width="80" height="80" rx="8" stroke="#c084fc" strokeWidth="1" strokeDasharray="4 4" />
+          </svg>
+        )
+      };
+    case '06':
+      return {
+        gradient: 'from-[#381905] via-[#230f03] to-[#0f0601]',
+        accent: '#fb923c',
+        glow: 'rgba(251, 146, 60, 0.45)',
+        icon: 'emergency',
+        domain: 'INCIDENT RESPONSE',
+        pattern: (
+          <svg className="absolute inset-0 w-full h-full opacity-40 pointer-events-none" viewBox="0 0 400 200" fill="none">
+            <polygon points="200,30 260,65 260,135 200,170 140,135 140,65" stroke="#fb923c" strokeWidth="1.8" />
+            <polygon points="200,55 240,78 240,122 200,145 160,122 160,78" stroke="#fb923c" strokeWidth="1" strokeDasharray="4 4" />
+            <line x1="100" y1="100" x2="300" y2="100" stroke="#fb923c" strokeWidth="1" strokeDasharray="6 6" />
+          </svg>
+        )
+      };
+    case '07':
+      return {
+        gradient: 'from-[#300d33] via-[#1e0720] to-[#0c020d]',
+        accent: '#f472b6',
+        glow: 'rgba(244, 114, 182, 0.45)',
+        icon: 'biotech',
+        domain: 'MALWARE FORENSICS',
+        pattern: (
+          <svg className="absolute inset-0 w-full h-full opacity-40 pointer-events-none" viewBox="0 0 400 200" fill="none">
+            <rect x="120" y="40" width="160" height="120" rx="10" stroke="#f472b6" strokeWidth="1.5" />
+            <circle cx="160" cy="80" r="15" stroke="#f472b6" strokeWidth="1" />
+            <circle cx="240" cy="80" r="15" stroke="#f472b6" strokeWidth="1" />
+            <circle cx="200" cy="130" r="18" stroke="#f472b6" strokeWidth="1.5" fill="#f472b6" fillOpacity="0.1" />
+            <line x1="160" y1="95" x2="190" y2="115" stroke="#f472b6" strokeWidth="1" />
+            <line x1="240" y1="95" x2="210" y2="115" stroke="#f472b6" strokeWidth="1" />
+          </svg>
+        )
+      };
+    case '08':
+    default:
+      return {
+        gradient: 'from-[#0b2842] via-[#07192a] to-[#020b12]',
+        accent: '#60a5fa',
+        glow: 'rgba(96, 165, 250, 0.45)',
+        icon: 'cloud_done',
+        domain: 'CLOUD DEFENSE',
+        pattern: (
+          <svg className="absolute inset-0 w-full h-full opacity-40 pointer-events-none" viewBox="0 0 400 200" fill="none">
+            <ellipse cx="200" cy="100" rx="90" ry="40" stroke="#60a5fa" strokeWidth="1.5" strokeDasharray="6 4" />
+            <circle cx="140" cy="90" r="25" stroke="#60a5fa" strokeWidth="1.2" />
+            <circle cx="200" cy="75" r="35" stroke="#60a5fa" strokeWidth="1.5" />
+            <circle cx="260" cy="95" r="28" stroke="#60a5fa" strokeWidth="1.2" />
+            <circle cx="110" cy="100" r="4" fill="#60a5fa" />
+            <circle cx="290" cy="100" r="4" fill="#60a5fa" />
+          </svg>
+        )
+      };
+  }
+};
+
 const SocCourse = () => {
   const { moduleId } = useParams();
   const navigate = useNavigate();
@@ -552,182 +694,89 @@ const SocCourse = () => {
                 className={`grid gap-space-md ${
                   viewLayout === 'grid'
                     ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-4'
-                    : 'grid-cols-1'
+                    : 'grid-cols-1 md:grid-cols-2'
                 }`}
               >
                 {filteredModules.map((m) => {
-                  const isCompleted = !!completedChallenges[m.id];
-                  const isActive = !isCompleted && m.status === 'active';
-                  const isCapstone = m.moduleNumber === '08';
-                  const isLocked = !isCompleted && !isActive;
-
-                  // Top indicator color
-                  let stripClass = 'bg-outline-variant/30';
-                  if (isCompleted) stripClass = 'bg-secondary';
-                  else if (isActive) stripClass = 'bg-primary animate-pulse';
-                  else if (isCapstone) stripClass = 'bg-tertiary';
+                  const cfg = getModuleCoverConfig(m.moduleNumber);
+                  const skillsList = m.skills || m.tags || [];
 
                   return (
                     <div
                       key={m.id}
-                      className={`group flex flex-col justify-between rounded-xl p-space-md transition-all duration-200 shadow-md relative overflow-hidden border border-outline-variant/30 ${
-                        isActive
-                          ? 'bg-surface-container shadow-primary/10 border-primary/40'
-                          : isCompleted
-                          ? 'bg-surface-container-low hover:bg-surface-container'
-                          : 'bg-surface-container-low/70 hover:bg-surface-container-low'
-                      }`}
+                      onClick={() => setSelectedModule(m)}
+                      className="group flex flex-col justify-between rounded-xl overflow-hidden transition-all duration-300 shadow-md hover:shadow-2xl hover:-translate-y-1.5 border border-outline-variant/30 hover:border-primary/50 bg-surface-container cursor-pointer relative"
                     >
-                      {/* Top Status Indicator Strip */}
-                      <div className={`absolute top-0 left-0 right-0 ${isActive || isCapstone ? 'h-1.5' : 'h-1'} ${stripClass}`}></div>
+                      {/* IMPRESSIVE COVER */}
+                      <div className={`relative w-full h-44 sm:h-48 overflow-hidden bg-gradient-to-br ${cfg.gradient} flex items-center justify-center border-b border-outline-variant/30`}>
+                        {/* Ambient Neon Glow */}
+                        <div
+                          className="absolute w-40 h-40 rounded-full blur-3xl pointer-events-none transition-all duration-500 group-hover:scale-125"
+                          style={{ backgroundColor: cfg.glow }}
+                        ></div>
 
-                      <div className="flex flex-col gap-space-sm">
-                        {/* Header line */}
-                        <div className="flex items-center justify-between pt-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className={`font-code-sm text-code-sm font-bold tracking-wider ${isActive ? 'text-primary' : isCapstone ? 'text-tertiary' : 'text-outline'}`}>
-                              MODULE {m.moduleNumber}
-                            </span>
-                            {isActive && <span className="flex h-2 w-2 rounded-full bg-primary animate-ping"></span>}
-                          </div>
-
-                          {/* Status Pill */}
-                          {isCompleted ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary/10 text-secondary font-label-sm text-label-sm font-semibold">
-                              <span className="material-symbols-outlined text-xs">check_circle</span>
-                              Mastered (100%)
-                            </span>
-                          ) : isActive ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/15 text-primary font-label-sm text-label-sm font-semibold">
-                              <span className="material-symbols-outlined text-xs">pending</span>
-                              In Progress (60%)
-                            </span>
-                          ) : isCapstone ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-tertiary/10 text-tertiary font-label-sm text-label-sm font-bold">
-                              <span className="material-symbols-outlined text-xs">military_tech</span>
-                              Capstone Exam
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container text-outline font-label-sm text-label-sm">
-                              <span className="material-symbols-outlined text-xs">lock</span>
-                              Locked
-                            </span>
-                          )}
+                        {/* Cyber Vector Overlay Pattern */}
+                        <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-105">
+                          {cfg.pattern}
                         </div>
 
-                        {/* Title */}
-                        <h3
-                          onClick={() => setSelectedModule(m)}
-                          className={`font-title-sm text-title-sm leading-snug cursor-pointer transition-colors ${
-                            isActive ? 'text-primary font-bold' : 'text-on-surface group-hover:text-primary'
-                          }`}
+                        {/* Top Badges */}
+                        <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10">
+                          <span
+                            className="px-2.5 py-1 rounded-md text-xs font-mono font-bold tracking-widest uppercase bg-[#060e20]/80 backdrop-blur-md border shadow-sm"
+                            style={{ borderColor: `${cfg.accent}50`, color: cfg.accent }}
+                          >
+                            MODULE {m.moduleNumber}
+                          </span>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-mono tracking-wider uppercase bg-[#0b1326]/70 backdrop-blur-md text-slate-300 border border-outline-variant/30">
+                            {cfg.domain}
+                          </span>
+                        </div>
+
+                        {/* Center Floating Glassmorphism Emblem */}
+                        <div
+                          className="relative z-10 w-14 h-14 rounded-2xl bg-[#060e20]/75 backdrop-blur-md flex items-center justify-center border shadow-xl transition-all duration-300 group-hover:scale-110"
+                          style={{
+                            borderColor: `${cfg.accent}60`,
+                            color: cfg.accent,
+                            boxShadow: `0 0 24px ${cfg.glow}`,
+                          }}
                         >
-                          {m.title}
-                        </h3>
-
-                        {/* Summary */}
-                        <p className="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">
-                          {m.summary}
-                        </p>
-
-                        {/* Active Drill Callout for Module 04 */}
-                        {isActive && (
-                          <div className="p-2.5 rounded-lg bg-surface-container-lowest flex flex-col gap-1 border border-primary/20">
-                            <span className="font-label-sm text-label-sm uppercase tracking-wider text-secondary flex items-center gap-1 font-semibold">
-                              <span className="material-symbols-outlined text-xs">flag</span> Next Active Drill
-                            </span>
-                            <span className="font-body-sm text-body-sm text-on-surface font-semibold truncate">
-                              Lab 4.2: Hunting APT29 C2 in Splunk
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Progress bar for active */}
-                        {isActive && (
-                          <div className="flex flex-col gap-1.5 pt-space-xs text-on-surface-variant font-code-sm text-code-sm">
-                            <div className="flex items-center justify-between">
-                              <span>Progress: 3 / 6 Labs Completed</span>
-                              <span className="text-primary font-bold">18/22 Slides</span>
-                            </div>
-                            <div className="w-full h-1.5 bg-surface-container-lowest rounded-full overflow-hidden">
-                              <div className="h-full bg-primary rounded-full" style={{ width: '60%' }}></div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Specs info */}
-                        {!isActive && (
-                          <div className="flex flex-col gap-1.5 pt-space-xs text-on-surface-variant font-code-sm text-code-sm">
-                            <div className="flex items-center gap-1.5">
-                              <span className="material-symbols-outlined text-sm text-outline">slideshow</span>
-                              <span>{m.slideCount} Comprehensive Slides</span>
-                            </div>
-                            <div className={`flex items-center gap-1.5 ${isCompleted ? 'text-secondary' : isCapstone ? 'text-tertiary' : 'text-outline'}`}>
-                              <span className="material-symbols-outlined text-sm">
-                                {isCompleted ? 'science' : isCapstone ? 'flag_circle' : 'science'}
-                              </span>
-                              <span>{m.labCount}</span>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Tags */}
-                        <div className="flex flex-wrap gap-1.5 pt-space-xs">
-                          {m.tags.map((t, idx) => (
-                            <span
-                              key={idx}
-                              className={`px-2 py-0.5 rounded font-label-sm text-label-sm ${
-                                isActive
-                                  ? 'bg-primary/10 text-primary border border-primary/20'
-                                  : isCapstone
-                                  ? 'bg-surface-container text-tertiary'
-                                  : 'bg-surface-container-highest text-on-surface-variant'
-                              }`}
-                            >
-                              {t}
-                            </span>
-                          ))}
+                          <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                            {cfg.icon}
+                          </span>
                         </div>
+
+                        {/* Bottom Gradient Fade */}
+                        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-surface-container to-transparent pointer-events-none"></div>
                       </div>
 
-                      {/* Card Footer Button */}
-                      <div className="pt-space-md flex items-center gap-space-xs">
-                        {isCompleted ? (
-                          <div className="w-full flex items-center justify-between gap-space-xs">
-                            <button
-                              onClick={() => { setSelectedModule(m); setActiveTab('slides'); }}
-                              className="flex-1 py-1.5 px-3 rounded-lg bg-surface-container-high hover:bg-surface-bright text-on-surface font-body-sm text-body-sm text-center transition-colors border border-outline-variant/30"
-                            >
-                              Review Module
-                            </button>
-                            <button
-                              onClick={() => setShowCertificate(true)}
-                              className="p-1.5 rounded-lg bg-surface-container-high hover:bg-secondary/20 text-secondary transition-colors border border-secondary/30"
-                              title="View Credential"
-                            >
-                              <span className="material-symbols-outlined text-lg leading-none">workspace_premium</span>
-                            </button>
-                          </div>
-                        ) : isActive ? (
-                          <button
-                            onClick={() => { setSelectedModule(m); setActiveTab('lab'); }}
-                            className="w-full py-2 px-3 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-title-sm text-body-md font-semibold transition-all shadow-[0_0_12px_rgba(6,182,212,0.3)]"
-                          >
-                            Continue Module {m.moduleNumber}
-                          </button>
-                        ) : (
-                          <div className="w-full flex flex-col gap-1.5">
-                            <span className="font-label-sm text-label-sm text-outline flex items-center gap-1">
-                              <span className="material-symbols-outlined text-xs">info</span> Requires: Previous Module
+                      {/* CARD BODY: ONLY MODULE NAME & SKILLS */}
+                      <div className="p-4 sm:p-5 flex flex-col justify-between gap-4 flex-1 bg-surface-container">
+                        {/* Module Name */}
+                        <h3 className="font-headline-md text-base sm:text-lg font-bold text-white group-hover:text-primary transition-colors leading-snug">
+                          Module {m.moduleNumber}: {m.title}
+                        </h3>
+
+                        {/* Skills List */}
+                        <div className="flex flex-col gap-2 pt-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cfg.accent }}></span>
+                            <span className="font-code-sm text-xs font-semibold uppercase tracking-wider text-outline">
+                              Skills
                             </span>
-                            <button
-                              onClick={() => setSelectedModule(m)}
-                              className="w-full py-1.5 px-3 rounded-lg bg-surface-container-high/50 hover:bg-surface-container-high text-outline hover:text-on-surface font-body-sm text-body-sm text-center transition-colors border border-outline-variant/20"
-                            >
-                              Explore Syllabus &amp; Lab Preview
-                            </button>
                           </div>
-                        )}
+                          <div className="flex flex-wrap gap-1.5">
+                            {skillsList.map((skill, sIdx) => (
+                              <span
+                                key={sIdx}
+                                className="px-2.5 py-1 rounded-md bg-surface-container-highest/60 text-slate-300 font-code-sm text-xs border border-outline-variant/30 group-hover:border-primary/30 group-hover:text-white transition-colors"
+                              >
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   );

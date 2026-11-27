@@ -25,6 +25,7 @@ export const SOC_MODULES = [
     slideCount: 16,
     labCount: "3 Labs Completed (3/3)",
     tags: ["SOC Models", "NIST SP 800-61", "SLA & Metrics"],
+    skills: ["SOC Architecture", "Alert Triage", "MTTD & MTTR Metrics", "NIST SP 800-61", "Escalation SOPs"],
     summary: "Establish defense operations foundation: SOC models, tier escalations, RFC 2828 taxonomy, MTTD/MTTR metrics, and NIST SP 800-61 workflows.",
     
     slides: [
@@ -208,6 +209,7 @@ export const SOC_MODULES = [
     slideCount: 18,
     labCount: "5 Labs Completed (5/5)",
     tags: ["Cyber Kill Chain", "MITRE ATT&CK", "Pyramid of Pain"],
+    skills: ["Cyber Kill Chain", "MITRE ATT&CK Matrix", "Pyramid of Pain", "IoC Identification", "Threat Intelligence"],
     summary: "Analyze adversary tradecraft, Indicators of Compromise (IoCs), the Cyber Kill Chain, MITRE ATT&CK mapping, and dissect covert network exfiltration.",
 
     slides: [
@@ -333,6 +335,7 @@ export const SOC_MODULES = [
     slideCount: 20,
     labCount: "4 Labs Completed (4/4)",
     tags: ["Log Pipeline", "Sysmon Telemetry", "Windows Events"],
+    skills: ["Windows Event Logs", "Sysmon Telemetry", "Linux Auditd", "Log Normalization", "SIEM Ingestion"],
     summary: "Master centralized log collection, parsing, Syslog, Windows Security Events, Sysmon endpoint telemetry, and log retention architectures.",
 
     slides: [
@@ -472,6 +475,7 @@ export const SOC_MODULES = [
     slideCount: 22,
     labCount: "3 / 6 Labs Completed",
     tags: ["Alert Triage", "SIEM Correlation", "Splunk SPL"],
+    skills: ["Splunk SPL", "Correlation Rules", "False Positive Triage", "Alert Prioritization", "Rule Tuning"],
     summary: "Detect suspicious activity via SIEM correlation rules, perform rapid alert triage, eliminate false positives, and validate true positive intrusions.",
 
     slides: [
@@ -599,6 +603,7 @@ index=winsec EventCode=1102 OR EventCode=104
     slideCount: 16,
     labCount: "4 Cyber Labs",
     tags: ["Threat Hunting", "Sigma Rules", "YARA Signatures"],
+    skills: ["Threat Hunting", "Sigma Rules", "YARA Signatures", "Beaconing Detection", "Living off the Land"],
     summary: "Execute hypothesis-driven threat hunting, create custom Sigma and YARA detection rules, and identify stealthy LOLBAS persistence.",
 
     slides: [
@@ -711,6 +716,7 @@ index=winsec EventCode=1102 OR EventCode=104
     slideCount: 16,
     labCount: "4 Simulation Labs",
     tags: ["NIST SP 800-61", "Host Containment", "Playbooks"],
+    skills: ["Incident Lifecycle", "Host Containment", "Network Isolation", "Remediation Playbooks", "Evidence Preservation"],
     summary: "Execute the NIST SP 800-61 IR lifecycle. Triage malicious phishing emails, execute emergency host containment, and neutralize live ransomware outbreaks.",
 
     slides: [
@@ -834,6 +840,7 @@ SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`,
     slideCount: 18,
     labCount: "5 Dynamic Labs",
     tags: ["Volatility 3", "Sandbox Triage", "Memory Forensics"],
+    skills: ["Memory Forensics", "Volatility 3", "Static Analysis", "Dynamic Sandboxing", "Timeline Reconstruction"],
     summary: "Perform static and dynamic malware triage in safe sandboxes, memory forensics using Volatility 3, and digital artifact recovery.",
 
     slides: [
@@ -946,6 +953,7 @@ Tag: LummaStealer_MemoryInjected_Payload_v4`,
     slideCount: 16,
     labCount: "4 Cloud Range Labs",
     tags: ["AWS CloudTrail", "Azure Sentinel", "Cloud IAM Security"],
+    skills: ["AWS CloudTrail", "Microsoft Sentinel", "Cloud IAM Auditing", "Multi-Cloud Security", "Container Security"],
     summary: "Monitor AWS CloudTrail, Azure Monitor, and Google Cloud Audit Logs. Hunt cloud IAM privilege escalation, bucket leaks, and container attacks.",
 
     slides: [
