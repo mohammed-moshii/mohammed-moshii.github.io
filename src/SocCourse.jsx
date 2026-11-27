@@ -145,7 +145,7 @@ const SocCourse = () => {
   const navigate = useNavigate();
 
   const tabParam = searchParams.get('tab');
-  const validInitialTab = ['slides', 'theory', 'lab', 'challenge'].includes(tabParam) ? tabParam : 'slides';
+  const validInitialTab = tabParam === 'lab' || tabParam === 'labs' || tabParam === 'challenge' ? 'lab' : 'slides';
 
   // Search & Filter state
   const [currentFilter, setCurrentFilter] = useState('all');
@@ -154,9 +154,8 @@ const SocCourse = () => {
   const [activeSidebarTrack, setActiveSidebarTrack] = useState('modules');
 
   // Module workspace state (full-screen tab when moduleId is present)
-  const [activeTab, setActiveTab] = useState(validInitialTab); // 'slides' | 'theory' | 'lab' | 'challenge'
+  const [activeTab, setActiveTab] = useState(validInitialTab); // 'slides' | 'lab'
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [copiedCode, setCopiedCode] = useState(null);
   const [isWorkspaceSidebarOpen, setIsWorkspaceSidebarOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -283,13 +282,6 @@ const SocCourse = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [routeModule, activeTab, nextSlide, prevSlide]);
 
-  // Copy helper
-  const handleCopy = (text, id) => {
-    navigator.clipboard.writeText(text);
-    setCopiedCode(id);
-    setTimeout(() => setCopiedCode(null), 2000);
-  };
-
   // Flag submission
   const handleFlagSubmit = (e) => {
     e.preventDefault();
@@ -359,7 +351,7 @@ const SocCourse = () => {
     const prevModule = routeModuleIndex > 0 ? SOC_MODULES[routeModuleIndex - 1] : null;
     const nextModule = routeModuleIndex < SOC_MODULES.length - 1 ? SOC_MODULES[routeModuleIndex + 1] : null;
     const isChallengeSolved = !!completedChallenges[routeModule.id];
-    const moduleSkills = routeModule.skills || routeModule.tags || [];
+    const currentSlide = routeModule.slides?.[currentSlideIndex];
 
     return (
       <div className="bg-surface font-body-md text-on-surface antialiased min-h-screen lg:h-screen w-full flex flex-col lg:overflow-hidden">
@@ -465,7 +457,7 @@ const SocCourse = () => {
           </div>
         </header>
 
-        {/* FULL-SCREEN BODY: SIDEBAR ("SLIDES AND LABS") + MAIN STAGE */}
+        {/* FULL-SCREEN BODY: SIMPLE SIDEBAR ("SLIDES" & "LABS") + MAIN STAGE */}
         <div className="flex-1 flex relative overflow-hidden">
           {/* Mobile Overlay Backdrop */}
           {isWorkspaceSidebarOpen && (
@@ -475,291 +467,183 @@ const SocCourse = () => {
             ></div>
           )}
 
-          {/* LEFT SIDEBAR: SLIDES AND LABS */}
+          {/* SIMPLE LEFT SIDEBAR: ONLY SLIDES AND LABS */}
           <aside
-            className={`fixed lg:static top-16 bottom-0 left-0 z-30 w-72 xl:w-80 shrink-0 bg-surface-container-low border-r border-outline-variant/30 flex flex-col justify-between overflow-y-auto transition-transform duration-300 ${
+            className={`fixed lg:static top-16 bottom-0 left-0 z-30 w-60 lg:w-64 shrink-0 bg-surface-container-low border-r border-outline-variant/30 flex flex-col justify-start overflow-y-auto transition-transform duration-300 ${
               isWorkspaceSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
             }`}
           >
-            <div className="p-4 flex flex-col gap-5">
-              {/* Sidebar Heading */}
-              <div className="flex items-center justify-between pb-2 border-b border-outline-variant/25">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cfg.accent }}></span>
-                  <span className="font-mono text-xs font-bold uppercase tracking-widest text-white">
-                    Slides and Labs
+            <nav className="p-4 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('slides');
+                  setIsWorkspaceSidebarOpen(false);
+                }}
+                className={`w-full text-left px-4 py-3 rounded-xl flex items-center justify-between transition-all border ${
+                  activeTab === 'slides'
+                    ? 'bg-primary/15 border-primary/50 text-white shadow-sm'
+                    : 'bg-transparent border-transparent text-on-surface-variant hover:bg-surface-container hover:text-white'
+                }`}
+              >
+                <span className="flex items-center gap-3 text-sm font-semibold">
+                  <span className={`material-symbols-outlined text-xl ${activeTab === 'slides' ? 'text-primary' : 'text-outline'}`}>
+                    slideshow
                   </span>
-                </div>
-                <span className="text-[11px] font-mono text-outline">
-                  {routeModule.slides?.length || 0} Slides • 1 Lab
+                  <span>Slides</span>
                 </span>
-              </div>
+                <span
+                  className={`px-2 py-0.5 rounded font-mono text-[11px] font-bold ${
+                    activeTab === 'slides' ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-outline'
+                  }`}
+                >
+                  {routeModule.slides?.length || 0}
+                </span>
+              </button>
 
-              {/* SECTION 1: SLIDES */}
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between px-1">
-                  <span className="flex items-center gap-1.5 text-[11px] font-mono font-bold uppercase tracking-wider text-primary">
-                    <span className="material-symbols-outlined text-base">slideshow</span>
-                    Slides
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('lab');
+                  setIsWorkspaceSidebarOpen(false);
+                }}
+                className={`w-full text-left px-4 py-3 rounded-xl flex items-center justify-between transition-all border ${
+                  activeTab === 'lab'
+                    ? 'bg-secondary/15 border-secondary/50 text-white shadow-sm'
+                    : 'bg-transparent border-transparent text-on-surface-variant hover:bg-surface-container hover:text-white'
+                }`}
+              >
+                <span className="flex items-center gap-3 text-sm font-semibold">
+                  <span className={`material-symbols-outlined text-xl ${activeTab === 'lab' ? 'text-secondary' : 'text-outline'}`}>
+                    terminal
                   </span>
-                  <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-mono text-[10px] font-semibold">
-                    {routeModule.slides?.length || 0} Decks
-                  </span>
-                </div>
-
-                {/* Slide Items List */}
-                <div className="flex flex-col gap-1">
-                  {routeModule.slides?.map((slide, idx) => {
-                    const isActiveSlide = activeTab === 'slides' && currentSlideIndex === idx;
-                    return (
-                      <button
-                        key={slide.id || idx}
-                        type="button"
-                        onClick={() => {
-                          setActiveTab('slides');
-                          setCurrentSlideIndex(idx);
-                          setIsWorkspaceSidebarOpen(false);
-                        }}
-                        className={`w-full text-left px-3 py-2 rounded-lg flex items-start gap-2.5 transition-all border ${
-                          isActiveSlide
-                            ? 'bg-primary/15 border-primary/50 text-white shadow-sm'
-                            : 'bg-transparent border-transparent text-on-surface-variant hover:bg-surface-container hover:text-white'
-                        }`}
-                      >
-                        <span
-                          className={`mt-0.5 px-1.5 py-0.5 rounded font-mono text-[10px] font-bold shrink-0 ${
-                            isActiveSlide
-                              ? 'bg-primary text-on-primary'
-                              : 'bg-surface-container-high text-outline'
-                          }`}
-                        >
-                          {(idx + 1).toString().padStart(2, '0')}
-                        </span>
-                        <span className="text-xs font-medium leading-snug line-clamp-2">
-                          {slide.title}
-                        </span>
-                      </button>
-                    );
-                  })}
-
-                  {/* Theory & Cheat Sheet under Slides / Reference */}
-                  {routeModule.theory && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveTab('theory');
-                        setIsWorkspaceSidebarOpen(false);
-                      }}
-                      className={`mt-1 w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-2.5 transition-all border ${
-                        activeTab === 'theory'
-                          ? 'bg-primary/15 border-primary/50 text-white shadow-sm'
-                          : 'bg-surface-container/40 border-outline-variant/20 text-on-surface-variant hover:bg-surface-container hover:text-white'
-                      }`}
-                    >
-                      <span className={`material-symbols-outlined text-lg ${activeTab === 'theory' ? 'text-primary' : 'text-outline'}`}>
-                        menu_book
-                      </span>
-                      <div className="flex flex-col min-w-0">
-                        <span className="text-xs font-semibold leading-tight">Theory &amp; Cheat Sheets</span>
-                        <span className="text-[10px] text-outline truncate">Commands &amp; technical guide</span>
-                      </div>
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* SECTION 2: LABS */}
-              <div className="flex flex-col gap-2 pt-1 border-t border-outline-variant/20">
-                <div className="flex items-center justify-between px-1 pt-1">
-                  <span className="flex items-center gap-1.5 text-[11px] font-mono font-bold uppercase tracking-wider text-secondary">
-                    <span className="material-symbols-outlined text-base">terminal</span>
-                    Labs
-                  </span>
-                  <span className="px-1.5 py-0.5 rounded bg-secondary/10 text-secondary font-mono text-[10px] font-semibold">
-                    Hands-On
-                  </span>
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  {/* Hands-On Simulator Lab */}
-                  {routeModule.lab && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveTab('lab');
-                        setIsWorkspaceSidebarOpen(false);
-                      }}
-                      className={`w-full text-left px-3 py-2.5 rounded-lg flex items-start gap-2.5 transition-all border ${
-                        activeTab === 'lab'
-                          ? 'bg-secondary/15 border-secondary/50 text-white shadow-sm'
-                          : 'bg-surface-container/40 border-outline-variant/20 text-on-surface-variant hover:bg-surface-container hover:text-white'
-                      }`}
-                    >
-                      <span className={`material-symbols-outlined text-lg mt-0.5 shrink-0 ${activeTab === 'lab' ? 'text-secondary' : 'text-outline'}`}>
-                        science
-                      </span>
-                      <div className="flex flex-col min-w-0 gap-1">
-                        <span className="text-xs font-semibold leading-snug">
-                          {routeModule.lab.title}
-                        </span>
-                        <span className="w-fit px-1.5 py-0.5 rounded bg-secondary/15 text-secondary font-mono text-[10px] font-semibold">
-                          Interactive Lab
-                        </span>
-                      </div>
-                    </button>
-                  )}
-
-                  {/* CTF Challenge */}
-                  {routeModule.challenge && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveTab('challenge');
-                        setIsWorkspaceSidebarOpen(false);
-                      }}
-                      className={`w-full text-left px-3 py-2.5 rounded-lg flex items-start gap-2.5 transition-all border ${
-                        activeTab === 'challenge'
-                          ? 'bg-tertiary/15 border-tertiary/50 text-white shadow-sm'
-                          : 'bg-surface-container/40 border-outline-variant/20 text-on-surface-variant hover:bg-surface-container hover:text-white'
-                      }`}
-                    >
-                      <span className={`material-symbols-outlined text-lg mt-0.5 shrink-0 ${activeTab === 'challenge' ? 'text-tertiary' : 'text-outline'}`}>
-                        flag
-                      </span>
-                      <div className="flex flex-col min-w-0 gap-1">
-                        <span className="text-xs font-semibold leading-snug">
-                          CTF Challenge Lab
-                        </span>
-                        <span className={`w-fit px-1.5 py-0.5 rounded font-mono text-[10px] font-bold ${
-                          isChallengeSolved
-                            ? 'bg-secondary/20 text-secondary'
-                            : 'bg-surface-container-high text-tertiary'
-                        }`}>
-                          {isChallengeSolved ? 'Solved' : `+${routeModule.challenge.points} XP`}
-                        </span>
-                      </div>
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Sidebar Bottom Module Skills Card */}
-            <div className="p-4 border-t border-outline-variant/20 bg-surface-container-lowest/60 flex flex-col gap-2">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-outline font-semibold">
-                Module Skills
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {moduleSkills.map((sk, i) => (
-                  <span
-                    key={i}
-                    className="px-2 py-0.5 rounded bg-surface-container text-slate-300 text-[10.5px] font-sans border border-outline-variant/30"
-                  >
-                    {sk}
-                  </span>
-                ))}
-              </div>
-            </div>
+                  <span>Labs</span>
+                </span>
+              </button>
+            </nav>
           </aside>
 
           {/* MAIN FULL-SCREEN CONTENT WORKSPACE */}
-          <main className="flex-1 overflow-y-auto p-5 sm:p-8 lg:p-10 bg-surface">
-            <div className="max-w-5xl mx-auto w-full">
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-surface">
+            <div className="max-w-6xl mx-auto w-full">
 
-              {/* VIEW 1: PRESENTATION SLIDES */}
+              {/* VIEW 1: SLIDES */}
               {activeTab === 'slides' && routeModule.slides && (
-                <div className="flex flex-col justify-between min-h-[calc(100vh-10rem)] bg-surface-container rounded-2xl border border-outline-variant/30 p-6 sm:p-8 lg:p-10 shadow-2xl relative overflow-hidden">
-                  {/* Subtle Top Glow */}
-                  <div
-                    className="absolute -top-24 right-0 w-72 h-72 rounded-full blur-3xl opacity-20 pointer-events-none"
-                    style={{ backgroundColor: cfg.glow }}
-                  ></div>
-
-                  <div className="relative z-10">
-                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/25 pb-4 mb-6">
+                <div className="flex flex-col justify-between bg-surface-container rounded-2xl border border-outline-variant/30 p-4 sm:p-6 lg:p-8 shadow-2xl relative overflow-hidden">
+                  {/* Top Header: Counter + Numbered Slide Stepper */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/25 pb-4 mb-5">
+                    <div className="flex items-center gap-3 min-w-0">
                       <span
-                        className="font-mono text-xs font-bold px-2.5 py-1 rounded border"
+                        className="font-mono text-xs font-bold px-2.5 py-1 rounded border shrink-0"
                         style={{
                           backgroundColor: `${cfg.accent}15`,
                           borderColor: `${cfg.accent}40`,
                           color: cfg.accent,
                         }}
                       >
-                        SLIDE {currentSlideIndex + 1} OF {routeModule.slides.length}
+                        SLIDE {currentSlideIndex + 1} / {routeModule.slides.length}
                       </span>
-                      <div className="flex gap-1.5">
-                        {routeModule.slides.map((_, idx) => (
-                          <button
-                            key={idx}
-                            onClick={() => setCurrentSlideIndex(idx)}
-                            aria-label={`Go to slide ${idx + 1}`}
-                            className={`h-2 rounded-full transition-all ${idx === currentSlideIndex ? 'w-7 bg-primary' : 'w-2 bg-outline-variant/40 hover:bg-outline'}`}
-                          ></button>
-                        ))}
-                      </div>
+                      {currentSlide?.title && (
+                        <span className="text-sm sm:text-base font-semibold text-white truncate">
+                          {currentSlide.title}
+                        </span>
+                      )}
                     </div>
 
-                    <h2 className="soc-clean-heading text-2xl sm:text-3xl font-bold text-white mb-2">
-                      {routeModule.slides[currentSlideIndex]?.title}
-                    </h2>
-                    <p className="text-sm sm:text-base text-primary font-medium mb-6 mt-0">
-                      {routeModule.slides[currentSlideIndex]?.subtitle}
-                    </p>
-
-                    <div className="flex flex-col gap-3.5 mb-7">
-                      {routeModule.slides[currentSlideIndex]?.bullets?.map((b, bIdx) => (
-                        <div key={bIdx} className="flex items-start gap-3 p-3 rounded-lg bg-surface-container-low/60 border border-outline-variant/20">
-                          <span className="text-secondary text-lg leading-snug shrink-0">▸</span>
-                          <p className="font-body-md text-body-md text-on-surface leading-relaxed m-0">
-                            {b}
-                          </p>
-                        </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {routeModule.slides.map((_, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setCurrentSlideIndex(idx)}
+                          aria-label={`Go to slide ${idx + 1}`}
+                          className={`min-w-7 h-7 px-2 rounded-md font-mono text-xs font-semibold transition-all border ${
+                            idx === currentSlideIndex
+                              ? 'bg-primary text-on-primary border-primary shadow-sm'
+                              : 'bg-surface-container-low text-outline border-outline-variant/25 hover:text-white hover:border-outline'
+                          }`}
+                        >
+                          {idx + 1}
+                        </button>
                       ))}
                     </div>
-
-                    {/* Visual Diagram Box */}
-                    {routeModule.slides[currentSlideIndex]?.diagram && (
-                      <pre className="p-4 sm:p-5 rounded-xl bg-surface-container-lowest text-primary font-code-sm text-code-sm border border-outline-variant/30 overflow-x-auto whitespace-pre mb-6 shadow-inner">
-                        {routeModule.slides[currentSlideIndex].diagram.trim()}
-                      </pre>
-                    )}
-
-                    {/* Key Takeaway */}
-                    {routeModule.slides[currentSlideIndex]?.takeaway && (
-                      <div className="p-4 rounded-xl bg-secondary/10 border-l-4 border-secondary text-on-surface font-body-sm text-body-sm">
-                        <strong className="text-secondary">KEY TAKEAWAY: </strong>
-                        {routeModule.slides[currentSlideIndex].takeaway}
-                      </div>
-                    )}
                   </div>
 
+                  {/* IMAGE SLIDE DISPLAY (e.g., Module 01 Slides 1–11) */}
+                  {currentSlide?.image ? (
+                    <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black border border-outline-variant/30 shadow-xl">
+                      <img
+                        src={currentSlide.image}
+                        alt={`Slide ${currentSlideIndex + 1}: ${currentSlide.title || routeModule.title}`}
+                        className="w-full h-full object-contain select-none"
+                      />
+                    </div>
+                  ) : (
+                    /* FALLBACK STRUCTURED SLIDE DISPLAY (Modules 02–08) */
+                    <div className="py-2">
+                      <h2 className="soc-clean-heading text-2xl sm:text-3xl font-bold text-white mb-2">
+                        {currentSlide?.title}
+                      </h2>
+                      <p className="text-sm sm:text-base text-primary font-medium mb-6 mt-0">
+                        {currentSlide?.subtitle}
+                      </p>
+
+                      <div className="flex flex-col gap-3.5 mb-7">
+                        {currentSlide?.bullets?.map((b, bIdx) => (
+                          <div key={bIdx} className="flex items-start gap-3 p-3 rounded-lg bg-surface-container-low/60 border border-outline-variant/20">
+                            <span className="text-secondary text-lg leading-snug shrink-0">▸</span>
+                            <p className="font-body-md text-body-md text-on-surface leading-relaxed m-0">
+                              {b}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {currentSlide?.diagram && (
+                        <pre className="p-4 sm:p-5 rounded-xl bg-surface-container-lowest text-primary font-code-sm text-code-sm border border-outline-variant/30 overflow-x-auto whitespace-pre mb-6 shadow-inner">
+                          {currentSlide.diagram.trim()}
+                        </pre>
+                      )}
+
+                      {currentSlide?.takeaway && (
+                        <div className="p-4 rounded-xl bg-secondary/10 border-l-4 border-secondary text-on-surface font-body-sm text-body-sm">
+                          <strong className="text-secondary">KEY TAKEAWAY: </strong>
+                          {currentSlide.takeaway}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Navigation Buttons Footer */}
-                  <div className="relative z-10 flex items-center justify-between pt-6 border-t border-outline-variant/25 mt-8">
+                  <div className="flex items-center justify-between pt-5 border-t border-outline-variant/25 mt-6">
                     <button
+                      type="button"
                       onClick={prevSlide}
                       disabled={currentSlideIndex === 0}
                       className="px-4 py-2 rounded-lg bg-surface-container-high hover:bg-surface-bright text-on-surface font-body-sm text-body-sm disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 border border-outline-variant/30 transition-colors"
                     >
                       <span className="material-symbols-outlined text-base">chevron_left</span>
-                      Previous Slide
+                      Previous
                     </button>
                     <span className="font-code-sm text-code-sm text-outline hidden sm:inline">
-                      Use ← / → arrow keys • Slide {currentSlideIndex + 1} / {routeModule.slides.length}
+                      ← / → Keys • Slide {currentSlideIndex + 1} of {routeModule.slides.length}
                     </span>
                     {currentSlideIndex < routeModule.slides.length - 1 ? (
                       <button
+                        type="button"
                         onClick={nextSlide}
                         className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-body-sm text-body-sm font-semibold flex items-center gap-1.5 shadow-sm transition-colors"
                       >
-                        Next Slide
+                        Next
                         <span className="material-symbols-outlined text-base">chevron_right</span>
                       </button>
                     ) : (
                       <button
+                        type="button"
                         onClick={() => setActiveTab('lab')}
                         className="px-4 py-2 rounded-lg bg-secondary hover:bg-secondary-container text-on-secondary font-body-sm text-body-sm font-bold flex items-center gap-1.5 shadow-sm transition-colors"
                       >
-                        Open Hands-On Lab
+                        Go to Labs
                         <span className="material-symbols-outlined text-base">terminal</span>
                       </button>
                     )}
@@ -767,86 +651,7 @@ const SocCourse = () => {
                 </div>
               )}
 
-              {/* VIEW 2: THEORY & CHEAT SHEETS */}
-              {activeTab === 'theory' && routeModule.theory && (
-                <div className="bg-surface-container rounded-2xl border border-outline-variant/30 p-6 sm:p-8 lg:p-10 shadow-2xl flex flex-col gap-6">
-                  <div>
-                    <h2 className="soc-clean-heading text-2xl font-bold text-primary mb-2 flex items-center gap-2.5">
-                      <span className="material-symbols-outlined text-2xl">menu_book</span>
-                      In-Depth Technical Guide &amp; Cheat Sheet
-                    </h2>
-                    <p className="font-body-md text-body-md text-on-surface-variant leading-relaxed">
-                      {routeModule.theory.overview}
-                    </p>
-                  </div>
-
-                  {routeModule.theory.sections?.map((sec, sIdx) => (
-                    <div key={sIdx} className="flex flex-col gap-3">
-                      <h3 className="soc-clean-heading text-base sm:text-lg font-bold text-secondary border-b border-outline-variant/25 pb-2">
-                        {sec.heading}
-                      </h3>
-                      <p className="font-body-md text-body-md text-on-surface leading-relaxed m-0">
-                        {sec.content}
-                      </p>
-
-                      {/* Steps */}
-                      {sec.steps && (
-                        <div className="flex flex-col gap-2">
-                          {sec.steps.map((st, stIdx) => (
-                            <div key={stIdx} className="p-3 rounded-lg bg-surface-container-lowest border-l-2 border-primary text-on-surface font-body-sm text-body-sm">
-                              {st}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Table */}
-                      {sec.table && (
-                        <div className="overflow-x-auto rounded-xl border border-outline-variant/30">
-                          <table className="w-full text-left font-body-sm text-body-sm border-collapse">
-                            <thead>
-                              <tr className="bg-surface-container-lowest text-primary border-b border-outline-variant/30">
-                                {sec.table.headers.map((h, hIdx) => (
-                                  <th key={hIdx} className="p-3 font-semibold font-code-sm">{h}</th>
-                                ))}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {sec.table.rows.map((row, rIdx) => (
-                                <tr key={rIdx} className="border-b border-outline-variant/10 hover:bg-surface-container-lowest/50">
-                                  {row.map((c, cIdx) => (
-                                    <td key={cIdx} className="p-3 text-on-surface">{c}</td>
-                                  ))}
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-
-                      {/* Code Block with Copy */}
-                      {sec.codeBlock && (
-                        <div className="relative rounded-xl overflow-hidden border border-outline-variant/30 bg-surface-container-lowest">
-                          <div className="flex items-center justify-between px-4 py-2 bg-surface-container-high border-b border-outline-variant/20">
-                            <span className="font-code-sm text-code-sm text-primary">COMMAND REFERENCE</span>
-                            <button
-                              onClick={() => handleCopy(sec.codeBlock, `code-${sIdx}`)}
-                              className="text-outline hover:text-on-surface font-code-sm text-code-sm flex items-center gap-1"
-                            >
-                              {copiedCode === `code-${sIdx}` ? 'Copied!' : 'Copy'}
-                            </button>
-                          </div>
-                          <pre className="p-4 text-on-surface font-code-sm text-code-sm overflow-x-auto m-0">
-                            {sec.codeBlock}
-                          </pre>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* VIEW 3: HANDS-ON LAB */}
+              {/* VIEW 2: LABS */}
               {activeTab === 'lab' && routeModule.lab && (
                 <div className="bg-surface-container rounded-2xl border border-outline-variant/30 p-6 sm:p-8 lg:p-10 shadow-2xl flex flex-col gap-6">
                   <div className="flex flex-wrap items-start justify-between gap-4 border-b border-outline-variant/25 pb-4">
@@ -1104,102 +909,87 @@ const SocCourse = () => {
                   )}
 
                   {/* Lab Instructions Footer */}
-                  <div className="p-4 rounded-xl bg-surface-container-high border-l-4 border-primary font-body-sm text-body-sm text-on-surface flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <strong className="text-primary">TASK INSTRUCTIONS:</strong>
-                      <p className="m-0 whitespace-pre-line pt-1 text-on-surface-variant font-code-sm text-code-sm">
-                        {routeModule.lab.taskInstructions}
-                      </p>
-                    </div>
-                    {routeModule.challenge && (
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab('challenge')}
-                        className="px-4 py-2 rounded-lg bg-secondary hover:bg-secondary-container text-on-secondary font-semibold text-xs shrink-0 flex items-center gap-1.5 shadow-sm transition-colors"
-                      >
-                        <span>Submit CTF Flag</span>
-                        <span className="material-symbols-outlined text-base">flag</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* VIEW 4: CTF CHALLENGE */}
-              {activeTab === 'challenge' && routeModule.challenge && (
-                <div className="bg-surface-container rounded-2xl border border-outline-variant/30 p-6 sm:p-8 lg:p-10 shadow-2xl flex flex-col gap-6">
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/25 pb-4">
-                    <h2 className="soc-clean-heading text-2xl font-bold text-secondary flex items-center gap-2.5">
-                      <span className="material-symbols-outlined text-2xl">flag</span>
-                      Module CTF Challenge &amp; Flag Submission
-                    </h2>
-                    <span className="px-3.5 py-1 rounded-full bg-secondary/10 text-secondary font-code-sm text-code-sm font-bold border border-secondary/25">
-                      REWARD: +{routeModule.challenge.points} XP
-                    </span>
-                  </div>
-
-                  <div className="p-5 rounded-xl bg-surface-container-lowest border-l-4 border-secondary flex flex-col gap-1.5">
-                    <span className="font-label-sm text-label-sm text-secondary uppercase tracking-wider font-semibold">
-                      OBJECTIVE / QUESTION:
-                    </span>
-                    <p className="font-title-sm text-title-sm text-on-surface font-semibold m-0 leading-relaxed">
-                      {routeModule.challenge.question}
+                  <div className="p-4 rounded-xl bg-surface-container-high border-l-4 border-primary font-body-sm text-body-sm text-on-surface">
+                    <strong className="text-primary">TASK INSTRUCTIONS:</strong>
+                    <p className="m-0 whitespace-pre-line pt-1 text-on-surface-variant font-code-sm text-code-sm">
+                      {routeModule.lab.taskInstructions}
                     </p>
                   </div>
 
-                  {/* Challenge Status banner */}
-                  {challengeStatus === 'success' && (
-                    <div className="p-4 rounded-xl bg-secondary/15 border border-secondary text-secondary flex items-center gap-3">
-                      <span className="material-symbols-outlined text-2xl">check_circle</span>
+                  {/* Lab Flag Verification Block */}
+                  {routeModule.challenge && (
+                    <div className="pt-4 border-t border-outline-variant/25 flex flex-col gap-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h3 className="soc-clean-heading text-lg font-bold text-secondary flex items-center gap-2">
+                          <span className="material-symbols-outlined text-xl">flag</span>
+                          Lab Flag Verification
+                        </h3>
+                        <span className="px-3 py-1 rounded-full bg-secondary/10 text-secondary font-code-sm text-code-sm font-bold border border-secondary/25">
+                          +{routeModule.challenge.points} XP
+                        </span>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-surface-container-lowest border-l-4 border-secondary flex flex-col gap-1">
+                        <span className="font-label-sm text-label-sm text-secondary uppercase tracking-wider font-semibold">
+                          OBJECTIVE:
+                        </span>
+                        <p className="font-title-sm text-title-sm text-on-surface font-semibold m-0 leading-relaxed">
+                          {routeModule.challenge.question}
+                        </p>
+                      </div>
+
+                      {challengeStatus === 'success' && (
+                        <div className="p-4 rounded-xl bg-secondary/15 border border-secondary text-secondary flex items-center gap-3">
+                          <span className="material-symbols-outlined text-2xl">check_circle</span>
+                          <div>
+                            <strong className="font-title-sm text-title-sm">FLAG VERIFIED! CHALLENGE SOLVED! (+{routeModule.challenge.points} XP)</strong>
+                            <p className="m-0 font-body-sm text-body-sm">Your defense telemetry analysis is correct. Progress has been saved.</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {challengeStatus === 'error' && (
+                        <div className="p-3.5 rounded-xl bg-error-container/20 border border-error text-error flex items-center gap-2">
+                          <span className="material-symbols-outlined text-xl">error</span>
+                          <span className="font-body-sm text-body-sm font-semibold">INCORRECT FLAG OR TARGET KEY. Review the lab findings and try again!</span>
+                        </div>
+                      )}
+
+                      <form onSubmit={handleFlagSubmit} className="flex flex-col sm:flex-row gap-3">
+                        <input
+                          type="text"
+                          value={flagInput}
+                          onChange={(e) => setFlagInput(e.target.value)}
+                          disabled={isChallengeSolved}
+                          placeholder="Enter flag format: flag{...} or target keyword"
+                          className="flex-1 px-4 py-3 rounded-xl bg-surface-container-lowest border border-outline-variant/40 text-on-surface font-code-md text-code-md focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+                        />
+                        <button
+                          type="submit"
+                          disabled={isChallengeSolved}
+                          className="px-6 py-3 rounded-xl bg-secondary hover:bg-secondary-container text-on-secondary font-title-sm text-body-md font-bold transition-all disabled:opacity-50 shadow-sm"
+                        >
+                          {isChallengeSolved ? 'Challenge Solved' : 'Submit Flag'}
+                        </button>
+                      </form>
+
                       <div>
-                        <strong className="font-title-sm text-title-sm">FLAG VERIFIED! CHALLENGE SOLVED! (+{routeModule.challenge.points} XP)</strong>
-                        <p className="m-0 font-body-sm text-body-sm">Your defense telemetry analysis is correct. Progress has been saved.</p>
+                        <button
+                          type="button"
+                          onClick={() => setShowHint(!showHint)}
+                          className="text-primary hover:underline font-code-sm text-code-sm flex items-center gap-1"
+                        >
+                          <span className="material-symbols-outlined text-base">help</span>
+                          {showHint ? 'Hide Hint' : 'Need a Hint?'}
+                        </button>
+                        {showHint && (
+                          <div className="mt-2.5 p-3.5 rounded-xl bg-primary/10 border border-primary/30 text-on-surface font-body-sm text-body-sm">
+                            💡 <strong>HINT:</strong> {routeModule.challenge.hint}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
-
-                  {challengeStatus === 'error' && (
-                    <div className="p-3.5 rounded-xl bg-error-container/20 border border-error text-error flex items-center gap-2">
-                      <span className="material-symbols-outlined text-xl">error</span>
-                      <span className="font-body-sm text-body-sm font-semibold">INCORRECT FLAG OR TARGET KEY. Review the lab findings and try again!</span>
-                    </div>
-                  )}
-
-                  {/* Form */}
-                  <form onSubmit={handleFlagSubmit} className="flex flex-col sm:flex-row gap-3">
-                    <input
-                      type="text"
-                      value={flagInput}
-                      onChange={(e) => setFlagInput(e.target.value)}
-                      disabled={isChallengeSolved}
-                      placeholder="Enter flag format: flag{...} or target keyword"
-                      className="flex-1 px-4 py-3 rounded-xl bg-surface-container-lowest border border-outline-variant/40 text-on-surface font-code-md text-code-md focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
-                    />
-                    <button
-                      type="submit"
-                      disabled={isChallengeSolved}
-                      className="px-6 py-3 rounded-xl bg-secondary hover:bg-secondary-container text-on-secondary font-title-sm text-body-md font-bold transition-all disabled:opacity-50 shadow-sm"
-                    >
-                      {isChallengeSolved ? 'Challenge Solved' : 'Submit Flag'}
-                    </button>
-                  </form>
-
-                  {/* Hint */}
-                  <div className="border-t border-outline-variant/25 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => setShowHint(!showHint)}
-                      className="text-primary hover:underline font-code-sm text-code-sm flex items-center gap-1"
-                    >
-                      <span className="material-symbols-outlined text-base">help</span>
-                      {showHint ? 'Hide Hint' : 'Need a Hint?'}
-                    </button>
-                    {showHint && (
-                      <div className="mt-2.5 p-3.5 rounded-xl bg-primary/10 border border-primary/30 text-on-surface font-body-sm text-body-sm">
-                        💡 <strong>HINT:</strong> {routeModule.challenge.hint}
-                      </div>
-                    )}
-                  </div>
                 </div>
               )}
 
@@ -1379,7 +1169,7 @@ const SocCourse = () => {
             </a>
 
             <a
-              href={`#/soc/${SOC_MODULES[4].slug}?tab=theory`}
+              href={`#/soc/${SOC_MODULES[4].slug}?tab=slides`}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setActiveSidebarTrack('mitre')}

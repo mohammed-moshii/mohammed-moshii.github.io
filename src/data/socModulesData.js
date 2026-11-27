@@ -22,99 +22,24 @@ export const SOC_MODULES = [
     progress: 100,
     difficulty: "Beginner",
     duration: "45 Mins",
-    slideCount: 16,
+    slideCount: 11,
     labCount: "3 Labs Completed (3/3)",
     tags: ["SOC Models", "NIST SP 800-61", "SLA & Metrics"],
     skills: ["SOC Architecture", "Alert Triage", "MTTD & MTTR Metrics", "NIST SP 800-61", "Escalation SOPs"],
     summary: "Establish defense operations foundation: SOC models, tier escalations, RFC 2828 taxonomy, MTTD/MTTR metrics, and NIST SP 800-61 workflows.",
-    
+
     slides: [
-      {
-        id: 1,
-        title: "The Modern SOC Ecosystem",
-        subtitle: "Defense-in-Depth & The Blue Team Nervous System",
-        bullets: [
-          "A Security Operations Center (SOC) is the centralized command hub monitoring, detecting, and responding to cyber incidents 24/7/365.",
-          "Core Triad: People (Analysts & Engineers), Processes (SOPs & Playbooks), and Technology (SIEM, EDR, SOAR, NDR).",
-          "Tier 1 (Triage & Validation) ➔ Tier 2 (Incident Responders & Forensic Investigation) ➔ Tier 3 (Threat Hunters & Reverse Engineers)."
-        ],
-        diagram: `
- ┌────────────────────────────────────────────────────────┐
- │                   TELEMETRY SOURCES                    │
- │  Firewalls · Windows Event Logs · Cloud · EDR · DNS    │
- └──────────────────────────┬─────────────────────────────┘
-                            ▼
- ┌────────────────────────────────────────────────────────┐
- │            CENTRAL SIEM & CORRELATION ENGINE           │
- │       Normalized Events · Correlation Rules · Alerts   │
- └──────────────────────────┬─────────────────────────────┘
-                            ▼
- ┌────────────────────────────────────────────────────────┐
- │                     SOC HIERARCHY                      │
- │   Tier 1 (Filter/Triage) ➔ Tier 2 (IR) ➔ Tier 3 (Hunt) │
- └────────────────────────────────────────────────────────┘`,
-        takeaway: "The primary mission of Tier 1 is rapid validation: distinguish benign anomalies from active intrusions."
-      },
-      {
-        id: 2,
-        title: "Alert Triage Methodology",
-        subtitle: "True Positive vs False Positive Matrix",
-        bullets: [
-          "True Positive (TP): Legitimate malicious activity correctly flagged by an alert (e.g. Mimikatz executing on an endpoint).",
-          "False Positive (FP): Benign business activity erroneously triggered by a generic rule (e.g. Admin script running PowerShell backup).",
-          "True Negative (TN): Benign traffic ignored properly without alert generation.",
-          "False Negative (FN): The worst nightmare: An active attack bypassed detection undetected."
-        ],
-        diagram: `
-                 ACTUAL ACTIVITY
-               Malicious        Benign
-             ┌──────────────┬──────────────┐
-   ALERT     │ True         │ False        │
-   TRIGGERED │ Positive     │ Positive     │
-             │ (Incident!)  │ (Tuning Req) │
-             ├──────────────┼──────────────┤
-   NO        │ False        │ True         │
-   ALERT     │ Negative     │ Negative     │
-             │ (Breach!)    │ (Normal Ops) │
-             └──────────────┴──────────────┘`,
-        takeaway: "Always check asset context, user baseline, and parent-child execution before closing an alert as False Positive."
-      },
-      {
-        id: 3,
-        title: "Key Performance Metrics (MTTD vs MTTR)",
-        subtitle: "Measuring Defense Velocity Against Adversary Dwell Time",
-        bullets: [
-          "MTTD (Mean Time to Detect): Average elapsed time between attacker initial compromise and SOC detection.",
-          "MTTA (Mean Time to Acknowledge): Time taken by a Tier 1 analyst to claim an alert in the case queue.",
-          "MTTR (Mean Time to Respond / Remediate): Time required to contain and neutralize the confirmed threat.",
-          "Dwell Time: How long the adversary wanders undetected inside the network (Industry average historically: ~16 to 45 days)."
-        ],
-        diagram: `
- [ Initial Access ] ──> [ Lateral Move ] ──> [ Detection ] ──> [ Containment ]
- ├──────────────── Dwell Time ──────────────┤
-                                            ├───── MTTR ─────┤`,
-        takeaway: "Automation through SOAR platforms drastically reduces MTTR from hours to seconds for routine alerts."
-      },
-      {
-        id: 4,
-        title: "The Alert Escalation SOP",
-        subtitle: "Standard Operating Procedure for Tier 1 ➔ Tier 2 Handoff",
-        bullets: [
-          "Step 1: Ingestion & Ticket Claiming in SOAR (e.g., TheHive, Jira, Splunk Phantom).",
-          "Step 2: Scoping (Identify affected Hostname, User account, IP address, Timestamp).",
-          "Step 3: Verification (Review raw logs, verify hashes on VirusTotal/HybridAnalysis).",
-          "Step 4: Containment Request & Escalation Notes (Document 5 Ws: Who, What, Where, When, Why)."
-        ],
-        diagram: `
- [ New Alert ] ──> [ Check Host Context ] ──> [ Malicious? ]
-                                                    │
-                 ┌──────────────────────────────────┴──────────────────┐
-                 ▼                                                     ▼
-           [ NO: Tune Rule ]                                     [ YES: Escalate ]
-            Document Reason                                       Host Isolation
-            Close Ticket as FP                                    Trigger IR Team`,
-        takeaway: "Clean documentation in incident tickets is as important as technical analysis."
-      }
+      { id: 1, title: "SOC Analyst 2026", image: "/soc-slides/module-01/1.png" },
+      { id: 2, title: "SOC Models", image: "/soc-slides/module-01/2.png" },
+      { id: 3, title: "People, Processes, Technology", image: "/soc-slides/module-01/3.png" },
+      { id: 4, title: "SOC Team Structure", image: "/soc-slides/module-01/4.png" },
+      { id: 5, title: "Analyst Career Path", image: "/soc-slides/module-01/5.png" },
+      { id: 6, title: "Event Management", image: "/soc-slides/module-01/6.png" },
+      { id: 7, title: "Incident Management", image: "/soc-slides/module-01/7.png" },
+      { id: 8, title: "Detection Outcomes", image: "/soc-slides/module-01/8.png" },
+      { id: 9, title: "SOC Metrics", image: "/soc-slides/module-01/9.png" },
+      { id: 10, title: "SOC Tools", image: "/soc-slides/module-01/10.png" },
+      { id: 11, title: "Common Threat Types", image: "/soc-slides/module-01/11.png" }
     ],
 
     theory: {
