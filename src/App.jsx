@@ -10,6 +10,8 @@ import Admin from './Admin';
 import Writeup from './Writeup';
 import About from './About';
 import SocCourse from './SocCourse';
+import SiemTelemetry from './SiemTelemetry';
+import { SIEM_DOC_ID } from './siemCodec';
 import { verifySecret } from './cryptoUtils';
 import { BUILTIN_MACHINES } from './data/builtinMachines';
 import './index.css';
@@ -81,7 +83,10 @@ const HackTheBox = () => {
           id: doc.id,
           ...doc.data()
         }));
-        const combined = [...machinesData];
+        const visibleMachines = machinesData.filter(
+          m => !m.hiddenFromHtb && m.type !== 'soc-siem-simulator' && m.id !== SIEM_DOC_ID
+        );
+        const combined = [...visibleMachines];
         for (const builtin of BUILTIN_MACHINES) {
           const builtinSlug = (builtin.name || '').trim().toLowerCase().replace(/\s+/g, '-');
           const alreadyExists = combined.some(m => {
@@ -310,6 +315,7 @@ const AppContent = () => {
             <Route path="/htb" element={<HackTheBox />} />
             <Route path="/htb/:id" element={<Writeup />} />
             <Route path="/soc" element={<SocCourse />} />
+            <Route path="/soc/siem-telemetry" element={<SiemTelemetry />} />
             <Route path="/soc/:moduleId" element={<SocCourse />} />
             <Route path="/admin" element={<Admin />} />
           </Routes>

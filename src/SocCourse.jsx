@@ -1154,7 +1154,7 @@ const SocCourse = () => {
             </a>
 
             <a
-              href={`#/soc/${SOC_MODULES[3].slug}?tab=lab`}
+              href="#/soc/siem-telemetry"
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setActiveSidebarTrack('siem')}

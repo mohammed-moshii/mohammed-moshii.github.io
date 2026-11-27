@@ -70,6 +70,9 @@ const Writeup = () => {
         const targetId = (id || '').trim().toLowerCase().replace(/-+$/, '');
         querySnapshot.forEach((doc) => {
           const data = doc.data();
+          if (data.hiddenFromHtb || data.type === 'soc-siem-simulator' || doc.id === 'siem-telemetry-elastic-simulator') {
+            return;
+          }
           const cleanName = (data.name || '').trim().toLowerCase();
           const docSlug = cleanName.replace(/\s+/g, '-').replace(/-+$/, '');
           if (docSlug === targetId || doc.id === id) {

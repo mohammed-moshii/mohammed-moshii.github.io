@@ -10,6 +10,7 @@ import * as OTPAuth from 'otpauth';
 import QRCode from 'qrcode';
 import { hashPassword } from './cryptoUtils';
 import { BUILTIN_MACHINES } from './data/builtinMachines';
+import { SIEM_DOC_ID, encodeSiemHtml } from './siemCodec';
 import './index.css';
 
 // The authorized email addresses that are allowed to access the admin panel
@@ -90,6 +91,7 @@ const Admin = () => {
   const [selectedMachineId, setSelectedMachineId] = useState(null);
   const [visitorCount, setVisitorCount] = useState(null);
   const [isRefreshingStats, setIsRefreshingStats] = useState(false);
+  const [siemStatus, setSiemStatus] = useState({ exists: false, sizeBytes: 0, uploading: false });
 
   // Form State
   const [name, setName] = useState('');
@@ -188,8 +190,21 @@ const Admin = () => {
         ...doc.data()
       }));
 
-      // Merge built-in machines so they ALWAYS show in the Admin dashboard!
-      const combined = [...machinesData];
+      const siemDoc = machinesData.find(m => m.id === SIEM_DOC_ID || m.type === 'soc-siem-simulator');
+      if (siemDoc && (siemDoc.payload || siemDoc.writeup)) {
+        setSiemStatus({
+          exists: true,
+          sizeBytes: siemDoc.sizeBytes || (siemDoc.payload ? Math.round((siemDoc.payload.length * 3) / 4) : siemDoc.writeup.length),
+          uploading: false
+        });
+      } else {
+        setSiemStatus({ exists: false, sizeBytes: 0, uploading: false });
+      }
+
+      // Exclude hidden SOC telemetry simulators from the HTB writeups list
+      const combined = machinesData.filter(
+        m => !m.hiddenFromHtb && m.type !== 'soc-siem-simulator' && m.id !== SIEM_DOC_ID
+      );
       for (const builtin of BUILTIN_MACHINES) {
         const builtinSlug = (builtin.name || '').trim().toLowerCase().replace(/\s+/g, '-');
         const alreadyExists = combined.some(m => {
@@ -230,6 +245,42 @@ const Admin = () => {
     } catch (err) {
       console.error("Error fetching machines:", err);
       setMachines(BUILTIN_MACHINES);
+    }
+  };
+
+  const handleSiemFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+      setSiemStatus(prev => ({ ...prev, uploading: true }));
+      const rawHtml = await file.text();
+      if (!rawHtml.includes('<html') && !rawHtml.includes('<!DOCTYPE')) {
+        alert('Please select a valid standalone HTML simulator file.');
+        setSiemStatus(prev => ({ ...prev, uploading: false }));
+        return;
+      }
+      const encoded = encodeSiemHtml(rawHtml);
+      if (encoded.length > 900000) {
+        alert('Encoded simulator exceeds Firestore 1 MB document limit.');
+        setSiemStatus(prev => ({ ...prev, uploading: false }));
+        return;
+      }
+      await setDoc(doc(db, 'machines', SIEM_DOC_ID), {
+        name: 'Elastic SIEM Telemetry Simulator',
+        type: 'soc-siem-simulator',
+        hiddenFromHtb: true,
+        encoding: 'moshii-xor-b64-v1',
+        payload: encoded,
+        sizeBytes: rawHtml.length,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      setSiemStatus({ exists: true, sizeBytes: rawHtml.length, uploading: false });
+      setSuccessMsg('Elastic SIEM Telemetry Simulator stored & encoded in Firestore database!');
+    } catch (err) {
+      console.error('Failed to upload SIEM simulator:', err);
+      alert('Failed to upload SIEM simulator: ' + err.message);
+      setSiemStatus(prev => ({ ...prev, uploading: false }));
     }
   };
 
@@ -545,6 +596,44 @@ const Admin = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <span style={{ fontSize: '0.9rem', color: 'var(--accent-cyan)' }}>{user.email} (Verified)</span>
           <button className="hack-btn" onClick={handleLogout} style={{ border: '1px solid var(--accent-red)', color: 'var(--accent-red)' }}><LogOut size={16} /> Logout</button>
+        </div>
+      </div>
+
+      {/* Elastic SIEM Telemetry Simulator (Firestore Database Sync) */}
+      <div className="glass-panel" style={{ padding: '20px 24px', marginBottom: '24px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px', border: '1px solid rgba(76, 215, 246, 0.35)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <strong style={{ color: '#fff', fontSize: '1rem' }}>SOC SIEM Telemetry Simulator (Firestore Database)</strong>
+            {siemStatus.exists ? (
+              <span style={{ padding: '2px 10px', borderRadius: '9999px', fontSize: '0.75rem', fontFamily: 'monospace', background: 'rgba(0, 255, 65, 0.12)', color: 'var(--accent-green)', border: '1px solid rgba(0, 255, 65, 0.35)' }}>
+                SYNCED ({Math.max(1, Math.round(siemStatus.sizeBytes / 1024))} KB · PROTECTED)
+              </span>
+            ) : (
+              <span style={{ padding: '2px 10px', borderRadius: '9999px', fontSize: '0.75rem', fontFamily: 'monospace', background: 'rgba(255, 185, 95, 0.12)', color: '#ffb95f', border: '1px solid rgba(255, 185, 95, 0.35)' }}>
+                NOT UPLOADED YET
+              </span>
+            )}
+          </div>
+          <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+            Stores the Elastic Kibana simulator HTML in Firestore (encoded, not exposed in GitHub repo or HTB writeups) and blocks source copying.
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <label className="hack-btn" style={{ cursor: siemStatus.uploading ? 'wait' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+            <PlusCircle size={16} />
+            <span>{siemStatus.uploading ? 'Encoding & Uploading...' : siemStatus.exists ? 'Update Simulator .html' : 'Upload Simulator .html'}</span>
+            <input type="file" accept=".html,.htm" onChange={handleSiemFileUpload} disabled={siemStatus.uploading} style={{ display: 'none' }} />
+          </label>
+          <a
+            href="#/soc/siem-telemetry"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hack-btn"
+            style={{ background: 'rgba(0, 255, 255, 0.1)', border: '1px solid var(--accent-cyan)', color: 'var(--accent-cyan)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+          >
+            <ExternalLink size={15} /> Open SIEM Tab
+          </a>
         </div>
       </div>
 
