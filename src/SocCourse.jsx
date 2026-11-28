@@ -155,6 +155,7 @@ const SocCourse = () => {
 
   // Module workspace state (full-screen tab when moduleId is present)
   const [activeTab, setActiveTab] = useState(validInitialTab); // 'slides' | 'lab'
+  const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [isWorkspaceSidebarOpen, setIsWorkspaceSidebarOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -198,6 +199,7 @@ const SocCourse = () => {
   if (currentRouteKey !== trackedRouteKey) {
     setTrackedRouteKey(currentRouteKey);
     setActiveTab(validInitialTab);
+    setCurrentSectionIndex(0);
     setCurrentSlideIndex(0);
     setFlagInput('');
     setChallengeStatus(null);
@@ -218,6 +220,35 @@ const SocCourse = () => {
     if (!routeModule) return -1;
     return SOC_MODULES.findIndex(m => m.id === routeModule.id);
   }, [routeModule]);
+
+  const slideSections = useMemo(() => {
+    if (!routeModule) return [];
+    return Array.isArray(routeModule.slideSections) ? routeModule.slideSections : [];
+  }, [routeModule]);
+
+  const activeSection = useMemo(() => {
+    if (slideSections.length === 0) return null;
+    return slideSections[currentSectionIndex] || slideSections[0];
+  }, [slideSections, currentSectionIndex]);
+
+  const activeSlides = useMemo(() => {
+    if (slideSections.length > 0) return activeSection?.slides || [];
+    return routeModule?.slides || [];
+  }, [slideSections, activeSection, routeModule]);
+
+  const totalModuleSlides = useMemo(() => {
+    if (slideSections.length > 0) {
+      return slideSections.reduce((sum, sec) => sum + (sec.slides?.length || 0), 0);
+    }
+    return routeModule?.slides?.length || 0;
+  }, [slideSections, routeModule]);
+
+  const selectSection = useCallback((idx) => {
+    setCurrentSectionIndex(idx);
+    setCurrentSlideIndex(0);
+    setActiveTab('slides');
+    setIsWorkspaceSidebarOpen(false);
+  }, []);
 
   // Save progress
   useEffect(() => {
@@ -257,7 +288,7 @@ const SocCourse = () => {
   };
 
   // Slide controls (declared before keyboard listener)
-  const totalSlides = routeModule?.slides?.length || 0;
+  const totalSlides = activeSlides.length;
   const nextSlide = useCallback(() => {
     setCurrentSlideIndex(prev => (prev < totalSlides - 1 ? prev + 1 : prev));
   }, [totalSlides]);
@@ -274,7 +305,7 @@ const SocCourse = () => {
         e.preventDefault();
         document.getElementById('module-search')?.focus();
       }
-      if (!routeModule || activeTab !== 'slides') return;
+      if (!routeModule || (routeModule.lab ? activeTab : 'slides') !== 'slides') return;
       if (e.key === 'ArrowRight') nextSlide();
       if (e.key === 'ArrowLeft') prevSlide();
     };
@@ -351,7 +382,7 @@ const SocCourse = () => {
     const prevModule = routeModuleIndex > 0 ? SOC_MODULES[routeModuleIndex - 1] : null;
     const nextModule = routeModuleIndex < SOC_MODULES.length - 1 ? SOC_MODULES[routeModuleIndex + 1] : null;
     const isChallengeSolved = !!completedChallenges[routeModule.id];
-    const currentSlide = routeModule.slides?.[currentSlideIndex];
+    const currentSlide = activeSlides?.[currentSlideIndex];
     const currentTab = routeModule.lab ? activeTab : 'slides';
 
     return (
@@ -498,9 +529,38 @@ const SocCourse = () => {
                     currentTab === 'slides' ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-outline'
                   }`}
                 >
-                  {routeModule.slides?.length || 0}
+                  {totalModuleSlides}
                 </span>
               </button>
+
+              {slideSections.length > 0 && (
+                <div className="pl-3 flex flex-col gap-1 border-l border-outline-variant/25 ml-4">
+                  {slideSections.map((sec, sIdx) => {
+                    const isActiveSection = currentTab === 'slides' && sIdx === currentSectionIndex;
+                    return (
+                      <button
+                        key={sec.id || sIdx}
+                        type="button"
+                        onClick={() => selectSection(sIdx)}
+                        className={`w-full text-left px-3 py-2 rounded-lg flex items-center justify-between gap-2 text-xs font-medium transition-all border ${
+                          isActiveSection
+                            ? 'bg-primary/10 border-primary/40 text-white'
+                            : 'bg-transparent border-transparent text-on-surface-variant hover:bg-surface-container hover:text-white'
+                        }`}
+                      >
+                        <span className="truncate">{sec.title}</span>
+                        <span
+                          className={`px-1.5 py-0.5 rounded font-mono text-[10px] font-bold shrink-0 ${
+                            isActiveSection ? 'bg-primary/25 text-primary' : 'bg-surface-container-high text-outline'
+                          }`}
+                        >
+                          {sec.slides?.length || 0}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
 
               {routeModule.lab && (
                 <button
@@ -531,8 +591,47 @@ const SocCourse = () => {
             <div className="max-w-6xl mx-auto w-full">
 
               {/* VIEW 1: SLIDES */}
-              {currentTab === 'slides' && routeModule.slides && (
+              {currentTab === 'slides' && activeSlides.length > 0 && (
                 <div className="flex flex-col justify-between bg-surface-container rounded-2xl border border-outline-variant/30 p-4 sm:p-6 lg:p-8 shadow-2xl relative overflow-hidden">
+                  {slideSections.length > 0 && activeSection && (
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-4 mb-4 border-b border-outline-variant/25">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-base text-primary">folder_open</span>
+                        <span className="font-mono text-[11px] uppercase tracking-wider text-outline">
+                          Section {currentSectionIndex + 1} / {slideSections.length}
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/15 text-primary border border-primary/30">
+                          {activeSection.title}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {slideSections.map((sec, sIdx) => (
+                          <button
+                            key={sec.id || sIdx}
+                            type="button"
+                            onClick={() => selectSection(sIdx)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border flex items-center gap-1.5 ${
+                              sIdx === currentSectionIndex
+                                ? 'bg-primary text-on-primary border-primary shadow-sm'
+                                : 'bg-surface-container-low text-on-surface-variant border-outline-variant/25 hover:text-white hover:border-outline'
+                            }`}
+                          >
+                            <span>{sec.title}</span>
+                            <span
+                              className={`font-mono text-[10px] px-1.5 py-0.5 rounded ${
+                                sIdx === currentSectionIndex
+                                  ? 'bg-black/20 text-on-primary'
+                                  : 'bg-surface-container-high text-outline'
+                              }`}
+                            >
+                              {sec.slides?.length || 0}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Top Header: Counter + Numbered Slide Stepper */}
                   <div className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/25 pb-4 mb-5">
                     <div className="flex items-center gap-3 min-w-0">
@@ -544,7 +643,7 @@ const SocCourse = () => {
                           color: cfg.accent,
                         }}
                       >
-                        SLIDE {currentSlideIndex + 1} / {routeModule.slides.length}
+                        SLIDE {currentSlideIndex + 1} / {activeSlides.length}
                       </span>
                       {currentSlide?.title && (
                         <span className="text-sm sm:text-base font-semibold text-white truncate">
@@ -554,7 +653,7 @@ const SocCourse = () => {
                     </div>
 
                     <div className="flex flex-wrap gap-1.5">
-                      {routeModule.slides.map((_, idx) => (
+                      {activeSlides.map((_, idx) => (
                         <button
                           key={idx}
                           type="button"
@@ -629,15 +728,24 @@ const SocCourse = () => {
                       Previous
                     </button>
                     <span className="font-code-sm text-code-sm text-outline hidden sm:inline">
-                      ← / → Keys • Slide {currentSlideIndex + 1} of {routeModule.slides.length}
+                      ← / → Keys • Slide {currentSlideIndex + 1} of {activeSlides.length}
                     </span>
-                    {currentSlideIndex < routeModule.slides.length - 1 ? (
+                    {currentSlideIndex < activeSlides.length - 1 ? (
                       <button
                         type="button"
                         onClick={nextSlide}
                         className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-body-sm text-body-sm font-semibold flex items-center gap-1.5 shadow-sm transition-colors"
                       >
                         Next
+                        <span className="material-symbols-outlined text-base">chevron_right</span>
+                      </button>
+                    ) : currentSectionIndex < slideSections.length - 1 ? (
+                      <button
+                        type="button"
+                        onClick={() => selectSection(currentSectionIndex + 1)}
+                        className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-body-sm text-body-sm font-semibold flex items-center gap-1.5 shadow-sm transition-colors"
+                      >
+                        Next Section: {slideSections[currentSectionIndex + 1]?.title}
                         <span className="material-symbols-outlined text-base">chevron_right</span>
                       </button>
                     ) : routeModule.lab ? (
