@@ -257,11 +257,11 @@ export const SOC_MODULES = [
     progress: 100,
     difficulty: "Intermediate",
     duration: "55 Mins",
-    slideCount: 11,
+    slideCount: 32,
     labCount: "4 Labs Completed (4/4)",
-    tags: ["Log Pipeline", "System Auditing", "Windows Events"],
-    skills: ["Windows Event Logs", "System Auditing", "Sysmon Telemetry", "Linux Auditd", "SIEM Ingestion"],
-    summary: "Master centralized log collection, Windows file system auditing, Event ID 4663 verification, Syslog, and endpoint telemetry pipelines.",
+    tags: ["Log Pipeline", "System Auditing", "Elasticsearch"],
+    skills: ["Windows Event Logs", "System Auditing", "Elasticsearch & Fleet", "Elastic Agent", "KQL Log Filtering"],
+    summary: "Master centralized log collection, Windows file system auditing, Event ID 4663 verification, and setting up Elastic Cloud, Fleet, and Elastic Agent telemetry pipelines.",
 
     slideSections: [
       {
@@ -279,6 +279,33 @@ export const SOC_MODULES = [
           { id: 19, title: "Configure Advanced Auditing Permissions", image: "/soc-slides/module-03/system-auditing/19.png" },
           { id: 20, title: "Edit the Monitored File (cysa.conf)", image: "/soc-slides/module-03/system-auditing/20.png" },
           { id: 21, title: "Event Viewer Security Log (Event ID 4663)", image: "/soc-slides/module-03/system-auditing/21.png" }
+        ]
+      },
+      {
+        id: "setup-elasticsearch",
+        title: "Setup Elastic Search",
+        slides: [
+          { id: 28, title: "Log in to Elastic Cloud", image: "/soc-slides/module-03/setup-elasticsearch/28.png" },
+          { id: 29, title: "Create Hosted Deployment", image: "/soc-slides/module-03/setup-elasticsearch/29.png" },
+          { id: 30, title: "Select Elasticsearch Solution View", image: "/soc-slides/module-03/setup-elasticsearch/30.png" },
+          { id: 31, title: "Configure Deployment Name & Cloud Region", image: "/soc-slides/module-03/setup-elasticsearch/31.png" },
+          { id: 32, title: "Save Deployment Credentials", image: "/soc-slides/module-03/setup-elasticsearch/32.png" },
+          { id: 33, title: "Get Started & Open Deployment Management", image: "/soc-slides/module-03/setup-elasticsearch/33.png" },
+          { id: 34, title: "Open Integrations Server", image: "/soc-slides/module-03/setup-elasticsearch/34.png" },
+          { id: 35, title: "Launch Fleet Management", image: "/soc-slides/module-03/setup-elasticsearch/35.png" },
+          { id: 36, title: "Fleet Dashboard — Add New Agent", image: "/soc-slides/module-03/setup-elasticsearch/36.png" },
+          { id: 37, title: "Create Agent Policy (win7)", image: "/soc-slides/module-03/setup-elasticsearch/37.png" },
+          { id: 38, title: "Windows PowerShell Agent Install Command", image: "/soc-slides/module-03/setup-elasticsearch/38.png" },
+          { id: 39, title: "Run Elastic Agent Installer & Accept License", image: "/soc-slides/module-03/setup-elasticsearch/39.png" },
+          { id: 40, title: "Agent Enrollment Confirmed", image: "/soc-slides/module-03/setup-elasticsearch/40.png" },
+          { id: 41, title: "Verify Healthy Enrolled Host (MOSHII)", image: "/soc-slides/module-03/setup-elasticsearch/41.png" },
+          { id: 42, title: "Metrics System Overview Dashboard", image: "/soc-slides/module-03/setup-elasticsearch/42.png" },
+          { id: 43, title: "Windows Overview Security Events Dashboard", image: "/soc-slides/module-03/setup-elasticsearch/43.png" },
+          { id: 44, title: "Open Deployment from Elastic Cloud Home", image: "/soc-slides/module-03/setup-elasticsearch/44.png" },
+          { id: 45, title: "Open Discover in Elasticsearch", image: "/soc-slides/module-03/setup-elasticsearch/45.png" },
+          { id: 46, title: "Select logs-* Data View", image: "/soc-slides/module-03/setup-elasticsearch/46.png" },
+          { id: 47, title: "View Ingested Agent Logs", image: "/soc-slides/module-03/setup-elasticsearch/47.png" },
+          { id: 48, title: "Filter Logs with KQL (host.hostname : \"MOSHII\")", image: "/soc-slides/module-03/setup-elasticsearch/48.png" }
         ]
       }
     ],
