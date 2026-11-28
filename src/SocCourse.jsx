@@ -352,6 +352,7 @@ const SocCourse = () => {
     const nextModule = routeModuleIndex < SOC_MODULES.length - 1 ? SOC_MODULES[routeModuleIndex + 1] : null;
     const isChallengeSolved = !!completedChallenges[routeModule.id];
     const currentSlide = routeModule.slides?.[currentSlideIndex];
+    const currentTab = routeModule.lab ? activeTab : 'slides';
 
     return (
       <div className="bg-surface font-body-md text-on-surface antialiased min-h-screen lg:h-screen w-full flex flex-col lg:overflow-hidden">
@@ -481,45 +482,47 @@ const SocCourse = () => {
                   setIsWorkspaceSidebarOpen(false);
                 }}
                 className={`w-full text-left px-4 py-3 rounded-xl flex items-center justify-between transition-all border ${
-                  activeTab === 'slides'
+                  currentTab === 'slides'
                     ? 'bg-primary/15 border-primary/50 text-white shadow-sm'
                     : 'bg-transparent border-transparent text-on-surface-variant hover:bg-surface-container hover:text-white'
                 }`}
               >
                 <span className="flex items-center gap-3 text-sm font-semibold">
-                  <span className={`material-symbols-outlined text-xl ${activeTab === 'slides' ? 'text-primary' : 'text-outline'}`}>
+                  <span className={`material-symbols-outlined text-xl ${currentTab === 'slides' ? 'text-primary' : 'text-outline'}`}>
                     slideshow
                   </span>
                   <span>Slides</span>
                 </span>
                 <span
                   className={`px-2 py-0.5 rounded font-mono text-[11px] font-bold ${
-                    activeTab === 'slides' ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-outline'
+                    currentTab === 'slides' ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-outline'
                   }`}
                 >
                   {routeModule.slides?.length || 0}
                 </span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('lab');
-                  setIsWorkspaceSidebarOpen(false);
-                }}
-                className={`w-full text-left px-4 py-3 rounded-xl flex items-center justify-between transition-all border ${
-                  activeTab === 'lab'
-                    ? 'bg-secondary/15 border-secondary/50 text-white shadow-sm'
-                    : 'bg-transparent border-transparent text-on-surface-variant hover:bg-surface-container hover:text-white'
-                }`}
-              >
-                <span className="flex items-center gap-3 text-sm font-semibold">
-                  <span className={`material-symbols-outlined text-xl ${activeTab === 'lab' ? 'text-secondary' : 'text-outline'}`}>
-                    terminal
+              {routeModule.lab && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('lab');
+                    setIsWorkspaceSidebarOpen(false);
+                  }}
+                  className={`w-full text-left px-4 py-3 rounded-xl flex items-center justify-between transition-all border ${
+                    currentTab === 'lab'
+                      ? 'bg-secondary/15 border-secondary/50 text-white shadow-sm'
+                      : 'bg-transparent border-transparent text-on-surface-variant hover:bg-surface-container hover:text-white'
+                  }`}
+                >
+                  <span className="flex items-center gap-3 text-sm font-semibold">
+                    <span className={`material-symbols-outlined text-xl ${currentTab === 'lab' ? 'text-secondary' : 'text-outline'}`}>
+                      terminal
+                    </span>
+                    <span>Labs</span>
                   </span>
-                  <span>Labs</span>
-                </span>
-              </button>
+                </button>
+              )}
             </nav>
           </aside>
 
@@ -528,7 +531,7 @@ const SocCourse = () => {
             <div className="max-w-6xl mx-auto w-full">
 
               {/* VIEW 1: SLIDES */}
-              {activeTab === 'slides' && routeModule.slides && (
+              {currentTab === 'slides' && routeModule.slides && (
                 <div className="flex flex-col justify-between bg-surface-container rounded-2xl border border-outline-variant/30 p-4 sm:p-6 lg:p-8 shadow-2xl relative overflow-hidden">
                   {/* Top Header: Counter + Numbered Slide Stepper */}
                   <div className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/25 pb-4 mb-5">
@@ -637,7 +640,7 @@ const SocCourse = () => {
                         Next
                         <span className="material-symbols-outlined text-base">chevron_right</span>
                       </button>
-                    ) : (
+                    ) : routeModule.lab ? (
                       <button
                         type="button"
                         onClick={() => setActiveTab('lab')}
@@ -646,13 +649,22 @@ const SocCourse = () => {
                         Go to Labs
                         <span className="material-symbols-outlined text-base">terminal</span>
                       </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled
+                        className="px-4 py-2 rounded-lg bg-surface-container-high text-on-surface font-body-sm text-body-sm opacity-40 cursor-not-allowed flex items-center gap-1.5 border border-outline-variant/30"
+                      >
+                        End of Deck
+                        <span className="material-symbols-outlined text-base">check</span>
+                      </button>
                     )}
                   </div>
                 </div>
               )}
 
               {/* VIEW 2: LABS */}
-              {activeTab === 'lab' && routeModule.lab && (
+              {currentTab === 'lab' && routeModule.lab && (
                 <div className="bg-surface-container rounded-2xl border border-outline-variant/30 p-6 sm:p-8 lg:p-10 shadow-2xl flex flex-col gap-6">
                   <div className="flex flex-wrap items-start justify-between gap-4 border-b border-outline-variant/25 pb-4">
                     <div>
@@ -1184,7 +1196,7 @@ const SocCourse = () => {
             </a>
 
             <a
-              href={`#/soc/${SOC_MODULES[6].slug}?tab=lab`}
+              href={`#/soc/${SOC_MODULES[5].slug}?tab=lab`}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setActiveSidebarTrack('drills')}

@@ -763,105 +763,34 @@ SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`,
     difficulty: "Advanced",
     duration: "70 Mins",
     slideCount: 18,
-    labCount: "5 Dynamic Labs",
-    tags: ["Volatility 3", "Sandbox Triage", "Memory Forensics"],
-    skills: ["Memory Forensics", "Volatility 3", "Static Analysis", "Dynamic Sandboxing", "Timeline Reconstruction"],
-    summary: "Perform static and dynamic malware triage in safe sandboxes, memory forensics using Volatility 3, and digital artifact recovery.",
+    labCount: "Slides Only",
+    tags: ["Static Analysis", "Dynamic Analysis", "ProcMon & INetSim"],
+    skills: ["Memory Forensics", "Static Analysis", "Dynamic Sandboxing", "ProcMon Triage", "PowerShell Deobfuscation"],
+    summary: "Perform static and dynamic malware analysis: hashes, strings, VirusTotal, Process Monitor (ProcMon), PowerShell decompression, and INetSim execution capture.",
 
     slides: [
-      {
-        id: 1,
-        title: "Malware Analysis Methodology in the SOC",
-        subtitle: "Static vs Dynamic vs Memory Forensics",
-        bullets: [
-          "Static Analysis: Inspecting binary attributes (PE headers, import tables, embedded strings, entropy) without executing the file.",
-          "Dynamic Analysis (Sandboxing): Detonating malware in an instrumented virtual machine to log process creation, file drops, registry modifications, and C2 beacons.",
-          "Memory Forensics: Using Volatility 3 to extract injected shellcode, unhooked DLLs, and in-memory decryption keys directly from RAM captures.",
-          "Safety Rule #1: Never analyze untrusted samples on your production host. Always isolate with network host-only or blackhole proxies."
-        ],
-        diagram: `
- [ Suspicious Sample ] ──> [ Static Triage (Strings, PEStudio, Floss) ]
-                                    │
-                                    ▼
-       [ Dynamic Sandboxing (Cuckoo, ANY.RUN, Hybrid-Analysis) ]
-                                    │
-                                    ▼
-       [ Memory Dump Extraction (Volatility 3: pslist, malfind) ]`,
-        takeaway: "High entropy (> 7.2) across PE sections typically indicates packing or encryption (UPX, Themida, custom crypters)."
-      },
-      {
-        id: 2,
-        title: "Portable Executable (PE) Deep Dive",
-        subtitle: "Anatomy of Windows .EXE and .DLL Files",
-        bullets: [
-          "DOS Header: Always starts with magic bytes `4D 5A` ('MZ' for Mark Zbikowski).",
-          "PE Header: Contains the signature `50 45 00 00` ('PE\\0\\0') and the Optional Header defining the EntryPoint address.",
-          "Sections: `.text` (executable code), `.data` (initialized global variables), `.rsrc` (icons, manifests, embedded payloads).",
-          "Import Address Table (IAT): Reveals what Windows APIs the binary calls (e.g., `VirtualAllocEx`, `WriteProcessMemory`, `CreateRemoteThread`)."
-        ]
-      },
-      {
-        id: 3,
-        title: "Memory Forensics with Volatility 3",
-        subtitle: "Uncovering Process Injection and Rootkits",
-        bullets: [
-          "`windows.pslist`: Lists all running processes walking the ActiveProcessLinks doubly-linked list.",
-          "`windows.psscan`: Scans raw memory pool tags for unlinked (hidden) processes used by rootkits.",
-          "`windows.malfind`: Locates memory pages marked `PAGE_EXECUTE_READWRITE` (RWX) containing unmapped MZ headers or injected shellcode.",
-          "`windows.netscan`: Reconstructs active and terminated network sockets with associated PIDs at the moment of memory dump."
-        ],
-        diagram: `
- VOLATILITY 3 COMMAND SEQUENCE:
- vol -f mem.raw windows.pslist
- vol -f mem.raw windows.malfind --pid 4280
- vol -f mem.raw windows.dumpfiles --pid 4280 --virtaddr 0x7ffd0000`
-      }
+      { id: 1, title: "Malware Analysis", image: "/soc-slides/module-07/1.png" },
+      { id: 2, title: "Static Analysis", image: "/soc-slides/module-07/2.png" },
+      { id: 3, title: "HASH (SHA256 Verification)", image: "/soc-slides/module-07/3.png" },
+      { id: 4, title: "Strings (strings, FLOSS, PEStudio)", image: "/soc-slides/module-07/4.png" },
+      { id: 5, title: "Upload (VirusTotal & Any.Run)", image: "/soc-slides/module-07/5.png" },
+      { id: 6, title: "Dynamic Analysis", image: "/soc-slides/module-07/6.png" },
+      { id: 7, title: "Open The File", image: "/soc-slides/module-07/7.png" },
+      { id: 8, title: "ProcMon Filter (Process Name & Parent ID)", image: "/soc-slides/module-07/8.png" },
+      { id: 9, title: "ProcMon Process Monitor Inspection", image: "/soc-slides/module-07/9.png" },
+      { id: 10, title: "Decode PowerShell Command", image: "/soc-slides/module-07/10.png" },
+      { id: 11, title: "Compressed Base64 Output", image: "/soc-slides/module-07/11.png" },
+      { id: 12, title: "Compressed Gzip Data Inspection", image: "/soc-slides/module-07/12.png" },
+      { id: 13, title: "Decompressed Payload", image: "/soc-slides/module-07/13.png" },
+      { id: 14, title: "Content (Deobfuscated Powerfun Script)", image: "/soc-slides/module-07/14.png" },
+      { id: 15, title: "Decode Domain & INetSim Setup", image: "/soc-slides/module-07/15.png" },
+      { id: 16, title: "INetSim Simulated Network Services", image: "/soc-slides/module-07/16.png" },
+      { id: 17, title: "Act As A Hacker (Hosts Redirect)", image: "/soc-slides/module-07/17.png" },
+      { id: 18, title: "Act As A Hacker (Reverse Shell Listener)", image: "/soc-slides/module-07/18.png" }
     ],
 
-    theory: {
-      overview: "When automated EDR engines fail to classify a custom binary, Tier 2 analysts leverage safe sandboxing and memory triage to classify the threat.",
-      sections: [
-        {
-          heading: "1. Key API Calls Indicating Process Hollowing",
-          content: "Watch for this sequence of API calls in sandbox execution traces:",
-          table: {
-            headers: ["API Call", "Purpose in Attack Chain", "Legitimate Rarity"],
-            rows: [
-              ["CreateProcess (CREATE_SUSPENDED)", "Spawns legitimate host process (e.g., svchost.exe) paused", "High"],
-              ["ZwUnmapViewOfSection", "Hollows out original executable memory from process", "Extremely Suspicious"],
-              ["VirtualAllocEx (PAGE_EXECUTE_READWRITE)", "Allocates new executable memory buffer inside target process", "Very High"],
-              ["WriteProcessMemory", "Copies encrypted shellcode / payload into hollowed space", "High"],
-              ["ResumeThread", "Resumes execution of malicious code under benign disguise", "Normal after create"]
-            ]
-          }
-        }
-      ]
-    },
-
-    lab: {
-      title: "Interactive Sandbox Detonation Inspector",
-      scenario: "A macro-laden invoice 'Invoice_Q4_2026.xlsm' was detonated in your isolated sandbox. Analyze the Volatility 3 malfind output below to pinpoint the injected memory address and malware payload family.",
-      type: "sandbox-sim",
-      processList: [
-        { pid: 1040, name: "EXCEL.EXE", ppid: 880, integrity: "Medium", path: "C:\\Program Files\\Microsoft Office\\root\\Office16\\EXCEL.EXE" },
-        { pid: 3244, name: "powershell.exe", ppid: 1040, integrity: "Medium", path: "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" },
-        { pid: 4892, name: "rundll32.exe", ppid: 3244, integrity: "High", path: "C:\\Windows\\System32\\rundll32.exe" }
-      ],
-      malfindOutput: `Process: rundll32.exe Pid: 4892 Address: 0x0000021b8f400000
-Protection: PAGE_EXECUTE_READWRITE
-0x0000021b8f400000  4d 5a 90 00 03 00 00 00  04 00 00 00 ff ff 00 00  MZ..............
-0x0000021b8f400010  b8 00 00 00 00 00 00 00  40 00 00 00 00 00 00 00  ........@.......
-Tag: LummaStealer_MemoryInjected_Payload_v4`,
-      taskInstructions: "1. Inspect the process spawning hierarchy: EXCEL.EXE ➔ powershell.exe ➔ rundll32.exe.\n2. Note the hollowed process 'rundll32.exe' (PID: 4892) running with PAGE_EXECUTE_READWRITE.\n3. Identify the injected malware family tag in the Volatility output."
-    },
-
-    challenge: {
-      question: "What is the specific malware tag identified in the memory injection buffer of rundll32.exe (PID 4892)?",
-      targetKey: "LummaStealer_MemoryInjected_Payload_v4",
-      flag: "flag{m4lw4r3_v0l4t1l1ty_tr14g3}",
-      hint: "Look at the Tag field in the Volatility output: 'LummaStealer_MemoryInjected_Payload_v4'. The flag is flag{m4lw4r3_v0l4t1l1ty_tr14g3}",
-      points: 150
-    }
+    lab: null,
+    challenge: null
   },
 
   {
