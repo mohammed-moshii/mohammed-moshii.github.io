@@ -548,7 +548,7 @@ const SocCourse = () => {
                             : 'bg-transparent border-transparent text-on-surface-variant hover:bg-surface-container hover:text-white'
                         }`}
                       >
-                        <span className="truncate">{sec.title}</span>
+                        <span className="leading-snug">{sec.title}</span>
                         <span
                           className={`px-1.5 py-0.5 rounded font-mono text-[10px] font-bold shrink-0 ${
                             isActiveSection ? 'bg-primary/25 text-primary' : 'bg-surface-container-high text-outline'

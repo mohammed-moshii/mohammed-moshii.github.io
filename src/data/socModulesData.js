@@ -22,25 +22,49 @@ export const SOC_MODULES = [
     progress: 100,
     difficulty: "Beginner",
     duration: "45 Mins",
-    slideCount: 11,
+    slideCount: 21,
     labCount: "3 Labs Completed (3/3)",
-    tags: ["SOC Models", "NIST SP 800-61", "SLA & Metrics"],
-    skills: ["SOC Architecture", "Alert Triage", "MTTD & MTTR Metrics", "NIST SP 800-61", "Escalation SOPs"],
-    summary: "Establish defense operations foundation: SOC models, tier escalations, RFC 2828 taxonomy, MTTD/MTTR metrics, and NIST SP 800-61 workflows.",
+    tags: ["SOC Models", "Cyber Defence Frameworks", "MITRE ATT&CK"],
+    skills: ["SOC Architecture", "Pyramid of Pain", "Cyber Kill Chain", "Diamond Model", "MITRE ATT&CK"],
+    summary: "Establish defense operations foundation: SOC models, metrics, tools, and Cyber Defence Frameworks (Pyramid of Pain, Cyber Kill Chain, Diamond Model, MITRE ATT&CK).",
 
-    slides: [
-      { id: 1, title: "SOC Analyst 2026", image: "/soc-slides/module-01/1.png" },
-      { id: 2, title: "SOC Models", image: "/soc-slides/module-01/2.png" },
-      { id: 3, title: "People, Processes, Technology", image: "/soc-slides/module-01/3.png" },
-      { id: 4, title: "SOC Team Structure", image: "/soc-slides/module-01/4.png" },
-      { id: 5, title: "Analyst Career Path", image: "/soc-slides/module-01/5.png" },
-      { id: 6, title: "Event Management", image: "/soc-slides/module-01/6.png" },
-      { id: 7, title: "Incident Management", image: "/soc-slides/module-01/7.png" },
-      { id: 8, title: "Detection Outcomes", image: "/soc-slides/module-01/8.png" },
-      { id: 9, title: "SOC Metrics", image: "/soc-slides/module-01/9.png" },
-      { id: 10, title: "SOC Tools", image: "/soc-slides/module-01/10.png" },
-      { id: 11, title: "Common Threat Types", image: "/soc-slides/module-01/11.png" }
+    slideSections: [
+      {
+        id: "soc-operations",
+        title: "SOC Operations",
+        slides: [
+          { id: 1, title: "SOC Analyst 2026", image: "/soc-slides/module-01/1.png" },
+          { id: 2, title: "SOC Models", image: "/soc-slides/module-01/2.png" },
+          { id: 3, title: "People, Processes, Technology", image: "/soc-slides/module-01/3.png" },
+          { id: 4, title: "SOC Team Structure", image: "/soc-slides/module-01/4.png" },
+          { id: 5, title: "Analyst Career Path", image: "/soc-slides/module-01/5.png" },
+          { id: 6, title: "Event Management", image: "/soc-slides/module-01/6.png" },
+          { id: 7, title: "Incident Management", image: "/soc-slides/module-01/7.png" },
+          { id: 8, title: "Detection Outcomes", image: "/soc-slides/module-01/8.png" },
+          { id: 9, title: "SOC Metrics", image: "/soc-slides/module-01/9.png" },
+          { id: 10, title: "SOC Tools", image: "/soc-slides/module-01/10.png" },
+          { id: 11, title: "Common Threat Types", image: "/soc-slides/module-01/11.png" }
+        ]
+      },
+      {
+        id: "cyber-defence-frameworks",
+        title: "Cyber Defence Frameworks",
+        slides: [
+          { id: 11, title: "Cyber Defence Frameworks", image: "/soc-slides/module-01/cyber-defence-frameworks/11.png" },
+          { id: 12, title: "Pyramid of Pain — Hashing & IP (Fast Flux)", image: "/soc-slides/module-01/cyber-defence-frameworks/12.png" },
+          { id: 13, title: "Pyramid of Pain — DNS (Punycode)", image: "/soc-slides/module-01/cyber-defence-frameworks/13.png" },
+          { id: 14, title: "Pyramid of Pain — DNS (URL Shorteners)", image: "/soc-slides/module-01/cyber-defence-frameworks/14.png" },
+          { id: 15, title: "Pyramid of Pain — Host Artifacts", image: "/soc-slides/module-01/cyber-defence-frameworks/15.png" },
+          { id: 16, title: "Pyramid of Pain — Network Artifacts", image: "/soc-slides/module-01/cyber-defence-frameworks/16.png" },
+          { id: 17, title: "Cyber Kill Chain", image: "/soc-slides/module-01/cyber-defence-frameworks/17.png" },
+          { id: 18, title: "Diamond Model Overview", image: "/soc-slides/module-01/cyber-defence-frameworks/18.png" },
+          { id: 19, title: "Diamond Model — Event Meta-features", image: "/soc-slides/module-01/cyber-defence-frameworks/19.png" },
+          { id: 20, title: "MITRE ATT&CK — Real Scenario (T1555)", image: "/soc-slides/module-01/cyber-defence-frameworks/20.png" }
+        ]
+      }
     ],
+
+    slides: [],
 
     theory: {
       overview: "Security Operations Centers operate on strict analytical workflows. In this module, we examine how enterprise telemetry converges into the SIEM and how a Tier 1 SOC analyst approaches incoming alerts methodically.",
