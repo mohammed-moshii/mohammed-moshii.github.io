@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import { SIEM_DOC_ID, decodeSiemHtml, injectAntiCopyGuard } from './siemCodec';
+import { SIEM_ENCODED_PAYLOAD } from './data/siemTelemetryPayload';
 import './cybersoc.css';
 
 const SiemTelemetry = () => {
@@ -24,21 +25,29 @@ const SiemTelemetry = () => {
 
     const fetchSimulator = async () => {
       try {
-        const docSnap = await getDoc(doc(db, 'machines', SIEM_DOC_ID));
-        if (!active) return;
-
-        if (!docSnap.exists()) {
-          setStatus('missing');
-          return;
-        }
-
-        const data = docSnap.data();
         let html = '';
 
-        if (data.encoding === 'moshii-xor-b64-v1' && data.payload) {
-          html = decodeSiemHtml(data.payload);
-        } else if (data.writeup) {
-          html = data.writeup;
+        // 1. Prefer live Firestore copy when present (allows dynamic admin updates)
+        try {
+          const docSnap = await getDoc(doc(db, 'machines', SIEM_DOC_ID));
+          if (!active) return;
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data.encoding === 'moshii-xor-b64-v1' && data.payload) {
+              html = decodeSiemHtml(data.payload);
+            } else if (data.writeup) {
+              html = data.writeup;
+            }
+          }
+        } catch (dbErr) {
+          console.warn('Firestore fetch fallback engaged:', dbErr?.message);
+        }
+
+        if (!active) return;
+
+        // 2. Fallback to encoded built-in payload so users can run the simulator immediately
+        if ((!html || !html.trim()) && SIEM_ENCODED_PAYLOAD) {
+          html = decodeSiemHtml(SIEM_ENCODED_PAYLOAD);
         }
 
         if (!html || !html.trim()) {
@@ -59,7 +68,7 @@ const SiemTelemetry = () => {
       } catch (err) {
         if (!active) return;
         console.error('Error loading SIEM Telemetry simulator:', err);
-        setErrorMsg(err?.message || 'Unable to fetch SIEM Telemetry simulator from database.');
+        setErrorMsg(err?.message || 'Unable to initialize SIEM Telemetry simulator.');
         setStatus('error');
       }
     };

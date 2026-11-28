@@ -11,6 +11,7 @@ import QRCode from 'qrcode';
 import { hashPassword } from './cryptoUtils';
 import { BUILTIN_MACHINES } from './data/builtinMachines';
 import { SIEM_DOC_ID, encodeSiemHtml } from './siemCodec';
+import { SIEM_BUILTIN_META, SIEM_ENCODED_PAYLOAD } from './data/siemTelemetryPayload';
 import './index.css';
 
 // The authorized email addresses that are allowed to access the admin panel
@@ -198,7 +199,19 @@ const Admin = () => {
           uploading: false
         });
       } else {
-        setSiemStatus({ exists: false, sizeBytes: 0, uploading: false });
+        try {
+          await setDoc(doc(db, 'machines', SIEM_DOC_ID), {
+            ...SIEM_BUILTIN_META,
+            payload: SIEM_ENCODED_PAYLOAD,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+          setSiemStatus({ exists: true, sizeBytes: SIEM_BUILTIN_META.sizeBytes, uploading: false });
+          console.log('[+] Auto-synced built-in SIEM Telemetry simulator to Firestore');
+        } catch (syncErr) {
+          console.warn('[!] Note: Could not auto-sync SIEM simulator to Firestore:', syncErr.message);
+          setSiemStatus({ exists: false, sizeBytes: 0, uploading: false });
+        }
       }
 
       // Exclude hidden SOC telemetry simulators from the HTB writeups list
