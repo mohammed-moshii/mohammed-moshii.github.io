@@ -316,7 +316,7 @@ const SocCourse = () => {
   // Flag submission
   const handleFlagSubmit = (e) => {
     e.preventDefault();
-    if (!routeModule) return;
+    if (!routeModule?.challenge) return;
     const clean = flagInput.trim();
     if (clean === routeModule.challenge.flag || clean === routeModule.challenge.targetKey) {
       setChallengeStatus('success');
@@ -581,6 +581,15 @@ const SocCourse = () => {
                     </span>
                     <span>Labs</span>
                   </span>
+                  {routeModule.lab.rooms?.length > 0 && (
+                    <span
+                      className={`px-2 py-0.5 rounded font-mono text-[11px] font-bold ${
+                        currentTab === 'lab' ? 'bg-secondary text-on-secondary' : 'bg-surface-container-high text-outline'
+                      }`}
+                    >
+                      {routeModule.lab.rooms.length}
+                    </span>
+                  )}
                 </button>
               )}
             </nav>
@@ -1028,13 +1037,77 @@ const SocCourse = () => {
                     </div>
                   )}
 
+                  {/* LAB TYPE 10: TRYHACKME ROOM LAUNCHER (MODULE 03: SPLUNK & ELK) */}
+                  {routeModule.lab.type === 'tryhackme-rooms' && Array.isArray(routeModule.lab.rooms) && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {routeModule.lab.rooms.map((room) => (
+                        <a
+                          key={room.id}
+                          href={room.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`Open ${room.tool} TryHackMe room ${room.title} in a new tab`}
+                          className="group relative rounded-2xl bg-surface-container-lowest border border-outline-variant/35 hover:border-primary/70 p-6 sm:p-8 flex flex-col items-center text-center gap-5 transition-all duration-300 hover:-translate-y-1 shadow-xl overflow-hidden no-underline"
+                        >
+                          <div
+                            className="absolute -top-16 left-1/2 -translate-x-1/2 w-56 h-56 rounded-full blur-3xl opacity-20 group-hover:opacity-35 transition-opacity pointer-events-none"
+                            style={{ backgroundColor: room.accent || '#38bdf8' }}
+                          />
+
+                          <div className="relative z-10 w-full flex items-center justify-between gap-2">
+                            <span
+                              className="px-3 py-1 rounded-full font-mono text-xs font-bold border"
+                              style={{
+                                backgroundColor: `${room.accent || '#38bdf8'}18`,
+                                borderColor: `${room.accent || '#38bdf8'}45`,
+                                color: room.accent || '#38bdf8'
+                              }}
+                            >
+                              {room.tool}
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high border border-outline-variant/30 font-mono text-[11px] text-outline group-hover:text-white transition-colors">
+                              <span>{room.platform || 'TryHackMe'}</span>
+                              <span className="material-symbols-outlined text-sm leading-none">open_in_new</span>
+                            </span>
+                          </div>
+
+                          <div className="relative z-10 w-40 h-40 sm:w-44 sm:h-44 rounded-2xl bg-surface-container border border-outline-variant/30 p-5 flex items-center justify-center shadow-inner group-hover:border-outline/50 transition-colors">
+                            <img
+                              src={room.logo}
+                              alt={`${room.tool} — ${room.title} logo`}
+                              className="w-full h-full object-contain drop-shadow-lg transition-transform duration-300 group-hover:scale-105 select-none"
+                            />
+                          </div>
+
+                          <div className="relative z-10 flex flex-col gap-1.5">
+                            <h3 className="soc-clean-heading text-xl font-bold text-white m-0 group-hover:text-primary transition-colors">
+                              {room.title}
+                            </h3>
+                            <p className="font-body-sm text-body-sm text-on-surface-variant m-0 leading-relaxed max-w-sm">
+                              {room.description}
+                            </p>
+                          </div>
+
+                          <div className="relative z-10 w-full pt-3 mt-auto border-t border-outline-variant/20 flex items-center justify-center gap-2 font-mono text-xs font-semibold text-primary">
+                            <span>Open Room in New Tab</span>
+                            <span className="material-symbols-outlined text-base transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+                              open_in_new
+                            </span>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  )}
+
                   {/* Lab Instructions Footer */}
-                  <div className="p-4 rounded-xl bg-surface-container-high border-l-4 border-primary font-body-sm text-body-sm text-on-surface">
-                    <strong className="text-primary">TASK INSTRUCTIONS:</strong>
-                    <p className="m-0 whitespace-pre-line pt-1 text-on-surface-variant font-code-sm text-code-sm">
-                      {routeModule.lab.taskInstructions}
-                    </p>
-                  </div>
+                  {routeModule.lab.taskInstructions && (
+                    <div className="p-4 rounded-xl bg-surface-container-high border-l-4 border-primary font-body-sm text-body-sm text-on-surface">
+                      <strong className="text-primary">TASK INSTRUCTIONS:</strong>
+                      <p className="m-0 whitespace-pre-line pt-1 text-on-surface-variant font-code-sm text-code-sm">
+                        {routeModule.lab.taskInstructions}
+                      </p>
+                    </div>
+                  )}
 
                   {/* Lab Flag Verification Block */}
                   {routeModule.challenge && (

